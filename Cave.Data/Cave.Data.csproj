@@ -10,7 +10,7 @@
     <PackageLicenseUrl>https://www.gnu.org/licenses/lgpl-3.0.en.html</PackageLicenseUrl>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>Cave.Data.snk</AssemblyOriginatorKeyFile>
-    <Version>1.0.0-alpha-$(Configuration.ToLower())-2</Version>
+    <Version>1.0.0-alpha-$(Configuration.ToLower())-3</Version>
     <PackageIconUrl>https://www.cavesystems.de/favicon.ico</PackageIconUrl>
     <PackageTags>CaveSystems Database</PackageTags>
     <PackageProjectUrl>https://github.com/CaveSystems/cave-data</PackageProjectUrl>
@@ -20,8 +20,8 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <AssemblyVersion>1.0.0.2</AssemblyVersion>
-    <FileVersion>2018.1121.2039.1140</FileVersion>
+    <AssemblyVersion>1.0.0.3</AssemblyVersion>
+    <FileVersion>2018.1202.1657.1321</FileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <DebugType>pdbonly</DebugType>
@@ -62,16 +62,16 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)'=='net20' OR '$(TargetFramework)'=='netstandard1.3'">
-    <PackageReference Include="Cave.Backports" Version="1.0.0-alpha-release-1" />
+    <PackageReference Include="Cave.Backports" Version="1.0.0-alpha-release-2" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Cave.Compression" Version="1.0.0-alpha-release-3" />
-    <PackageReference Include="Cave.IO" Version="1.0.0-alpha-release-3" />
-    <PackageReference Include="Cave.Extensions" Version="1.0.0-alpha-release-4" />
+    <PackageReference Include="Cave.Compression" Version="1.0.0-alpha-release-4" />
+    <PackageReference Include="Cave.IO" Version="1.0.0-beta-release-1" />
+    <PackageReference Include="Cave.Extensions" Version="1.0.0-alpha-release-5" />
     <PackageReference Include="Cave.Collections" Version="1.0.0-alpha-release-1" />
-    <PackageReference Include="Cave.Platform" Version="1.0.0-alpha-release-1" />
+    <PackageReference Include="Cave.Platform" Version="1.0.0-alpha-release-2" />
     <PackageReference Include="Cave.BaseX" Version="1.0.0-alpha-release-1" />
     <PackageReference Include="Cave.AssemblyVersionInfo" Version="1.0.0-alpha-release-1" />
-    <PackageReference Include="Cave.Settings" Version="1.0.0-alpha-release-1" />
+    <PackageReference Include="Cave.Settings" Version="1.0.0-alpha-release-2" />
   </ItemGroup>
 </Project>
