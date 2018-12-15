@@ -1,51 +1,3 @@
-#region CopyRight 2018
-/*
-    Copyright (c) 2003-2018 Andreas Rohleder (andreas@rohleder.cc)
-    All rights reserved
-*/
-#endregion
-#region License LGPL-3
-/*
-    This program/library/sourcecode is free software; you can redistribute it
-    and/or modify it under the terms of the GNU Lesser General Public License
-    version 3 as published by the Free Software Foundation subsequent called
-    the License.
-
-    You may not use this program/library/sourcecode except in compliance
-    with the License. The License is included in the LICENSE file
-    found at the installation directory or the distribution package.
-
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-#endregion
-#region Authors & Contributors
-/*
-   Author:
-     Andreas Rohleder <andreas@rohleder.cc>
-
-   Contributors:
- */
-#endregion
-
-using Cave.IO;
-using Cave.Text;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -76,9 +28,9 @@ namespace Cave.Data
                 table = new SynchronizedMemoryTable<T>();
                 return;
             }
-			table = Database.GetTable<T>(flags, name);
+            table = Database.GetTable<T>(flags, name);
             Trace.TraceInformation("Loaded {0} from {1}", table, Database);
-			switch (Mode)
+            switch (Mode)
             {
                 case TableConnectorMode.BackgroundWriter: table = new BackgroundWriterTable<T>(table); break;
                 case TableConnectorMode.ReadCache: table = new ReadCachedTable<T>(table); break;
@@ -105,13 +57,13 @@ namespace Cave.Data
         /// <value>The database.</value>
         public IDatabase Database { get; private set; }
 
-		/// <summary>Gets the database folder used at load.</summary>
-		/// <value>The folder.</value>
-		public string Folder { get; private set; }
+        /// <summary>Gets the database folder used at load.</summary>
+        /// <value>The folder.</value>
+        public string Folder { get; private set; }
 
-		/// <summary>Gets the current mode of the connector.</summary>
-		/// <value>The <see cref="TableConnectorMode" />.</value>
-		public virtual TableConnectorMode Mode { get; private set; }
+        /// <summary>Gets the current mode of the connector.</summary>
+        /// <value>The <see cref="TableConnectorMode" />.</value>
+        public virtual TableConnectorMode Mode { get; private set; }
 
         /// <summary>Gets all tables of this instance.</summary>
         /// <value>The tables.</value>
@@ -121,8 +73,8 @@ namespace Cave.Data
         /// <param name="path">The path.</param>
         public bool Load(string path)
         {
-			bool result = true;
-			Folder = path;
+            bool result = true;
+            Folder = path;
             m_Tables = new Dictionary<IMemoryTable, int>();
             lock (m_Tables)
             {
@@ -131,30 +83,30 @@ namespace Cave.Data
                 {
                     Trace.TraceInformation("Loading {0}", table);
                     string file = Path.Combine(path, table.Name + ".dat");
-					m_Tables[table] = 0;
-					if (File.Exists(file))
-					{
-						try
-						{
-							table.Clear();
-							DatReader.ReadTable(table, file);
-							m_Tables[table] = table.SequenceNumber;
-						}
-						catch (Exception ex)
-						{
-							result = false;
+                    m_Tables[table] = 0;
+                    if (File.Exists(file))
+                    {
+                        try
+                        {
+                            table.Clear();
+                            DatReader.ReadTable(table, file);
+                            m_Tables[table] = table.SequenceNumber;
+                        }
+                        catch (Exception ex)
+                        {
+                            result = false;
                             Trace.TraceWarning("Could not load table {0}.\n{1}", table.Name, ex);
-						}
-					}                    
+                        }
+                    }
                 }
             }
-			return result;
+            return result;
         }
 
         /// <summary>Saves all tables to the specified path.</summary>
         public void Save()
         {
-			if (Folder == null)
+            if (Folder == null)
             {
                 return;
             }
@@ -197,8 +149,8 @@ namespace Cave.Data
         /// <param name="closeStorage">If not set only the Tables are closed. If set closes Database and Storage, too.</param>
         public virtual void Close(bool closeStorage)
         {
-			Save();
-			Folder = null;
+            Save();
+            Folder = null;
             foreach (ITable table in Tables)
             {
                 if (table is ICachedTable t)
@@ -224,26 +176,26 @@ namespace Cave.Data
         /// <summary>Updates the cache of all read cached tables.</summary>
         public virtual void UpdateCache(bool async = false)
         {
-			if (async)
-			{
-				Parallel.ForEach(Tables, (table) =>
-				{
-					if (table is ReadCachedTable t)
+            if (async)
+            {
+                Parallel.ForEach(Tables, (table) =>
+                {
+                    if (table is ReadCachedTable t)
                     {
                         t.UpdateCache();
                     }
                 });
-			}
-			else
-			{
-				foreach (ITable table in Tables)
-				{
-					if (table is ReadCachedTable t)
+            }
+            else
+            {
+                foreach (ITable table in Tables)
+                {
+                    if (table is ReadCachedTable t)
                     {
                         t.UpdateCache();
                     }
                 }
-			}
+            }
         }
     }
 }

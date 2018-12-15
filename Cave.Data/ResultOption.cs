@@ -1,49 +1,3 @@
-#region CopyRight 2018
-/*
-    Copyright (c) 2005-2018 Andreas Rohleder (andreas@rohleder.cc)
-    All rights reserved
-*/
-#endregion
-#region License LGPL-3
-/*
-    This program/library/sourcecode is free software; you can redistribute it
-    and/or modify it under the terms of the GNU Lesser General Public License
-    version 3 as published by the Free Software Foundation subsequent called
-    the License.
-
-    You may not use this program/library/sourcecode except in compliance
-    with the License. The License is included in the LICENSE file
-    found at the installation directory or the distribution package.
-
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-#endregion License
-#region Authors & Contributors
-/*
-   Author:
-     Andreas Rohleder <andreas@rohleder.cc>
-
-   Contributors:
- */
-#endregion Authors & Contributors
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -197,17 +151,17 @@ namespace Cave.Data
             option.m_ParentList = m_ParentList;
         }
 
-		/// <summary>Returns an array with all options.</summary>
-		/// <returns>Returns an array with all options.</returns>
-		public ResultOption[] ToArray()
+        /// <summary>Returns an array with all options.</summary>
+        /// <returns>Returns an array with all options.</returns>
+        public ResultOption[] ToArray()
         {
             return m_ParentList.Where(i => i.Mode != ResultOptionMode.None).ToArray();
         }
 
-		/// <summary>Returns an array with all options with the specified modes.</summary>
-		/// <param name="modes">The modes.</param>
-		/// <returns>Returns an array with all matching options.</returns>
-		public ResultOption[] ToArray(params ResultOptionMode[] modes)
+        /// <summary>Returns an array with all options with the specified modes.</summary>
+        /// <param name="modes">The modes.</param>
+        /// <returns>Returns an array with all matching options.</returns>
+        public ResultOption[] ToArray(params ResultOptionMode[] modes)
         {
             List<ResultOption> results = new List<ResultOption>();
             foreach (ResultOption option in m_ParentList)
@@ -220,10 +174,10 @@ namespace Cave.Data
             return results.ToArray();
         }
 
-		/// <summary>Determines whether [contains] [the specified modes].</summary>
-		/// <param name="modes">The modes.</param>
-		/// <returns><c>true</c> if [contains] [the specified modes]; otherwise, <c>false</c>.</returns>
-		public bool Contains(params ResultOptionMode[] modes)
+        /// <summary>Determines whether [contains] [the specified modes].</summary>
+        /// <param name="modes">The modes.</param>
+        /// <returns><c>true</c> if [contains] [the specified modes]; otherwise, <c>false</c>.</returns>
+        public bool Contains(params ResultOptionMode[] modes)
         {
             foreach (ResultOption option in m_ParentList)
             {
@@ -235,9 +189,9 @@ namespace Cave.Data
             return false;
         }
 
-		/// <summary>Gets the field names.</summary>
-		/// <value>The field names.</value>
-		public string[] FieldNames
+        /// <summary>Gets the field names.</summary>
+        /// <value>The field names.</value>
+        public string[] FieldNames
         {
             get
             {

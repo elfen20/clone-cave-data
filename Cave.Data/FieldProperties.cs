@@ -1,52 +1,3 @@
-#region CopyRight 2018
-/*
-    Copyright (c) 2005-2018 Andreas Rohleder (andreas@rohleder.cc)
-    All rights reserved
-*/
-#endregion
-#region License LGPL-3
-/*
-    This program/library/sourcecode is free software; you can redistribute it
-    and/or modify it under the terms of the GNU Lesser General Public License
-    version 3 as published by the Free Software Foundation subsequent called
-    the License.
-
-    You may not use this program/library/sourcecode except in compliance
-    with the License. The License is included in the LICENSE file
-    found at the installation directory or the distribution package.
-
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-#endregion License
-#region Authors & Contributors
-/*
-   Author:
-     Andreas Rohleder <andreas@rohleder.cc>
-
-   Contributors:
- */
-#endregion Authors & Contributors
-
-using Cave.Data;
-using Cave.IO;
-using Cave.Text;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -55,6 +6,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using Cave.Data;
+using Cave.IO;
 
 namespace Cave
 {
@@ -183,7 +136,7 @@ namespace Cave
 
             string typeName = reader.ReadString();
             Type valueType = AppDom.FindType(typeName);
-            
+
             if (dataType == DataType.DateTime)
             {
                 DateTimeKind dateTimeKind = (DateTimeKind)reader.Read7BitEncodedInt32();
@@ -200,7 +153,7 @@ namespace Cave
 
         /// <summary>Gets the name of the log source.</summary>
         /// <value>The name of the log source.</value>
-        public string LogSourceName { get { return "FieldProperties <" + SourceName + ">"; } }
+        public string LogSourceName => "FieldProperties <" + SourceName + ">";
 
         bool m_ParserUsed;
         MethodInfo m_StaticParse;
@@ -313,29 +266,29 @@ namespace Cave
         {
         }
 
-		/// <summary>Creates new <see cref="FieldProperties" /></summary>
-		/// <param name="sourceName">Name of the source of the field definition (tablename, typename, ...).</param>
-		/// <param name="fieldFlags">The <see cref="FieldFlags" /> of the field</param>
-		/// <param name="dataType">The <see cref="DataType" /> of the field</param>
-		/// <param name="valueType">The dotnet type of the value</param>
-		/// <param name="maximumLength">The maximum length of the field</param>
-		/// <param name="fieldName">The <see cref="Name" /> of the field</param>
-		/// <param name="databaseDataType">The <see cref="DataType" /> of the field at the database</param>
-		/// <param name="dateTimeType">DateTimeType used to store the value at the database</param>
-		/// <param name="dateTimeKind">DateTimeKind used to convert the local value to the database value</param>
-		/// <param name="stringEncoding">The string encoding.</param>
-		/// <param name="databaseFieldName">The name of the field at the database</param>
-		/// <param name="description">The description of the field</param>
-		/// <param name="displayFormat">Provides agruments used when formatting field values with <see cref="Row.GetDisplayStrings" /></param>
-		/// <param name="alternativeNames">The alternative names.</param>
-		/// <exception cref="ArgumentNullException">ValueType
-		/// or
-		/// ValueType
-		/// or
-		/// DatabaseDataType</exception>
-		/// <exception cref="NotSupportedException"></exception>
-		/// <exception cref="NotImplementedException">Unknown DataType!</exception>
-		public FieldProperties(string sourceName, FieldFlags fieldFlags, DataType dataType, Type valueType, float maximumLength, string fieldName, DataType databaseDataType, DateTimeType dateTimeType, DateTimeKind dateTimeKind, StringEncoding stringEncoding, string databaseFieldName, string description, string displayFormat, string alternativeNames)
+        /// <summary>Creates new <see cref="FieldProperties" /></summary>
+        /// <param name="sourceName">Name of the source of the field definition (tablename, typename, ...).</param>
+        /// <param name="fieldFlags">The <see cref="FieldFlags" /> of the field</param>
+        /// <param name="dataType">The <see cref="DataType" /> of the field</param>
+        /// <param name="valueType">The dotnet type of the value</param>
+        /// <param name="maximumLength">The maximum length of the field</param>
+        /// <param name="fieldName">The <see cref="Name" /> of the field</param>
+        /// <param name="databaseDataType">The <see cref="DataType" /> of the field at the database</param>
+        /// <param name="dateTimeType">DateTimeType used to store the value at the database</param>
+        /// <param name="dateTimeKind">DateTimeKind used to convert the local value to the database value</param>
+        /// <param name="stringEncoding">The string encoding.</param>
+        /// <param name="databaseFieldName">The name of the field at the database</param>
+        /// <param name="description">The description of the field</param>
+        /// <param name="displayFormat">Provides agruments used when formatting field values with <see cref="Row.GetDisplayStrings" /></param>
+        /// <param name="alternativeNames">The alternative names.</param>
+        /// <exception cref="ArgumentNullException">ValueType
+        /// or
+        /// ValueType
+        /// or
+        /// DatabaseDataType</exception>
+        /// <exception cref="NotSupportedException"></exception>
+        /// <exception cref="NotImplementedException">Unknown DataType!</exception>
+        public FieldProperties(string sourceName, FieldFlags fieldFlags, DataType dataType, Type valueType, float maximumLength, string fieldName, DataType databaseDataType, DateTimeType dateTimeType, DateTimeKind dateTimeKind, StringEncoding stringEncoding, string databaseFieldName, string description, string displayFormat, string alternativeNames)
         {
             if (string.IsNullOrEmpty(sourceName))
             {
@@ -513,38 +466,38 @@ namespace Cave
             switch (DataType)
             {
                 case DataType.DateTime:
-                    {
-                        if (string.IsNullOrEmpty(text) || text == "null")
+                {
+                    if (string.IsNullOrEmpty(text) || text == "null")
                     {
                         return default(DateTime);
                     }
 
                     switch (DateTimeType)
-                        {
-                            default: throw new NotSupportedException(string.Format("DateTimeType {0} is not supported", DateTimeType));
+                    {
+                        default: throw new NotSupportedException(string.Format("DateTimeType {0} is not supported", DateTimeType));
 
-                            case DateTimeType.BigIntHumanReadable:
-                                return DateTime.ParseExact(text, CaveSystemData.BigIntDateTimeFormat, culture);
+                        case DateTimeType.BigIntHumanReadable:
+                            return DateTime.ParseExact(text, CaveSystemData.BigIntDateTimeFormat, culture);
 
-                            case DateTimeType.Undefined:
-                            case DateTimeType.Native:
-                                if (stringMarker != null)
+                        case DateTimeType.Undefined:
+                        case DateTimeType.Native:
+                            if (stringMarker != null)
                             {
                                 text = text.Unbox(stringMarker, false);
                             }
 
                             return DateTime.ParseExact(text, StringExtensions.InterOpDateTimeFormat, culture);
 
-                            case DateTimeType.BigIntTicks:
-                                return new DateTime(long.Parse(text, culture), DateTimeKind);
+                        case DateTimeType.BigIntTicks:
+                            return new DateTime(long.Parse(text, culture), DateTimeKind);
 
-                            case DateTimeType.DecimalSeconds:
-                                return new DateTime((long)decimal.Round(decimal.Parse(text, culture) * TimeSpan.TicksPerSecond), DateTimeKind);
-                        }
+                        case DateTimeType.DecimalSeconds:
+                            return new DateTime((long)decimal.Round(decimal.Parse(text, culture) * TimeSpan.TicksPerSecond), DateTimeKind);
                     }
+                }
                 case DataType.Binary:
-                    {
-                        if (string.IsNullOrEmpty(text) || text == "null")
+                {
+                    if (string.IsNullOrEmpty(text) || text == "null")
                     {
                         return null;
                     }
@@ -555,7 +508,7 @@ namespace Cave
                     }
 
                     return Base64.NoPadding.Decode(text);
-                    }
+                }
                 case DataType.Bool:
                     if (text.Length == 0)
                     {
@@ -716,145 +669,145 @@ namespace Cave
             throw new MissingMethodException(string.Format("Could not find a way to parse or create {0} from string!", ValueType));
         }
 
-		/// <summary>
-		/// Retrieves a string for the specified value. The string may be parsed back to a value using <see cref="ParseValue(string, string, CultureInfo)" />
-		/// </summary>
-		/// <param name="value">The value.</param>
-		/// <param name="stringMarker">The string marker.</param>
-		/// <param name="jsonMode">if set to <c>true</c> [json mode].</param>
-		/// <param name="culture">The culture.</param>
-		/// <returns></returns>
-		/// <exception cref="NotSupportedException"></exception>
-		/// <exception cref="InvalidDataException">
-		/// </exception>
-		public string GetString(object value, string stringMarker, bool jsonMode, CultureInfo culture = null)
-		{
-			if (culture == null)
+        /// <summary>
+        /// Retrieves a string for the specified value. The string may be parsed back to a value using <see cref="ParseValue(string, string, CultureInfo)" />
+        /// </summary>
+        /// <param name="value">The value.</param>
+        /// <param name="stringMarker">The string marker.</param>
+        /// <param name="jsonMode">if set to <c>true</c> [json mode].</param>
+        /// <param name="culture">The culture.</param>
+        /// <returns></returns>
+        /// <exception cref="NotSupportedException"></exception>
+        /// <exception cref="InvalidDataException">
+        /// </exception>
+        public string GetString(object value, string stringMarker, bool jsonMode, CultureInfo culture = null)
+        {
+            if (culture == null)
             {
                 culture = CultureInfo.InvariantCulture;
             }
 
             if (value == null)
-			{
-				if (stringMarker == null)
+            {
+                if (stringMarker == null)
                 {
                     return null;
                 }
 
                 return "null";
-			}
-			switch (DataType)
-			{
-				case DataType.DateTime:
-				{
-					DateTime dt = (DateTime)value;
-					switch (DateTimeKind)
-					{
-						case DateTimeKind.Utc: dt = dt.ToUniversalTime(); break;
-						case DateTimeKind.Local: dt = dt.ToLocalTime(); break;
-					}
-					if (jsonMode)
-					{
-						//javascript uses time/date in milliseconds. var timeInMsec = new Date() - pastDate;
-						return (dt - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind)).TotalMilliseconds.ToString(culture);
-					}
-					switch (DateTimeType)
-					{
-						default: throw new NotSupportedException(string.Format("DateTimeType {0} is not supported", DateTimeType));
-						case DateTimeType.BigIntHumanReadable:
-							if (dt <= DateTime.MinValue)
+            }
+            switch (DataType)
+            {
+                case DataType.DateTime:
+                {
+                    DateTime dt = (DateTime)value;
+                    switch (DateTimeKind)
+                    {
+                        case DateTimeKind.Utc: dt = dt.ToUniversalTime(); break;
+                        case DateTimeKind.Local: dt = dt.ToLocalTime(); break;
+                    }
+                    if (jsonMode)
+                    {
+                        //javascript uses time/date in milliseconds. var timeInMsec = new Date() - pastDate;
+                        return (dt - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind)).TotalMilliseconds.ToString(culture);
+                    }
+                    switch (DateTimeType)
+                    {
+                        default: throw new NotSupportedException(string.Format("DateTimeType {0} is not supported", DateTimeType));
+                        case DateTimeType.BigIntHumanReadable:
+                            if (dt <= DateTime.MinValue)
                             {
                                 return "0";
                             }
 
                             return dt.ToString(CaveSystemData.BigIntDateTimeFormat, culture).TrimStart('0');
-						case DateTimeType.Native: return dt.ToString(StringExtensions.InterOpDateTimeFormat).Box(stringMarker);
-						case DateTimeType.BigIntTicks: return dt.Ticks.ToString();
-						case DateTimeType.DecimalSeconds: return (dt.Ticks / (decimal)TimeSpan.TicksPerSecond).ToString(culture);
-					}
-				}
-				case DataType.Binary:
-				{
-					byte[] data = (byte[])value;
-					if (data.Length == 0)
+                        case DateTimeType.Native: return dt.ToString(StringExtensions.InterOpDateTimeFormat).Box(stringMarker);
+                        case DateTimeType.BigIntTicks: return dt.Ticks.ToString();
+                        case DateTimeType.DecimalSeconds: return (dt.Ticks / (decimal)TimeSpan.TicksPerSecond).ToString(culture);
+                    }
+                }
+                case DataType.Binary:
+                {
+                    byte[] data = (byte[])value;
+                    if (data.Length == 0)
                     {
                         return "\"\"";
                     }
 
                     return Base64.NoPadding.Encode(data).Box(stringMarker);
-				}
-				case DataType.Bool:
-				{
-					return ((bool)value) ? "true" : "false";
-				}
-				case DataType.TimeSpan:
-				{
-					//json does not support 64bit integers, so we transmit it as string
-					if (jsonMode)
+                }
+                case DataType.Bool:
+                {
+                    return ((bool)value) ? "true" : "false";
+                }
+                case DataType.TimeSpan:
+                {
+                    //json does not support 64bit integers, so we transmit it as string
+                    if (jsonMode)
                     {
                         return ((TimeSpan)value).TotalMilliseconds.ToString(culture);
                     }
 
                     return ((TimeSpan)value).Ticks.ToString();
-				}
-				case DataType.Single:
-				{
-					float f = ((float)value);
-					if (float.IsNaN(f) || float.IsInfinity(f))
+                }
+                case DataType.Single:
+                {
+                    float f = ((float)value);
+                    if (float.IsNaN(f) || float.IsInfinity(f))
                     {
                         throw new InvalidDataException(string.Format("Cannot serialize float with value {0}!", f));
                     }
 
                     return f.ToString(culture);
-				}
-				case DataType.Double:
-				{
-					double d = ((double)value);
-					if (double.IsNaN(d) || double.IsInfinity(d))
+                }
+                case DataType.Double:
+                {
+                    double d = ((double)value);
+                    if (double.IsNaN(d) || double.IsInfinity(d))
                     {
                         throw new InvalidDataException(string.Format("Cannot serialize double with value {0}!", d));
                     }
 
                     return d.ToString(culture);
-				}
-				case DataType.Decimal: return ((decimal)value).ToString(culture);
-				case DataType.Int8: return ((sbyte)value).ToString(culture);
-				case DataType.Int16: return ((short)value).ToString(culture);
-				case DataType.Int32: return ((int)value).ToString(culture);
-				case DataType.Int64:
-				{
-					//json does not support 64bit integers, so we transmit it as string
-					if (jsonMode)
+                }
+                case DataType.Decimal: return ((decimal)value).ToString(culture);
+                case DataType.Int8: return ((sbyte)value).ToString(culture);
+                case DataType.Int16: return ((short)value).ToString(culture);
+                case DataType.Int32: return ((int)value).ToString(culture);
+                case DataType.Int64:
+                {
+                    //json does not support 64bit integers, so we transmit it as string
+                    if (jsonMode)
                     {
                         return ((long)value).ToString(culture).Box(stringMarker);
                     }
 
                     return ((long)value).ToString(culture);
-				}
-				case DataType.UInt8: return ((byte)value).ToString(culture);
-				case DataType.UInt16: return ((ushort)value).ToString(culture);
-				case DataType.UInt32: return ((uint)value).ToString(culture);
-				case DataType.UInt64:
-				{
-					//json does not support 64bit integers, so we transmit it as string
-					if (jsonMode)
+                }
+                case DataType.UInt8: return ((byte)value).ToString(culture);
+                case DataType.UInt16: return ((ushort)value).ToString(culture);
+                case DataType.UInt32: return ((uint)value).ToString(culture);
+                case DataType.UInt64:
+                {
+                    //json does not support 64bit integers, so we transmit it as string
+                    if (jsonMode)
                     {
                         return ((long)value).ToString(culture).Box(stringMarker);
                     }
 
                     return ((ulong)value).ToString(culture);
-				}
-				case DataType.Enum: return value.ToString().Box(stringMarker);
-				case DataType.Char: return value.ToString().Box(stringMarker);
+                }
+                case DataType.Enum: return value.ToString().Box(stringMarker);
+                case DataType.Char: return value.ToString().Box(stringMarker);
 
-				case DataType.String:
-				case DataType.User:
-				default: break;
-			}
+                case DataType.String:
+                case DataType.User:
+                default: break;
+            }
 
-			string s = (value is IConvertible) ? ((IConvertible)value).ToString(culture) : value.ToString();
-			return s.Escape().Box(stringMarker);
-		}
+            string s = (value is IConvertible) ? ((IConvertible)value).ToString(culture) : value.ToString();
+            return s.Escape().Box(stringMarker);
+        }
 
         /// <summary>
         /// Obtains an enum value from the specified long value
@@ -904,8 +857,8 @@ namespace Cave
                     case DataType.Char: return "char";
 
                     default:
-                    //case DataType.User: 
-                    //case DataType.Enum:
+                        //case DataType.User: 
+                        //case DataType.Enum:
                         if (ValueType != null)
                         {
                             return ValueType.Name;
@@ -944,7 +897,7 @@ namespace Cave
             }
         }
 
-        
+
 
         /// <summary>
         /// Obtains the hashcode for the instance
@@ -969,7 +922,7 @@ namespace Cave
             //check name
             if ((other.Name != Name) && (other.Name != NameAtDatabase) && (other.NameAtDatabase != Name))
             {
-                var splitters = " ,;".ToCharArray();
+                char[] splitters = " ,;".ToCharArray();
                 if (true == AlternativeNames?.Split(splitters, StringSplitOptions.RemoveEmptyEntries).Any(n => n == other.Name || n == other.NameAtDatabase))
                 {
                     return true;

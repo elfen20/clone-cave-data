@@ -1,50 +1,3 @@
-#region CopyRight 2018
-/*
-    Copyright (c) 2003-2018 Andreas Rohleder (andreas@rohleder.cc)
-    All rights reserved
-*/
-#endregion
-#region License LGPL-3
-/*
-    This program/library/sourcecode is free software; you can redistribute it
-    and/or modify it under the terms of the GNU Lesser General Public License
-    version 3 as published by the Free Software Foundation subsequent called
-    the License.
-
-    You may not use this program/library/sourcecode except in compliance
-    with the License. The License is included in the LICENSE file
-    found at the installation directory or the distribution package.
-
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-#endregion
-#region Authors & Contributors
-/*
-   Author:
-     Andreas Rohleder <andreas@rohleder.cc>
-
-   Contributors:
- */
-#endregion Authors & Contributors
-
-using Cave.Text;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -71,7 +24,7 @@ namespace Cave.Data
                 throw new ArgumentNullException("fieldInfo");
             }
 
-            foreach (var attribute in fieldInfo.GetCustomAttributes(true))
+            foreach (object attribute in fieldInfo.GetCustomAttributes(true))
             {
                 FieldAttribute fieldAttribute = attribute as FieldAttribute;
                 if (fieldAttribute != null)
@@ -101,7 +54,7 @@ namespace Cave.Data
                 throw new ArgumentNullException("fieldInfo");
             }
 
-            foreach (var attribute in fieldInfo.GetCustomAttributes(true))
+            foreach (object attribute in fieldInfo.GetCustomAttributes(true))
             {
                 FieldAttribute fieldAttribute = attribute as FieldAttribute;
                 if (fieldAttribute != null)
@@ -124,7 +77,7 @@ namespace Cave.Data
                 throw new ArgumentNullException("fieldInfo");
             }
 
-            foreach (var attribute in fieldInfo.GetCustomAttributes(true))
+            foreach (object attribute in fieldInfo.GetCustomAttributes(true))
             {
                 FieldAttribute fieldAttribute = attribute as FieldAttribute;
                 if (fieldAttribute != null)
@@ -148,7 +101,7 @@ namespace Cave.Data
                 throw new ArgumentNullException("fieldInfo");
             }
 
-            foreach (var attribute in fieldInfo.GetCustomAttributes(false))
+            foreach (object attribute in fieldInfo.GetCustomAttributes(false))
             {
                 DescriptionAttribute descriptionAttribute = attribute as DescriptionAttribute;
                 if (descriptionAttribute != null)
@@ -182,7 +135,7 @@ namespace Cave.Data
                 string name = Enum.GetName(value.GetType(), value);
                 return GetDescription(type.GetField(name));
             }
-            foreach (var attribute in type.GetCustomAttributes(false))
+            foreach (object attribute in type.GetCustomAttributes(false))
             {
                 DescriptionAttribute descriptionAttribute = attribute as DescriptionAttribute;
                 if (descriptionAttribute != null)
@@ -241,14 +194,14 @@ namespace Cave.Data
 #if NET45 || NET46 || NET47 || NETSTANDARD20
 				fieldType = fieldType.GenericTypeArguments[0];
 #elif NET20 || NET35 || NET40
-				fieldType = fieldType.GetGenericArguments()[0];
+                fieldType = fieldType.GetGenericArguments()[0];
 #else
 #error No code defined for the current framework or NETXX version define missing!
 #endif
             }
             if (fieldType == typeof(bool))
             {
-                switch(value.ToString().ToLower())
+                switch (value.ToString().ToLower())
                 {
                     case "true":
                     case "on":
@@ -305,14 +258,12 @@ namespace Cave.Data
 
             if (fieldType == typeof(DateTime))
             {
-                long ticks;
-                if (long.TryParse(str, out ticks))
+                if (long.TryParse(str, out long ticks))
                 {
                     return new DateTime(ticks, DateTimeKind.Unspecified);
                 }
 
-                DateTime dt;
-                if (DateTimeParser.TryParseDateTime(str, out dt))
+                if (DateTimeParser.TryParseDateTime(str, out DateTime dt))
                 {
                     return dt;
                 }
@@ -325,11 +276,11 @@ namespace Cave.Data
                     {
                         return TimeSpan.Parse(str);
                     }
-					if (str.EndsWith("ms"))
-					{
-						return new TimeSpan((long)Math.Round(double.Parse(str.SubstringEnd(1)) * TimeSpan.TicksPerMillisecond));
-					}
-					if (str.EndsWith("s"))
+                    if (str.EndsWith("ms"))
+                    {
+                        return new TimeSpan((long)Math.Round(double.Parse(str.SubstringEnd(1)) * TimeSpan.TicksPerMillisecond));
+                    }
+                    if (str.EndsWith("s"))
                     {
                         return new TimeSpan((long)Math.Round(double.Parse(str.SubstringEnd(1)) * TimeSpan.TicksPerSecond));
                     }

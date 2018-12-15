@@ -1,64 +1,17 @@
-#region CopyRight 2018
-/*
-    Copyright (c) 2005-2018 Andreas Rohleder (andreas@rohleder.cc)
-    All rights reserved
-*/
-#endregion
-#region License LGPL-3
-/*
-    This program/library/sourcecode is free software; you can redistribute it
-    and/or modify it under the terms of the GNU Lesser General Public License
-    version 3 as published by the Free Software Foundation subsequent called
-    the License.
-
-    You may not use this program/library/sourcecode except in compliance
-    with the License. The License is included in the LICENSE file
-    found at the installation directory or the distribution package.
-
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-#endregion License
-#region Authors & Contributors
-/*
-   Author:
-     Andreas Rohleder <andreas@rohleder.cc>
-
-   Contributors:
- */
-#endregion Authors & Contributors
-
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Reflection;
 using Cave.Data.Sql;
-using Cave.Text;
 
 namespace Cave.Data.Postgres
 {
-	/// <summary>
-	/// Provides a postgre sql storage implementation.
-	/// Attention: <see cref="float"/> variables stored at the mysqldatabase loose their last precision digit (a value of 1 may differ by &lt;= 0.000001f)
-	/// </summary>
-	public sealed class PgSqlStorage : SqlStorage
+    /// <summary>
+    /// Provides a postgre sql storage implementation.
+    /// Attention: <see cref="float"/> variables stored at the mysqldatabase loose their last precision digit (a value of 1 may differ by &lt;= 0.000001f)
+    /// </summary>
+    public sealed class PgSqlStorage : SqlStorage
     {
         #region protected overrides
 
@@ -70,11 +23,11 @@ namespace Cave.Data.Postgres
         public override FieldProperties GetDatabaseFieldProperties(FieldProperties field)
         {
             if (field == null)
-			{
-				throw new ArgumentNullException("LocalField");
-			}
+            {
+                throw new ArgumentNullException("LocalField");
+            }
 
-			switch (field.DataType)
+            switch (field.DataType)
             {
                 case DataType.UInt8: return new FieldProperties(field, DataType.Int16, GetObjectName(field.Name));
                 case DataType.UInt16: return new FieldProperties(field, DataType.Int32, GetObjectName(field.Name));
@@ -90,7 +43,7 @@ namespace Cave.Data.Postgres
         /// <returns></returns>
         protected override DataType GetLocalDataType(Type fieldType, uint fieldSize)
         {
-            var dataType = RowLayout.DataTypeFromType(fieldType);
+            DataType dataType = RowLayout.DataTypeFromType(fieldType);
             switch (dataType)
             {
                 case DataType.UInt8: return DataType.Int16;
@@ -136,12 +89,12 @@ namespace Cave.Data.Postgres
             {
                 command.CommandText = "SET CLIENT_ENCODING TO 'UTF8'; SET NAMES 'UTF8';";
                 if (LogVerboseMessages)
-				{
-					LogQuery(command);
-				}
-				//return value is not globally defined. some implementations use it correctly, some dont use it, some return positive or negative result enum values
-				//so we ignore this: int affectedRows = 
-				command.ExecuteNonQuery();
+                {
+                    LogQuery(command);
+                }
+                //return value is not globally defined. some implementations use it correctly, some dont use it, some return positive or negative result enum values
+                //so we ignore this: int affectedRows = 
+                command.ExecuteNonQuery();
             }
             return connection;
         }
@@ -158,14 +111,14 @@ namespace Cave.Data.Postgres
         /// </summary>
         public readonly Version Version;
 
-		/// <summary>Creates a new mysql storage instance</summary>
-		/// <param name="connectionString">the connection details</param>
-		/// <param name="options">The options.</param>
-		public PgSqlStorage(ConnectionString connectionString, DbConnectionOptions options)
+        /// <summary>Creates a new mysql storage instance</summary>
+        /// <param name="connectionString">the connection details</param>
+        /// <param name="options">The options.</param>
+        public PgSqlStorage(ConnectionString connectionString, DbConnectionOptions options)
             : base(connectionString, options)
         {
             VersionString = (string)QueryValue(null, null, "SELECT VERSION()");
-            string[]parts = VersionString.Split(' ');
+            string[] parts = VersionString.Split(' ');
             Version = new Version(parts[1]);
             Trace.TraceInformation(string.Format("pgsql version {0}", Version));
         }
@@ -188,10 +141,10 @@ namespace Cave.Data.Postgres
         public override string FQTN(string database, string table)
         {
             if (table.IndexOf('"') > -1)
-			{
-				throw new ArgumentException("Tablename is invalid!");
-			}
-			return "\"" + table + "\"";
+            {
+                throw new ArgumentException("Tablename is invalid!");
+            }
+            return "\"" + table + "\"";
         }
 
         /// <summary>Gets the postgresql name of the database/table/field.</summary>
@@ -211,7 +164,7 @@ namespace Cave.Data.Postgres
             get
             {
                 List<string> result = new List<string>();
-                var rows = Query(null, null, "SCHEMATA", "SELECT datname FROM pg_database;");
+                List<Row> rows = Query(null, null, "SCHEMATA", "SELECT datname FROM pg_database;");
                 foreach (Row row in rows)
                 {
                     result.Add((string)row.GetValue(0));
@@ -239,11 +192,11 @@ namespace Cave.Data.Postgres
         public override IDatabase GetDatabase(string database)
         {
             if (!HasDatabase(database))
-			{
-				throw new ArgumentException(string.Format("Database does not exist!"));
-			}
+            {
+                throw new ArgumentException(string.Format("Database does not exist!"));
+            }
 
-			return new PgSqlDatabase(this, database);
+            return new PgSqlDatabase(this, database);
         }
 
         /// <summary>
@@ -278,7 +231,7 @@ namespace Cave.Data.Postgres
         /// <summary>
         /// Obtains whether the db connections can change the database with the Sql92 "USE Database" command.
         /// </summary>
-        protected override bool DBConnectionCanChangeDataBase { get { return true; } }
+        protected override bool DBConnectionCanChangeDataBase => true;
 
         /// <summary>
         /// Initializes the needed interop assembly and type
@@ -296,26 +249,17 @@ namespace Cave.Data.Postgres
         /// <summary>
         /// true
         /// </summary>
-        public override bool SupportsNamedParameters
-        {
-            get { return true; }
-        }
+        public override bool SupportsNamedParameters => true;
 
         /// <summary>
         /// Obtains wether the connection supports select * groupby
         /// </summary>
-        public override bool SupportsAllFieldsGroupBy
-        {
-            get { return true; }
-        }
+        public override bool SupportsAllFieldsGroupBy => true;
 
         /// <summary>
         /// Obtains the parameter prefix char (?)
         /// </summary>
-        public override string ParameterPrefix
-        {
-            get { return "@_"; }
-        }
+        public override string ParameterPrefix => "@_";
 
         /// <summary>
         /// Gets a value indicating whether the storage engine supports native transactions with faster execution than single commands.
@@ -329,17 +273,17 @@ namespace Cave.Data.Postgres
         /// <summary>
         /// Obtains the maximum <see cref="float"/> precision at the value of 1.0f of this storage engine
         /// </summary>
-        public override float FloatPrecision { get { return 0.00001f; } }
+        public override float FloatPrecision => 0.00001f;
 
         /// <summary>
         /// Obtains the maximum <see cref="DateTime"/> value precision of this storage engine
         /// </summary>
-        public override TimeSpan DateTimePrecision { get { return TimeSpan.FromSeconds(1); } }
+        public override TimeSpan DateTimePrecision => TimeSpan.FromSeconds(1);
 
         /// <summary>
         /// Obtains the maximum <see cref="TimeSpan"/> value precision of this storage engine
         /// </summary>
-        public override TimeSpan TimeSpanPrecision { get { return TimeSpan.FromMilliseconds(1); } }
+        public override TimeSpan TimeSpanPrecision => TimeSpan.FromMilliseconds(1);
 
         /// <summary>
         /// Obtains the maximum <see cref="decimal"/> value precision of this storage engine
@@ -347,10 +291,10 @@ namespace Cave.Data.Postgres
         public override decimal GetDecimalPrecision(float count)
         {
             if (count == 0)
-			{
-				count = 65.30f;
-			}
-			return base.GetDecimalPrecision(count);
+            {
+                count = 65.30f;
+            }
+            return base.GetDecimalPrecision(count);
         }
         #endregion
     }

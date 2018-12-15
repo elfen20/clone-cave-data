@@ -1,51 +1,3 @@
-#region CopyRight 2018
-/*
-    Copyright (c) 2005-2018 Andreas Rohleder (andreas@rohleder.cc)
-    All rights reserved
-*/
-#endregion
-#region License LGPL-3
-/*
-    This program/library/sourcecode is free software; you can redistribute it
-    and/or modify it under the terms of the GNU Lesser General Public License
-    version 3 as published by the Free Software Foundation subsequent called
-    the License.
-
-    You may not use this program/library/sourcecode except in compliance
-    with the License. The License is included in the LICENSE file
-    found at the installation directory or the distribution package.
-
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-#endregion License
-#region Authors & Contributors
-/*
-   Author:
-     Andreas Rohleder <andreas@rohleder.cc>
-
-   Contributors:
- */
-#endregion Authors & Contributors
-
-using Cave.IO;
-using Cave.Text;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -54,6 +6,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Cave.IO;
 
 namespace Cave.Data
 {
@@ -85,8 +38,8 @@ namespace Cave.Data
             }
             for (int i = 0; i < expected.FieldCount; i++)
             {
-                var expectedField = expected.GetProperties(i);
-                var currentField = current.GetProperties(i);
+                FieldProperties expectedField = expected.GetProperties(i);
+                FieldProperties currentField = current.GetProperties(i);
                 if (fieldPropertiesConversion != null)
                 {
                     expectedField = fieldPropertiesConversion(expectedField);
@@ -118,10 +71,10 @@ namespace Cave.Data
             }
             return new RowLayout(name, fieldProperties.ToArray());
         }
-        
+
         /// <summary>Gets the name of the log source.</summary>
-            /// <value>The name of the log source.</value>
-        public string LogSourceName { get { return "RowLayout"; } }
+        /// <value>The name of the log source.</value>
+        public string LogSourceName => "RowLayout";
 
         /// <summary>Creates an alien row layout without using any field properies.</summary>
         /// <param name="type">Type to parse fields from.</param>
@@ -177,7 +130,7 @@ namespace Cave.Data
         {
             return new RowLayout(name, fields);
         }
-        
+
         /// <summary>Creates a RowLayout instance for the specified struct</summary>
         /// <param name="type">The type to build the rowlayout for</param>
         /// <param name="excludedFields">The excluded fields.</param>
@@ -376,7 +329,7 @@ namespace Cave.Data
         /// <summary>
         /// Obtains whether the layout was created from a typed struct or not
         /// </summary>
-        public bool IsTyped { get { return RowType != null; } }
+        public bool IsTyped => RowType != null;
 
         /// <summary>The row type</summary>
         public readonly Type RowType;
@@ -495,7 +448,7 @@ namespace Cave.Data
         /// </summary>
         /// <param name="item">The struct to read the ID from</param>
         /// <returns>Returns the ID of the dataset</returns>
-        public long GetID<T>(T item) where T: struct
+        public long GetID<T>(T item) where T : struct
         {
             if (IDFieldIndex < 0)
             {
@@ -673,7 +626,7 @@ namespace Cave.Data
             }
             for (int i = 0; i < FieldCount; i++)
             {
-                var names = m_Properties[i].AlternativeNames?.Split(" ,;".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                string[] names = m_Properties[i].AlternativeNames?.Split(" ,;".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
                 if (names != null && names.Any(n => n == field))
                 {
                     return i;
@@ -778,7 +731,7 @@ namespace Cave.Data
 
         /// <summary>Gets the fields.</summary>
         /// <value>The fields.</value>
-        public ICollection<FieldProperties> Fields { get { return new ReadOnlyCollection<FieldProperties>(m_Properties); } }
+        public ICollection<FieldProperties> Fields => new ReadOnlyCollection<FieldProperties>(m_Properties);
 
         /// <summary>Returns a <see cref="string" /> that represents this instance.</summary>
         /// <returns>A <see cref="string" /> that represents this instance.</returns>

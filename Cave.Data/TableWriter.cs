@@ -1,49 +1,3 @@
-#region CopyRight 2018
-/*
-    Copyright (c) 2005-2018 Andreas Rohleder (andreas@rohleder.cc)
-    All rights reserved
-*/
-#endregion
-#region License LGPL-3
-/*
-    This program/library/sourcecode is free software; you can redistribute it
-    and/or modify it under the terms of the GNU Lesser General Public License
-    version 3 as published by the Free Software Foundation subsequent called
-    the License.
-
-    You may not use this program/library/sourcecode except in compliance
-    with the License. The License is included in the LICENSE file
-    found at the installation directory or the distribution package.
-
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-#endregion License
-#region Authors & Contributors
-/*
-   Author:
-     Andreas Rohleder <andreas@rohleder.cc>
-
-   Contributors:
- */
-#endregion Authors & Contributors
-
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -59,14 +13,14 @@ namespace Cave.Data
     {
         /// <summary>Gets the name of the log source.</summary>
         /// <value>The name of the log source.</value>
-        public string LogSourceName { get { return "TableWriter <" + Table.Name + ">"; } }
+        public string LogSourceName => "TableWriter <" + Table.Name + ">";
 
         /// <summary>logs verbose messages</summary>
-        public bool LogVerboseMessages { get; set; } 
+        public bool LogVerboseMessages { get; set; }
 
         bool m_Flushing;
         bool m_Disposed;
-        Task m_Task;        
+        Task m_Task;
         bool m_Exit;
         long m_WrittenCount;
         long? m_LastFlush;
@@ -85,7 +39,7 @@ namespace Cave.Data
         /// <summary>
         /// Obtains the RowLayout of the table
         /// </summary>
-        public RowLayout Layout { get { return Table.Layout; } }
+        public RowLayout Layout => Table.Layout;
 
         /// <summary>
         /// Gets / sets the cache flush treshold. This is the number of datasets the CachedTable will store before triggering a threshold violation and causing it to be flushed to the database.
@@ -109,11 +63,11 @@ namespace Cave.Data
         /// Gets / sets the number of transactions flushed per round (values &lt;= 0 will use the database default transaction count)
         /// </summary>
         public int FlushCount { get; set; } = 1000;
-    
+
         /// <summary>
         /// Obtains the (local) date time of the last flush
         /// </summary>
-        public DateTime LastFlush { get { return new DateTime((long)m_LastFlush); } }
+        public DateTime LastFlush => new DateTime((long)m_LastFlush);
 
         void UncatchedFlush()
         {
@@ -268,7 +222,7 @@ namespace Cave.Data
                 m_Exit = true;
                 Flush();
                 Dispose();
-            }           
+            }
         }
 
         /// <summary>
@@ -292,7 +246,7 @@ namespace Cave.Data
             TransactionLog = log;
             TransactionFlags = TransactionFlags.AllowRequeue;
             m_LastFlush = DateTime.Now.Ticks;
-            m_Task = Task.Factory.StartNew(()=>
+            m_Task = Task.Factory.StartNew(() =>
             {
                 try { Worker(); }
                 catch (Exception ex)
@@ -306,12 +260,12 @@ namespace Cave.Data
         /// <summary>
         /// Obtains the number of items queued for writing
         /// </summary>
-        public int QueueCount { get { return TransactionLog.Count; } }
+        public int QueueCount => TransactionLog.Count;
 
         /// <summary>
         /// Obtains the number of items written
         /// </summary>
-        public long WrittenCount { get { return Interlocked.Read(ref m_WrittenCount); } }
+        public long WrittenCount => Interlocked.Read(ref m_WrittenCount);
 
         /// <summary>Gets the error.</summary>
         /// <value>The error.</value>
@@ -501,7 +455,7 @@ namespace Cave.Data
         /// <summary>Finalizes an instance of the <see cref="TableWriter"/> class.</summary>
         ~TableWriter()
         {
-           Dispose(false);
+            Dispose(false);
         }
 
         /// <summary>

@@ -1,50 +1,3 @@
-#region CopyRight 2018
-/*
-    Copyright (c) 2005-2018 Andreas Rohleder (andreas@rohleder.cc)
-    All rights reserved
-*/
-#endregion
-#region License LGPL-3
-/*
-    This program/library/sourcecode is free software; you can redistribute it
-    and/or modify it under the terms of the GNU Lesser General Public License
-    version 3 as published by the Free Software Foundation subsequent called
-    the License.
-
-    You may not use this program/library/sourcecode except in compliance
-    with the License. The License is included in the LICENSE file
-    found at the installation directory or the distribution package.
-
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-#endregion License
-#region Authors & Contributors
-/*
-   Author:
-     Andreas Rohleder <andreas@rohleder.cc>
-
-   Contributors:
- */
-#endregion Authors & Contributors
-
-using Cave.IO;
 using System.Collections.Generic;
 
 namespace Cave.Data
@@ -132,11 +85,11 @@ namespace Cave.Data
         /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
         void Delete(IEnumerable<long> ids, bool writeTransaction);
 
-		/// <summary>Removes all rows from the table matching the specified search.</summary>
-		/// <param name="search">The Search used to identify rows for removal</param>
-		/// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
-		/// <returns>Returns the number of dataset deleted.</returns>
-		int TryDelete(Search search, bool writeTransaction);
+        /// <summary>Removes all rows from the table matching the specified search.</summary>
+        /// <param name="search">The Search used to identify rows for removal</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        /// <returns>Returns the number of dataset deleted.</returns>
+        int TryDelete(Search search, bool writeTransaction);
 
         /// <summary>
         /// Clears all rows of the table (this operation will not write anything to the transaction log).
@@ -149,7 +102,7 @@ namespace Cave.Data
     /// Provides an interface for tables stored at the memory
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public interface IMemoryTable<T> : ITable<T>, IMemoryTable where T: struct
+    public interface IMemoryTable<T> : ITable<T>, IMemoryTable where T : struct
     {
         /// <summary>
         /// Replaces the whole data at the table with the specified one without writing transactions

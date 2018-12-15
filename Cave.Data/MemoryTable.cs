@@ -1,58 +1,11 @@
-#region CopyRight 2018
-/*
-    Copyright (c) 2005-2018 Andreas Rohleder (andreas@rohleder.cc)
-    All rights reserved
-*/
-#endregion
-#region License LGPL-3
-/*
-    This program/library/sourcecode is free software; you can redistribute it
-    and/or modify it under the terms of the GNU Lesser General Public License
-    version 3 as published by the Free Software Foundation subsequent called
-    the License.
-
-    You may not use this program/library/sourcecode except in compliance
-    with the License. The License is included in the LICENSE file
-    found at the installation directory or the distribution package.
-
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-#endregion License
-#region Authors & Contributors
-/*
-   Author:
-     Andreas Rohleder <andreas@rohleder.cc>
-
-   Contributors:
- */
-#endregion Authors & Contributors
-
-using Cave.Collections.Generic;
-using Cave.Compression.Tar;
-using Cave.IO;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Cave.Collections.Generic;
+using Cave.Compression.Tar;
 
 namespace Cave.Data
 {
@@ -108,37 +61,56 @@ namespace Cave.Data
                         case ResultOptionMode.None: break;
 
                         case ResultOptionMode.Group:
-                            {
-                                int fieldIndex = layout.GetFieldIndex(option.Parameter);
-                                if (fieldIndex < 0)
+                        {
+                            int fieldIndex = layout.GetFieldIndex(option.Parameter);
+                            if (fieldIndex < 0)
                             {
                                 throw new ArgumentException(string.Format("Field '{0}' is not present!", resultOption.Parameter));
                             }
 
                             grouping.Add(fieldIndex);
-                            }
-                            break;
+                        }
+                        break;
 
                         case ResultOptionMode.SortAsc:
                         case ResultOptionMode.SortDesc:
-                            {
-                                int fieldIndex = layout.GetFieldIndex(option.Parameter);
-                                if (fieldIndex < 0)
+                        {
+                            int fieldIndex = layout.GetFieldIndex(option.Parameter);
+                            if (fieldIndex < 0)
                             {
                                 throw new ArgumentException(string.Format("Field '{0}' is not present!", option.Parameter));
                             }
 
                             if (fieldIndex == layout.IDFieldIndex)
+                            {
+                                sorting.Add(layout.GetFieldIndex(option.Parameter), option.Mode);
+                                if (sorting.Count == 1)
                                 {
-                                    sorting.Add(layout.GetFieldIndex(option.Parameter), option.Mode);
-                                    if (sorting.Count == 1)
-                                    {
-                                        sortedIDs = table.Keys;
-                                        if (option.Mode == ResultOptionMode.SortDesc)
+                                    sortedIDs = table.Keys;
+                                    if (option.Mode == ResultOptionMode.SortDesc)
                                     {
                                         sortedIDs = sortedIDs.Reverse();
                                     }
                                 }
+                                else
+                                {
+                                    sortedIDs = null;
+                                }
+                            }
+                            else
+                            {
+                                sorting.Add(layout.GetFieldIndex(option.Parameter), option.Mode);
+                                IFieldIndex index = indices?[fieldIndex];
+                                if (index != null)
+                                {
+                                    if (sorting.Count == 1)
+                                    {
+                                        sortedIDs = index.SortedIDs;
+                                        if (option.Mode == ResultOptionMode.SortDesc)
+                                        {
+                                            sortedIDs = sortedIDs.Reverse();
+                                        }
+                                    }
                                     else
                                     {
                                         sortedIDs = null;
@@ -146,33 +118,14 @@ namespace Cave.Data
                                 }
                                 else
                                 {
-                                    sorting.Add(layout.GetFieldIndex(option.Parameter), option.Mode);
-                                    var index = indices?[fieldIndex];
-                                    if (index != null)
-                                    {
-                                        if (sorting.Count == 1)
-                                        {
-                                            sortedIDs = index.SortedIDs;
-                                            if (option.Mode == ResultOptionMode.SortDesc)
-                                        {
-                                            sortedIDs = sortedIDs.Reverse();
-                                        }
-                                    }
-                                        else
-                                        {
-                                            sortedIDs = null;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        sortedIDs = null;
+                                    sortedIDs = null;
 #if DEBUG
                                         Debug.WriteLine(string.Format("Sorting of <yellow>{0}<default> requires slow result sort. Think about adding an index to field <yellow>{1}<default>!", resultOption, layout.GetProperties(fieldIndex)));
 #endif
-                                    }
                                 }
                             }
-                            break;
+                        }
+                        break;
 
                         case ResultOptionMode.Limit:
                             if (limit >= 0)
@@ -270,7 +223,7 @@ namespace Cave.Data
             //no sort
             else
             {
-                sorted = result.AsList(); 
+                sorted = result.AsList();
             }
 
             if (offset > -1 || limit > -1)
@@ -332,7 +285,7 @@ namespace Cave.Data
         public MemoryTable(RowLayout layout)
             : this(MemoryDatabase.Default, layout)
         {
-		}
+        }
 
         /// <summary>Creates a new empty MemoryTable for the specified database with the specified name</summary>
         /// <param name="database">The database the</param>
@@ -359,7 +312,7 @@ namespace Cave.Data
         /// </remarks>
         public bool IsReadonly
         {
-            get { return isReadonly; }
+            get => isReadonly;
             set
             {
                 if (isReadonly)
@@ -401,7 +354,7 @@ namespace Cave.Data
                 long rowCount = table.RowCount;
                 while (true)
                 {
-                    var rows = table.GetRows(search & Search.FieldGreater(table.Layout.IDField.Name, startID), ResultOption.SortAscending("ID") + ResultOption.Limit(CaveSystemData.TransactionRowCount));
+                    List<Row> rows = table.GetRows(search & Search.FieldGreater(table.Layout.IDField.Name, startID), ResultOption.SortAscending("ID") + ResultOption.Limit(CaveSystemData.TransactionRowCount));
                     if (rows.Count == 0)
                     {
                         break;
@@ -468,7 +421,7 @@ namespace Cave.Data
         public override Row GetRowAt(int index)
         {
             long id = m_Items.Keys.ElementAt(index);
-			if (Database.Storage.LogVerboseMessages)
+            if (Database.Storage.LogVerboseMessages)
             {
                 Trace.TraceInformation("IndexOf {0} is ID {1} at {2}", index, id, this);
             }
@@ -608,7 +561,7 @@ namespace Cave.Data
             }
 
             long id = Layout.GetID(row);
-			if (Database.Storage.LogVerboseMessages)
+            if (Database.Storage.LogVerboseMessages)
             {
                 Trace.TraceInformation("Insert {0} ID {1} at {2}", row, id, this);
             }
@@ -650,7 +603,7 @@ namespace Cave.Data
 #endif
                 }
             }
-			IncreaseSequenceNumber();
+            IncreaseSequenceNumber();
             return id;
         }
 
@@ -701,7 +654,7 @@ namespace Cave.Data
             }
 
             long id = Layout.GetID(row);
-			if (Database.Storage.LogVerboseMessages)
+            if (Database.Storage.LogVerboseMessages)
             {
                 Trace.TraceInformation("Update {0} ID {1} at {2}", row, id, this);
             }
@@ -740,8 +693,8 @@ namespace Cave.Data
 #endif
                 }
             }
-			IncreaseSequenceNumber();
-		}
+            IncreaseSequenceNumber();
+        }
 
         /// <summary>
         /// Updates rows at the table. The rows must exist already!
@@ -750,7 +703,7 @@ namespace Cave.Data
         /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/></param>
         /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
         public void Update(IEnumerable<Row> rows, bool writeTransaction)
-        { 
+        {
             if (rows == null)
             {
                 throw new ArgumentNullException("Rows");
@@ -828,8 +781,8 @@ namespace Cave.Data
             {
                 m_TransactionLog?.AddDeleted(id);
             }
-			IncreaseSequenceNumber();
-		}
+            IncreaseSequenceNumber();
+        }
 
         /// <summary>Removes a row from the table.</summary>
         /// <param name="ids">The ids.</param>
@@ -843,34 +796,34 @@ namespace Cave.Data
             }
         }
 
-		/// <summary>Removes all rows from the table matching the specified search.</summary>
-		/// <param name="search">The Search used to identify rows for removal</param>
-		/// <returns>Returns the number of dataset deleted.</returns>
-		public override int TryDelete(Search search)
+        /// <summary>Removes all rows from the table matching the specified search.</summary>
+        /// <param name="search">The Search used to identify rows for removal</param>
+        /// <returns>Returns the number of dataset deleted.</returns>
+        public override int TryDelete(Search search)
         {
             return TryDelete(search, m_TransactionLog != null);
         }
 
-		/// <summary>Removes all rows from the table matching the specified search.</summary>
-		/// <param name="search">The Search used to identify rows for removal</param>
-		/// <param name="writeTransaction">if set to <c>true</c> [write transaction].</param>
-		/// <returns>Returns the number of dataset deleted.</returns>
-		public int TryDelete(Search search, bool writeTransaction)
-		{
-			if (search == null)
+        /// <summary>Removes all rows from the table matching the specified search.</summary>
+        /// <param name="search">The Search used to identify rows for removal</param>
+        /// <param name="writeTransaction">if set to <c>true</c> [write transaction].</param>
+        /// <returns>Returns the number of dataset deleted.</returns>
+        public int TryDelete(Search search, bool writeTransaction)
+        {
+            if (search == null)
             {
                 search = Search.None;
             }
 
             IEnumerable<long> ids = search.Scan(null, Layout, m_Indices, m_Items);
-			int count = 0;
-			foreach (long id in ids)
-			{
-				Delete(id, writeTransaction);
-				count++;
-			}
-			return count;
-		}
+            int count = 0;
+            foreach (long id in ids)
+            {
+                Delete(id, writeTransaction);
+                count++;
+            }
+            return count;
+        }
 
         #endregion
 
@@ -909,8 +862,8 @@ namespace Cave.Data
 
             m_Items = new SortedDictionary<long, Row>();
             m_Indices = CreateIndex(Layout, m_MemoryTableOptions);
-			IncreaseSequenceNumber();
-		}
+            IncreaseSequenceNumber();
+        }
 
         #endregion
 
@@ -927,31 +880,19 @@ namespace Cave.Data
             return FindRows(Layout, m_Indices, m_Items, search, resultOption);
         }
 
-		#endregion
+        #endregion
 
-		#region Properties
+        #region Properties
 
-		/// <summary>
-		/// Obtains the RowCount
-		/// </summary>
-		public override long RowCount
-        {
-            get
-            {
-                return m_Items.Count;
-            }
-        }
+        /// <summary>
+        /// Obtains the RowCount
+        /// </summary>
+        public override long RowCount => m_Items.Count;
 
         /// <summary>
         /// Obtains all IDs
         /// </summary>
-        public override List<long> IDs
-        {
-            get
-            {
-                return m_Items.Keys.ToList();
-            }
-        }
+        public override List<long> IDs => m_Items.Keys.ToList();
 
         /// <summary>
         /// Gets/sets the transaction log used to store all changes. The user has to create it, dequeue the items and
@@ -959,14 +900,8 @@ namespace Cave.Data
         /// </summary>
         public TransactionLog TransactionLog
         {
-            get
-            {
-                return m_TransactionLog;
-            }
-            set
-            {
-                m_TransactionLog = value;
-            }
+            get => m_TransactionLog;
+            set => m_TransactionLog = value;
         }
 
         #endregion
@@ -1099,7 +1034,7 @@ namespace Cave.Data
         /// </remarks>
         public bool IsReadonly
         {
-            get { return isReadonly; }
+            get => isReadonly;
             set
             {
                 if (isReadonly)
@@ -1141,8 +1076,8 @@ namespace Cave.Data
                 long rowCount = table.RowCount;
                 while (true)
                 {
-                    var rows = table.GetRows(search & Search.FieldGreater(table.Layout.IDField.Name, startID), 
-						ResultOption.SortAscending(table.Layout.IDField.Name) + ResultOption.Limit(CaveSystemData.TransactionRowCount));
+                    List<Row> rows = table.GetRows(search & Search.FieldGreater(table.Layout.IDField.Name, startID),
+                        ResultOption.SortAscending(table.Layout.IDField.Name) + ResultOption.Limit(CaveSystemData.TransactionRowCount));
                     if (rows.Count == 0)
                     {
                         break;
@@ -1233,7 +1168,7 @@ namespace Cave.Data
             }
 
             long id = m_Items.Keys.ElementAt(index);
-			if (Database.Storage.LogVerboseMessages)
+            if (Database.Storage.LogVerboseMessages)
             {
                 Trace.TraceInformation("IndexOf {0} is ID {1} at {2}", index, id, this);
             }
@@ -1323,7 +1258,7 @@ namespace Cave.Data
         /// <returns>Returns the row</returns>
         public override T GetStructAt(int index)
         {
-			long id = m_Items.Keys.ElementAt(index);
+            long id = m_Items.Keys.ElementAt(index);
             return m_Items[id].GetStruct<T>(Layout);
         }
 
@@ -1492,7 +1427,7 @@ namespace Cave.Data
             }
 
             long id = Layout.GetID(row);
-			if (Database.Storage.LogVerboseMessages)
+            if (Database.Storage.LogVerboseMessages)
             {
                 Trace.TraceInformation("Insert {0} ID {1} at {2}", row, id, this);
             }
@@ -1534,8 +1469,8 @@ namespace Cave.Data
 #endif
                 }
             }
-			IncreaseSequenceNumber();
-			return id;
+            IncreaseSequenceNumber();
+            return id;
         }
 
         /// <summary>
@@ -1606,7 +1541,7 @@ namespace Cave.Data
             }
 
             long id = Layout.GetID(row);
-			if (Database.Storage.LogVerboseMessages)
+            if (Database.Storage.LogVerboseMessages)
             {
                 Trace.TraceInformation("Update {0} ID {1} at {2}", row, id, this);
             }
@@ -1645,8 +1580,8 @@ namespace Cave.Data
 #endif
                 }
             }
-			IncreaseSequenceNumber();
-		}
+            IncreaseSequenceNumber();
+        }
 
         /// <summary>
         /// Updates rows at the table. The rows must exist already!
@@ -1733,8 +1668,8 @@ namespace Cave.Data
             {
                 m_TransactionLog?.AddDeleted(id);
             }
-			IncreaseSequenceNumber();
-		}
+            IncreaseSequenceNumber();
+        }
 
         /// <summary>Removes a row from the table.</summary>
         /// <param name="ids">The ids.</param>
@@ -1772,13 +1707,13 @@ namespace Cave.Data
             }
 
             IEnumerable<long> ids = search.Scan(null, Layout, m_Indices, m_Items);
-			int count = 0;
+            int count = 0;
             foreach (long id in ids)
             {
                 Delete(id, writeTransaction);
-				count++;
+                count++;
             }
-			return count;
+            return count;
         }
 
         #endregion
@@ -1818,8 +1753,8 @@ namespace Cave.Data
 
             m_Items = new SortedDictionary<long, Row>();
             m_Indices = CreateIndex(Layout, m_MemoryTableOptions);
-			IncreaseSequenceNumber();
-		}
+            IncreaseSequenceNumber();
+        }
 
         #endregion
 
@@ -1843,24 +1778,12 @@ namespace Cave.Data
         /// <summary>
         /// Obtains the RowCount
         /// </summary>
-        public override long RowCount
-        {
-            get
-            {
-                return m_Items.Count;
-            }
-        }
+        public override long RowCount => m_Items.Count;
 
         /// <summary>
         /// Obtains all IDs
         /// </summary>
-        public override List<long> IDs
-        {
-            get
-            {
-                return m_Items.Keys.ToList();
-            }
-        }
+        public override List<long> IDs => m_Items.Keys.ToList();
 
         /// <summary>
         /// Gets/sets the transaction log used to store all changes. The user has to create it, dequeue the items and
@@ -1868,14 +1791,8 @@ namespace Cave.Data
         /// </summary>
         public TransactionLog TransactionLog
         {
-            get
-            {
-                return m_TransactionLog;
-            }
-            set
-            {
-                m_TransactionLog = value;
-            }
+            get => m_TransactionLog;
+            set => m_TransactionLog = value;
         }
 
         #endregion
