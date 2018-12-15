@@ -1,53 +1,5 @@
-#region CopyRight 2018
-/*
-    Copyright (c) 2005-2018 Andreas Rohleder (andreas@rohleder.cc)
-    All rights reserved
-*/
-#endregion
-#region License LGPL-3
-/*
-    This program/library/sourcecode is free software; you can redistribute it
-    and/or modify it under the terms of the GNU Lesser General Public License
-    version 3 as published by the Free Software Foundation subsequent called
-    the License.
-
-    You may not use this program/library/sourcecode except in compliance
-    with the License. The License is included in the LICENSE file
-    found at the installation directory or the distribution package.
-
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-#endregion License
-#region Authors & Contributors
-/*
-   Author:
-     Andreas Rohleder <andreas@rohleder.cc>
-
-   Contributors:
- */
-#endregion Authors & Contributors
-
-using Cave.Collections.Generic;
 using System;
 using System.Collections.Generic;
-using System.IO;
 
 namespace Cave.Data
 {
@@ -73,12 +25,12 @@ namespace Cave.Data
         /// <summary>
         /// Obtains the current cache generation (this will increase on each update)
         /// </summary>
-        public int Generation { get { return m_Generation; } }
+        public int Generation => m_Generation;
 
         /// <summary>
         /// Obtains the DateTime value of the last full update
         /// </summary>
-        public DateTime LastUpdate { get { lock(this) { return m_LastUpdate; } } }
+        public DateTime LastUpdate { get { lock (this) { return m_LastUpdate; } } }
 
         /// <summary>
         /// Updates the whole table.
@@ -86,7 +38,7 @@ namespace Cave.Data
         public void UpdateCache()
         {
             MemoryTable newCache = new MemoryTable(m_BaseTable.Layout);
-            var rows = m_BaseTable.GetRows(m_Search, m_ResultOption);
+            List<Row> rows = m_BaseTable.GetRows(m_Search, m_ResultOption);
             newCache.SetRows(rows);
             lock (this)
             {
@@ -140,7 +92,9 @@ namespace Cave.Data
         /// </summary>
         public override long RowCount
         {
-            get { lock (this)
+            get
+            {
+                lock (this)
                 {
                     return m_CacheTable.RowCount;
                 }
@@ -166,7 +120,7 @@ namespace Cave.Data
         /// <returns>Returns the ID of the row found or -1</returns>
         public override List<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
-            lock(this)
+            lock (this)
             {
                 return m_CacheTable.FindRows(search, resultOption);
             }
@@ -383,7 +337,7 @@ namespace Cave.Data
         public void UpdateCache()
         {
             MemoryTable<T> newCache = new MemoryTable<T>();
-            var rows = m_BaseTable.GetRows(m_Search, m_ResultOption);
+            List<Row> rows = m_BaseTable.GetRows(m_Search, m_ResultOption);
             newCache.SetRows(rows);
             lock (this)
             {
@@ -437,7 +391,9 @@ namespace Cave.Data
         /// </summary>
         public override long RowCount
         {
-            get { lock (this)
+            get
+            {
+                lock (this)
                 {
                     return m_CacheTable.RowCount;
                 }

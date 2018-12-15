@@ -1,57 +1,10 @@
-#region CopyRight 2018
-/*
-    Copyright (c) 2005-2018 Andreas Rohleder (andreas@rohleder.cc)
-    All rights reserved
-*/
-#endregion
-#region License LGPL-3
-/*
-    This program/library/sourcecode is free software; you can redistribute it
-    and/or modify it under the terms of the GNU Lesser General Public License
-    version 3 as published by the Free Software Foundation subsequent called
-    the License.
-
-    You may not use this program/library/sourcecode except in compliance
-    with the License. The License is included in the LICENSE file
-    found at the installation directory or the distribution package.
-
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-#endregion License
-#region Authors & Contributors
-/*
-   Author:
-     Andreas Rohleder <andreas@rohleder.cc>
-
-   Contributors:
- */
-#endregion Authors & Contributors
-
-using Cave.Compression;
-using Cave.IO;
-using Cave.Text;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Text;
+using Cave.Compression;
+using Cave.IO;
 
 namespace Cave.Data
 {
@@ -148,11 +101,11 @@ namespace Cave.Data
                     switch (Layout.GetProperties(i).DataType)
                     {
                         case DataType.Binary:
-                            {
-                                string str = Base64.NoPadding.Encode((byte[])values[i]);
-                                result.Append(str);
-                                break;
-                            }
+                        {
+                            string str = Base64.NoPadding.Encode((byte[])values[i]);
+                            result.Append(str);
+                            break;
+                        }
                         case DataType.Bool:
                         case DataType.Int8:
                         case DataType.Int16:
@@ -162,104 +115,104 @@ namespace Cave.Data
                         case DataType.UInt16:
                         case DataType.UInt32:
                         case DataType.UInt64:
-                            {
-                                if (!Properties.SaveDefaultValues && (values[i].Equals(0)))
+                        {
+                            if (!Properties.SaveDefaultValues && (values[i].Equals(0)))
                             {
                                 break;
                             }
 
                             string str = values[i].ToString();
-                                result.Append(str);
-                                break;
-                            }
+                            result.Append(str);
+                            break;
+                        }
                         case DataType.Char:
-                            {
-                                if (!Properties.SaveDefaultValues && (values[i].Equals((char)0)))
+                        {
+                            if (!Properties.SaveDefaultValues && (values[i].Equals((char)0)))
                             {
                                 break;
                             }
 
                             string str = values[i].ToString();
-                                result.Append(str);
-                                break;
-                            }
+                            result.Append(str);
+                            break;
+                        }
                         case DataType.TimeSpan:
-                            {
-                                if (!Properties.SaveDefaultValues && (values[i].Equals(TimeSpan.Zero)))
+                        {
+                            if (!Properties.SaveDefaultValues && (values[i].Equals(TimeSpan.Zero)))
                             {
                                 break;
                             }
 
                             string str = values[i].ToString();
-                                result.Append(str);
-                                break;
-                            }
+                            result.Append(str);
+                            break;
+                        }
                         case DataType.Decimal:
-                            {
-                                if (!Properties.SaveDefaultValues && (values[i].Equals(0m)))
+                        {
+                            if (!Properties.SaveDefaultValues && (values[i].Equals(0m)))
                             {
                                 break;
                             }
 
                             decimal value = (decimal)values[i];
-                                result.Append(value.ToString(Properties.Culture));
-                                break;
-                            }
+                            result.Append(value.ToString(Properties.Culture));
+                            break;
+                        }
                         case DataType.Single:
-                            {
-                                if (!Properties.SaveDefaultValues && (values[i].Equals(0f)))
+                        {
+                            if (!Properties.SaveDefaultValues && (values[i].Equals(0f)))
                             {
                                 break;
                             }
 
                             float value = (float)values[i];
-                                result.Append(value.ToString("R", Properties.Culture));
-                                break;
-                            }
+                            result.Append(value.ToString("R", Properties.Culture));
+                            break;
+                        }
                         case DataType.Double:
-                            {
-                                if (!Properties.SaveDefaultValues && (values[i].Equals(0d)))
+                        {
+                            if (!Properties.SaveDefaultValues && (values[i].Equals(0d)))
                             {
                                 break;
                             }
 
                             double value = (double)values[i];
-                                result.Append(value.ToString("R", Properties.Culture));
-                                break;
-                            }
+                            result.Append(value.ToString("R", Properties.Culture));
+                            break;
+                        }
                         case DataType.DateTime:
-                            {
-                                if (!Properties.SaveDefaultValues && (values[i].Equals(new DateTime(0))))
+                        {
+                            if (!Properties.SaveDefaultValues && (values[i].Equals(new DateTime(0))))
                             {
                                 break;
                             }
 
                             string str = ((DateTime)values[i]).ToString(Properties.DateTimeFormat, Properties.Culture);
-                                result.Append(str);
-                                break;
-                            }
+                            result.Append(str);
+                            break;
+                        }
                         case DataType.User:
                         case DataType.String:
-                            {
-                                if (!Properties.SaveDefaultValues && (values[i].Equals(string.Empty)))
+                        {
+                            if (!Properties.SaveDefaultValues && (values[i].Equals(string.Empty)))
                             {
                                 break;
                             }
 
                             string str = (values[i] == null) ? "" : values[i].ToString();
-                                str = str.Replace("\r", @"\r").Replace("\n", @"\n");
+                            str = str.Replace("\r", @"\r").Replace("\n", @"\n");
+                            if (Properties.StringMarker.HasValue)
+                            {
+                                str = str.Replace("" + Properties.StringMarker, "" + Properties.StringMarker + Properties.StringMarker);
+                                result.Append(Properties.StringMarker);
+                            }
+                            if (str.Length == 0)
+                            {
+                                result.Append(" ");
+                            }
+                            else
+                            {
                                 if (Properties.StringMarker.HasValue)
-                                {
-                                    str = str.Replace("" + Properties.StringMarker, "" + Properties.StringMarker + Properties.StringMarker);
-                                    result.Append(Properties.StringMarker);
-                                }
-                                if (str.Length == 0)
-                                {
-                                    result.Append(" ");
-                                }
-                                else
-                                {
-                                    if (Properties.StringMarker.HasValue)
                                 {
                                     if (str.StartsWith(Properties.StringMarker.ToString()))
                                     {
@@ -268,7 +221,7 @@ namespace Cave.Data
                                 }
 
                                 result.Append(str);
-                                    if (Properties.StringMarker.HasValue)
+                                if (Properties.StringMarker.HasValue)
                                 {
                                     if (str.EndsWith(Properties.StringMarker.ToString()))
                                     {
@@ -276,24 +229,24 @@ namespace Cave.Data
                                     }
                                 }
                             }
-                                if (Properties.StringMarker.HasValue)
+                            if (Properties.StringMarker.HasValue)
                             {
                                 result.Append(Properties.StringMarker);
                             }
 
                             break;
-                            }
+                        }
                         case DataType.Enum:
-                            {
-                                if (!Properties.SaveDefaultValues && (Convert.ToInt32(values[i]).Equals(0)))
+                        {
+                            if (!Properties.SaveDefaultValues && (Convert.ToInt32(values[i]).Equals(0)))
                             {
                                 break;
                             }
 
                             string str = values[i].ToString();
-                                result.Append(str);
-                                break;
-                            }
+                            result.Append(str);
+                            break;
+                        }
                         default:
                             throw new NotImplementedException(string.Format("DataType {0} is not implemented!", Layout.GetProperties(i).DataType));
                     }
@@ -313,7 +266,7 @@ namespace Cave.Data
             CloseBaseStream = true;
         }
 
-         /// <summary>
+        /// <summary>
         /// Creates a new csv file writer with the specified properties
         /// </summary>
         /// <param name="properties"></param>

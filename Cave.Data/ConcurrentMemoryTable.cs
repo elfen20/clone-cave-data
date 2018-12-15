@@ -1,55 +1,9 @@
-#region CopyRight 2018
-/*
-    Copyright (c) 2005-2018 Andreas Rohleder (andreas@rohleder.cc)
-    All rights reserved
-*/
-#endregion
-#region License LGPL-3
-/*
-    This program/library/sourcecode is free software; you can redistribute it
-    and/or modify it under the terms of the GNU Lesser General Public License
-    version 3 as published by the Free Software Foundation subsequent called
-    the License.
-
-    You may not use this program/library/sourcecode except in compliance
-    with the License. The License is included in the LICENSE file
-    found at the installation directory or the distribution package.
-
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-#endregion License
-#region Authors & Contributors
-/*
-   Author:
-     Andreas Rohleder <andreas@rohleder.cc>
-
-   Contributors:
- */
-#endregion Authors & Contributors
-
-using Cave.Collections.Generic;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
 using System.Threading;
+using Cave.Collections.Generic;
 
 namespace Cave.Data
 {
@@ -72,11 +26,11 @@ namespace Cave.Data
         MemoryTable table;
         int readLock;
 
-		#region ReadLocked
-		internal void ReadLocked(Action action)
-		{
-			int v;
-			lock (this)
+        #region ReadLocked
+        internal void ReadLocked(Action action)
+        {
+            int v;
+            lock (this)
             {
                 v = Interlocked.Increment(ref readLock);
             }
@@ -87,20 +41,20 @@ namespace Cave.Data
             }
 
             try { action(); }
-			finally
-			{
-				v = Interlocked.Decrement(ref readLock);
-				if (Storage.LogVerboseMessages)
+            finally
+            {
+                v = Interlocked.Decrement(ref readLock);
+                if (Storage.LogVerboseMessages)
                 {
                     Trace.TraceInformation("ReadLock <red>exit <magenta>{0}", v);
                 }
             }
-		}
+        }
 
-		internal TResult ReadLocked<TResult>(Func<TResult> func)
-		{
-			int v;
-			lock (this)
+        internal TResult ReadLocked<TResult>(Func<TResult> func)
+        {
+            int v;
+            lock (this)
             {
                 v = Interlocked.Increment(ref readLock);
             }
@@ -111,22 +65,22 @@ namespace Cave.Data
             }
 
             try { return func(); }
-			finally
-			{
-				v = Interlocked.Decrement(ref readLock);
-				if (Storage.LogVerboseMessages)
+            finally
+            {
+                v = Interlocked.Decrement(ref readLock);
+                if (Storage.LogVerboseMessages)
                 {
                     Trace.TraceInformation("ReadLock <red>exit <magenta>{0}", v);
                 }
             }
-		}
-		#endregion
+        }
+        #endregion
 
-		#region WriteLocked
-		void WriteLocked(Action action)
+        #region WriteLocked
+        void WriteLocked(Action action)
         {
             int wait = MaxWaitTime;
-			if (Storage.LogVerboseMessages)
+            if (Storage.LogVerboseMessages)
             {
                 Trace.TraceInformation("WriteLock <cyan>wait (read lock <magenta>{0}<default>)", readLock);
             }
@@ -134,59 +88,59 @@ namespace Cave.Data
             lock (writeLock)
             {
                 Monitor.Enter(this);
-				if (readLock < 0)
+                if (readLock < 0)
                 {
                     throw new Exception("Fatal readlock underflow, deadlock imminent!");
                 }
 
                 while (readLock > 0)
-				{
-					if (wait > 0)
-					{
-						Stopwatch watch = null;
-						if (wait > 0)
-						{
-							watch = new Stopwatch();
-							watch.Start();
-						}
-						//spin until noone is reading anymore or spincount is reached
-						while (readLock > 0 && watch.ElapsedMilliseconds < wait)
-						{
-							Monitor.Exit(this);
-							Thread.Sleep(1);
-							Monitor.Enter(this);
-						}
-						//if spinning completed and we are still waiting on readers, keep lock until all readers are finished
-						while (readLock > 0)
+                {
+                    if (wait > 0)
+                    {
+                        Stopwatch watch = null;
+                        if (wait > 0)
+                        {
+                            watch = new Stopwatch();
+                            watch.Start();
+                        }
+                        //spin until noone is reading anymore or spincount is reached
+                        while (readLock > 0 && watch.ElapsedMilliseconds < wait)
+                        {
+                            Monitor.Exit(this);
+                            Thread.Sleep(1);
+                            Monitor.Enter(this);
+                        }
+                        //if spinning completed and we are still waiting on readers, keep lock until all readers are finished
+                        while (readLock > 0)
                         {
                             Thread.Sleep(0);
                         }
                     }
-					else
-					{
-						//spin until noone is reading anymore, this may wait forever if there is no gap between reading processes
-						while (readLock > 0)
-						{
-							Monitor.Exit(this);
-							Thread.Sleep(1);
-							Monitor.Enter(this);
-						}
-					}
-				}
-				if (Storage.LogVerboseMessages)
+                    else
+                    {
+                        //spin until noone is reading anymore, this may wait forever if there is no gap between reading processes
+                        while (readLock > 0)
+                        {
+                            Monitor.Exit(this);
+                            Thread.Sleep(1);
+                            Monitor.Enter(this);
+                        }
+                    }
+                }
+                if (Storage.LogVerboseMessages)
                 {
                     Trace.TraceInformation("WriteLock <green>acquired (read lock <magenta>{0}<default>)", readLock);
                 }
 
                 //write
                 try
-				{
-					action.Invoke();
-				}
-				finally
-				{
-					Monitor.Exit(this);
-					if (Storage.LogVerboseMessages)
+                {
+                    action.Invoke();
+                }
+                finally
+                {
+                    Monitor.Exit(this);
+                    if (Storage.LogVerboseMessages)
                     {
                         Trace.TraceInformation("WriteLock <red>exit (read lock <magenta>{0}<default>)", readLock);
                     }
@@ -241,34 +195,22 @@ namespace Cave.Data
         /// <summary>
         /// The storage engine the database belongs to
         /// </summary>
-        public IStorage Storage
-        {
-            get { return table.Storage; }
-        }
+        public IStorage Storage => table.Storage;
 
         /// <summary>
         /// Obtains the database the table belongs to
         /// </summary>
-        public IDatabase Database
-        {
-            get { return table.Database; }
-        }
+        public IDatabase Database => table.Database;
 
         /// <summary>
         /// Obtains the name of the table
         /// </summary>
-        public string Name
-        {
-            get { return table.Name; }
-        }
+        public string Name => table.Name;
 
         /// <summary>
         /// Obtains the RowLayout of the table
         /// </summary>
-        public RowLayout Layout
-        {
-            get { return table.Layout; }
-        }
+        public RowLayout Layout => table.Layout;
 
         /// <summary>
         /// Counts the results of a given search
@@ -278,28 +220,22 @@ namespace Cave.Data
         /// <returns>Returns the number of rows found matching the criteria given</returns>
         public virtual long Count(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
-			return ReadLocked(() => table.Count(search, resultOption));
+            return ReadLocked(() => table.Count(search, resultOption));
         }
 
-		/// <summary>Calculates the sum of the specified field name for all matching rows.</summary>
-		/// <param name="fieldName">Name of the field.</param>
-		/// <param name="search">The search.</param>
-		/// <returns></returns>
-		public double Sum(string fieldName, Search search = null)
-		{
-			return ReadLocked(() => table.Sum(fieldName, search));
-		}
-
-		/// <summary>
-		/// Obtains the RowCount
-		/// </summary>
-		public long RowCount
+        /// <summary>Calculates the sum of the specified field name for all matching rows.</summary>
+        /// <param name="fieldName">Name of the field.</param>
+        /// <param name="search">The search.</param>
+        /// <returns></returns>
+        public double Sum(string fieldName, Search search = null)
         {
-            get
-            {
-				return ReadLocked(() => table.RowCount);
-            }
+            return ReadLocked(() => table.Sum(fieldName, search));
         }
+
+        /// <summary>
+        /// Obtains the RowCount
+        /// </summary>
+        public long RowCount => ReadLocked(() => table.RowCount);
 
         /// <summary>
         /// Clears all rows of the table using the <see cref="Clear(bool)"/> [resetIDs = true] function.
@@ -321,26 +257,26 @@ namespace Cave.Data
             });
         }
 
-		/// <summary>
-		/// Obtains a row from the table
-		/// </summary>
-		/// <param name="id">The ID of the row to be fetched</param>
-		/// <returns>Returns the row</returns>
-		public Row GetRow(long id)
-		{
-			return ReadLocked(() => table.GetRow(id));
-		}
+        /// <summary>
+        /// Obtains a row from the table
+        /// </summary>
+        /// <param name="id">The ID of the row to be fetched</param>
+        /// <returns>Returns the row</returns>
+        public Row GetRow(long id)
+        {
+            return ReadLocked(() => table.GetRow(id));
+        }
 
-		/// <summary>
-		/// This function does a lookup on the ids of the table and returns the row with the n-th ID where n is the given index.
-		/// Note that indices may change on each update, insert, delete and sorting is not garanteed!
-		/// <param name="index">The index of the row to be fetched</param>
-		/// </summary>
-		/// <returns>Returns the row</returns>
-		public Row GetRowAt(int index)
-		{
-			return ReadLocked(() => table.GetRowAt(index));
-		}
+        /// <summary>
+        /// This function does a lookup on the ids of the table and returns the row with the n-th ID where n is the given index.
+        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!
+        /// <param name="index">The index of the row to be fetched</param>
+        /// </summary>
+        /// <returns>Returns the row</returns>
+        public Row GetRowAt(int index)
+        {
+            return ReadLocked(() => table.GetRowAt(index));
+        }
 
         /// <summary>
         /// Sets the specified value to the specified fieldname on all rows
@@ -355,24 +291,24 @@ namespace Cave.Data
             });
         }
 
-		/// <summary>
-		/// Checks a given ID for existance
-		/// </summary>
-		/// <param name="id">The dataset ID to look for</param>
-		/// <returns>Returns whether the dataset exists or not</returns>
-		public bool Exist(long id)
-		{
-			return ReadLocked(() => table.Exist(id));
-		}
+        /// <summary>
+        /// Checks a given ID for existance
+        /// </summary>
+        /// <param name="id">The dataset ID to look for</param>
+        /// <returns>Returns whether the dataset exists or not</returns>
+        public bool Exist(long id)
+        {
+            return ReadLocked(() => table.Exist(id));
+        }
 
         /// <summary>Checks a given search for any datasets matching</summary>
         /// <param name="search"></param>
         /// <returns></returns>
         public bool Exist(Search search)
         {
-			return ReadLocked(() => table.Exist(search));
+            return ReadLocked(() => table.Exist(search));
         }
-        
+
         /// <summary>
         /// Inserts a row into the table. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.
         /// </summary>
@@ -471,17 +407,17 @@ namespace Cave.Data
             });
         }
 
-		/// <summary>Removes all rows from the table matching the specified search.</summary>
-		/// <param name="search">The Search used to identify rows for removal</param>
-		/// <returns>Returns the number of dataset deleted.</returns>
-		public int TryDelete(Search search)
+        /// <summary>Removes all rows from the table matching the specified search.</summary>
+        /// <param name="search">The Search used to identify rows for removal</param>
+        /// <returns>Returns the number of dataset deleted.</returns>
+        public int TryDelete(Search search)
         {
-			int result = 0;
+            int result = 0;
             WriteLocked(delegate
             {
                 result = table.TryDelete(search);
             });
-			return result;
+            return result;
         }
 
         /// <summary>
@@ -529,7 +465,7 @@ namespace Cave.Data
         /// <returns>Returns the ID of the row found or -1</returns>
         public long FindRow(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
-			return ReadLocked(() => table.FindRow(search, resultOption));
+            return ReadLocked(() => table.FindRow(search, resultOption));
         }
 
         /// <summary>
@@ -540,7 +476,7 @@ namespace Cave.Data
         /// <returns>Returns the IDs of the rows found</returns>
         public List<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
-			return ReadLocked(() => table.FindRows(search, resultOption));
+            return ReadLocked(() => table.FindRows(search, resultOption));
         }
 
         /// <summary>
@@ -551,9 +487,9 @@ namespace Cave.Data
         /// <returns>Returns the row found</returns>
         public Row GetRow(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
-			return ReadLocked(() => table.GetRow(search, resultOption));
+            return ReadLocked(() => table.GetRow(search, resultOption));
         }
-        
+
         /// <summary>
         /// Searches the table for rows with given search.
         /// </summary>
@@ -562,7 +498,7 @@ namespace Cave.Data
         /// <returns>Returns the rows found</returns>
         public List<Row> GetRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
-			return ReadLocked(() => table.GetRows(search, resultOption));
+            return ReadLocked(() => table.GetRows(search, resultOption));
         }
 
         /// <summary>
@@ -572,7 +508,7 @@ namespace Cave.Data
         /// <returns></returns>
         public long GetNextUsedID(long id)
         {
-			return ReadLocked(() => table.GetNextUsedID(id));
+            return ReadLocked(() => table.GetNextUsedID(id));
         }
 
         /// <summary>
@@ -581,7 +517,7 @@ namespace Cave.Data
         /// <returns></returns>
         public long GetNextFreeID()
         {
-			return ReadLocked(() => table.GetNextFreeID());
+            return ReadLocked(() => table.GetNextFreeID());
         }
 
         /// <summary>
@@ -591,7 +527,7 @@ namespace Cave.Data
         /// <returns>Returns the rows</returns>
         public virtual List<Row> GetRows(IEnumerable<long> ids)
         {
-			return ReadLocked(() => table.GetRows(ids));
+            return ReadLocked(() => table.GetRows(ids));
         }
 
         /// <summary>
@@ -600,7 +536,7 @@ namespace Cave.Data
         /// <returns></returns>
         public List<Row> GetRows()
         {
-			return ReadLocked(() => table.GetRows());
+            return ReadLocked(() => table.GetRows());
         }
 
         /// <summary>Obtains all different field values of a given field</summary>
@@ -611,7 +547,7 @@ namespace Cave.Data
         /// <returns></returns>
         public IItemSet<T> GetValues<T>(string field, bool includeNull = false, IEnumerable<long> ids = null)
         {
-			return ReadLocked(() => table.GetValues<T>(field, includeNull, ids));
+            return ReadLocked(() => table.GetValues<T>(field, includeNull, ids));
         }
 
         /// <summary>Commits a whole TransactionLog to the table</summary>
@@ -633,11 +569,11 @@ namespace Cave.Data
         #region MemoryTable additions
         /// <summary>Gets the sequence number.</summary>
         /// <value>The sequence number.</value>
-        public int SequenceNumber { get { return table.SequenceNumber; } }
+        public int SequenceNumber => table.SequenceNumber;
 
         /// <summary>Gets a value indicating whether this instance is readonly.</summary>
         /// <value><c>true</c> if this instance is readonly; otherwise, <c>false</c>.</value>
-        public bool IsReadonly { get { return table.IsReadonly; } }
+        public bool IsReadonly => table.IsReadonly;
 
         #region LoadTable
         /// <summary>Replaces all data present with the data at the given table</summary>
@@ -673,13 +609,7 @@ namespace Cave.Data
         /// <summary>
         /// Obtains all IDs
         /// </summary>
-        public List<long> IDs
-        {
-            get
-            {
-				return ReadLocked(() => table.IDs);
-            }
-        }
+        public List<long> IDs => ReadLocked(() => table.IDs);
         #endregion
 
         #region TransactionLog
@@ -690,8 +620,8 @@ namespace Cave.Data
         public virtual TransactionLog TransactionLog
         {
             //no need to lock anything here, transaction log is already thread safe
-            get { return table.TransactionLog; }
-            set { table.TransactionLog = value; }
+            get => table.TransactionLog;
+            set => table.TransactionLog = value;
         }
         #endregion
 
@@ -765,18 +695,18 @@ namespace Cave.Data
             });
         }
 
-		/// <summary>Removes all rows from the table matching the specified search.</summary>
-		/// <param name="search">The Search used to identify rows for removal</param>
-		/// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
-		/// <returns>Returns the number of dataset deleted.</returns>
-		public int TryDelete(Search search, bool writeTransaction)
+        /// <summary>Removes all rows from the table matching the specified search.</summary>
+        /// <param name="search">The Search used to identify rows for removal</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        /// <returns>Returns the number of dataset deleted.</returns>
+        public int TryDelete(Search search, bool writeTransaction)
         {
-			int result = 0;
+            int result = 0;
             WriteLocked(delegate
             {
                 result = table.TryDelete(search, writeTransaction);
             });
-			return result;
+            return result;
         }
         #endregion
 
@@ -820,93 +750,93 @@ namespace Cave.Data
 
         #region private class
         MemoryTable<T> table;
-		int readLock;
-		object writeLock = new object();
+        int readLock;
+        object writeLock = new object();
 
-		#region ReadLocked
-		internal void ReadLocked(Action action)
-		{
-			lock (this)
+        #region ReadLocked
+        internal void ReadLocked(Action action)
+        {
+            lock (this)
             {
                 Interlocked.Increment(ref readLock);
             }
 
             try { action(); }
-			finally { Interlocked.Decrement(ref readLock); }
-		}
+            finally { Interlocked.Decrement(ref readLock); }
+        }
 
-		internal TResult ReadLocked<TResult>(Func<TResult> func)
-		{
-			lock (this)
+        internal TResult ReadLocked<TResult>(Func<TResult> func)
+        {
+            lock (this)
             {
                 Interlocked.Increment(ref readLock);
             }
 
             try { return func(); }
-			finally { Interlocked.Decrement(ref readLock); }
-		}
-		#endregion
+            finally { Interlocked.Decrement(ref readLock); }
+        }
+        #endregion
 
-		#region WriteLocked
-		void WriteLocked(Action action)
-		{
-			int wait = MaxWaitTime;
-			lock (writeLock)
-			{
-				Monitor.Enter(this);
-				if (readLock < 0)
+        #region WriteLocked
+        void WriteLocked(Action action)
+        {
+            int wait = MaxWaitTime;
+            lock (writeLock)
+            {
+                Monitor.Enter(this);
+                if (readLock < 0)
                 {
                     throw new Exception("Fatal readlock underflow, deadlock imminent!");
                 }
 
                 while (readLock > 0)
-				{
-					if (wait > 0)
-					{
-						Stopwatch watch = null;
-						if (wait > 0)
-						{
-							watch = new Stopwatch();
-							watch.Start();
-						}
-						//spin until noone is reading anymore or spincount is reached
-						while (readLock > 0 && watch.ElapsedMilliseconds < wait)
-						{
-							Monitor.Exit(this);
-							Thread.Sleep(1);
-							Monitor.Enter(this);
-						}
-						//if spinning completed and we are still waiting on readers, keep lock until all readers are finished
-						while (readLock > 0)
+                {
+                    if (wait > 0)
+                    {
+                        Stopwatch watch = null;
+                        if (wait > 0)
+                        {
+                            watch = new Stopwatch();
+                            watch.Start();
+                        }
+                        //spin until noone is reading anymore or spincount is reached
+                        while (readLock > 0 && watch.ElapsedMilliseconds < wait)
+                        {
+                            Monitor.Exit(this);
+                            Thread.Sleep(1);
+                            Monitor.Enter(this);
+                        }
+                        //if spinning completed and we are still waiting on readers, keep lock until all readers are finished
+                        while (readLock > 0)
                         {
                             Thread.Sleep(0);
                         }
                     }
-					else
-					{
-						//spin until noone is reading anymore, this may wait forever if there is no gap between reading processes
-						while (readLock > 0)
-						{
-							Monitor.Exit(this);
-							Thread.Sleep(1);
-							Monitor.Enter(this);
-						}
-					}
-				}
+                    else
+                    {
+                        //spin until noone is reading anymore, this may wait forever if there is no gap between reading processes
+                        while (readLock > 0)
+                        {
+                            Monitor.Exit(this);
+                            Thread.Sleep(1);
+                            Monitor.Enter(this);
+                        }
+                    }
+                }
 
-				//write
-				try { action.Invoke(); }
-				finally { Monitor.Exit(this); }
-			}
-		}
-		#endregion
-		#endregion
+                //write
+                try { action.Invoke(); }
+                finally { Monitor.Exit(this); }
+            }
+        }
+        #endregion
+        #endregion
 
-		#region constructors
-		/// <summary>
-		/// Creates a new empty unbound thread safe memory table.
-		/// </summary>
-		public ConcurrentMemoryTable(MemoryTableOptions options = 0, string nameOverride = null)
+        #region constructors
+        /// <summary>
+        /// Creates a new empty unbound thread safe memory table.
+        /// </summary>
+        public ConcurrentMemoryTable(MemoryTableOptions options = 0, string nameOverride = null)
         {
             table = new MemoryTable<T>(MemoryDatabase.Default, RowLayout.CreateTyped(typeof(T), nameOverride), options);
         }
@@ -944,24 +874,24 @@ namespace Cave.Data
         /// <returns>Returns the row</returns>
         public T GetStruct(long id)
         {
-			return ReadLocked(() => table.GetStruct(id));
+            return ReadLocked(() => table.GetStruct(id));
         }
 
-		/// <summary>Calculates the sum of the specified field name for all matching rows.</summary>
-		/// <param name="fieldName">Name of the field.</param>
-		/// <param name="search">The search.</param>
-		/// <returns></returns>
-		public double Sum(string fieldName, Search search = null)
-		{
-			return ReadLocked(() => table.Sum(fieldName, search));
-		}
+        /// <summary>Calculates the sum of the specified field name for all matching rows.</summary>
+        /// <param name="fieldName">Name of the field.</param>
+        /// <param name="search">The search.</param>
+        /// <returns></returns>
+        public double Sum(string fieldName, Search search = null)
+        {
+            return ReadLocked(() => table.Sum(fieldName, search));
+        }
 
-		/// <summary>
-		/// Inserts a row into the table. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.
-		/// </summary>
-		/// <param name="row">The row to insert. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.</param>
-		/// <returns>Returns the ID of the inserted dataset</returns>
-		public long Insert(T row)
+        /// <summary>
+        /// Inserts a row into the table. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.
+        /// </summary>
+        /// <param name="row">The row to insert. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.</param>
+        /// <returns>Returns the ID of the inserted dataset</returns>
+        public long Insert(T row)
         {
             long id = 0;
             WriteLocked(delegate
@@ -1073,19 +1003,19 @@ namespace Cave.Data
         /// <returns>Returns the row found</returns>
         public T GetStruct(Search search)
         {
-			return ReadLocked(() => table.GetStruct(search));
+            return ReadLocked(() => table.GetStruct(search));
         }
 
-		/// <summary>
-		/// Searches the table for a single row with given search.
-		/// </summary>
-		/// <param name="search">The search to run</param>
-		/// <param name="resultOption">Options for the search and the result set</param>
-		/// <returns>Returns the row found</returns>
-		public T GetStruct(Search search = default(Search), ResultOption resultOption = default(ResultOption))
-		{
-			return ReadLocked(() => table.GetStruct(search, resultOption));
-		}
+        /// <summary>
+        /// Searches the table for a single row with given search.
+        /// </summary>
+        /// <param name="search">The search to run</param>
+        /// <param name="resultOption">Options for the search and the result set</param>
+        /// <returns>Returns the row found</returns>
+        public T GetStruct(Search search = default(Search), ResultOption resultOption = default(ResultOption))
+        {
+            return ReadLocked(() => table.GetStruct(search, resultOption));
+        }
 
         /// <summary>
         /// Searches the table for rows with given search.
@@ -1094,7 +1024,7 @@ namespace Cave.Data
         /// <returns>Returns the rows found</returns>
         public List<T> GetStructs(Search search)
         {
-			return ReadLocked(() => table.GetStructs(search));
+            return ReadLocked(() => table.GetStructs(search));
         }
 
         /// <summary>
@@ -1105,7 +1035,7 @@ namespace Cave.Data
         /// <returns>Returns the rows found</returns>
         public List<T> GetStructs(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
-			return ReadLocked(() => table.GetStructs(search, resultOption));
+            return ReadLocked(() => table.GetStructs(search, resultOption));
         }
 
         /// <summary>
@@ -1113,13 +1043,7 @@ namespace Cave.Data
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public T this[long id]
-        {
-            get
-            {
-				return ReadLocked(() => table[id]);
-            }
-        }
+        public T this[long id] => ReadLocked(() => table[id]);
 
         /// <summary>
         /// Obtains the rows with the given ids
@@ -1128,37 +1052,28 @@ namespace Cave.Data
         /// <returns>Returns the rows</returns>
         public virtual List<T> GetStructs(IEnumerable<long> ids)
         {
-			return ReadLocked(() => table.GetStructs(ids));
+            return ReadLocked(() => table.GetStructs(ids));
         }
 
         /// <summary>
         /// The storage engine the database belongs to
         /// </summary>
-        public IStorage Storage
-        {
-            get { return table.Storage; }
-        }
+        public IStorage Storage => table.Storage;
 
         /// <summary>
         /// Obtains the database the table belongs to
         /// </summary>
-        public IDatabase Database
-        {
-            get { return table.Database; }
-        }
+        public IDatabase Database => table.Database;
 
         /// <summary>
         /// Obtains the name of the table
         /// </summary>
-        public string Name
-        {
-            get { return table.Name; }
-        }
+        public string Name => table.Name;
 
         /// <summary>
         /// Obtains the RowLayout of the table
         /// </summary>
-        public RowLayout Layout { get { return table.Layout; } }
+        public RowLayout Layout => table.Layout;
 
         /// <summary>
         /// Counts the results of a given search
@@ -1168,16 +1083,13 @@ namespace Cave.Data
         /// <returns>Returns the number of rows found matching the criteria given</returns>
         public virtual long Count(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
-			return ReadLocked(() => table.Count(search, resultOption));
+            return ReadLocked(() => table.Count(search, resultOption));
         }
 
         /// <summary>
         /// Obtains the RowCount
         /// </summary>
-        public long RowCount
-        {
-            get { return ReadLocked(() => table.RowCount); }
-        }
+        public long RowCount => ReadLocked(() => table.RowCount);
 
         /// <summary>
         /// Clears all rows of the table using the <see cref="Clear(bool)"/> [resetIDs = true] function.
@@ -1206,7 +1118,7 @@ namespace Cave.Data
         /// <returns>Returns the row</returns>
         public Row GetRow(long id)
         {
-			return ReadLocked(() => table.GetRow(id));
+            return ReadLocked(() => table.GetRow(id));
         }
 
         /// <summary>
@@ -1217,7 +1129,7 @@ namespace Cave.Data
         /// <returns>Returns the row</returns>
         public Row GetRowAt(int index)
         {
-			return ReadLocked(() => table.GetRowAt(index));
+            return ReadLocked(() => table.GetRowAt(index));
         }
 
         /// <summary>
@@ -1240,7 +1152,7 @@ namespace Cave.Data
         /// <returns>Returns whether the dataset exists or not</returns>
         public bool Exist(long id)
         {
-			return ReadLocked(() => table.Exist(id));
+            return ReadLocked(() => table.Exist(id));
         }
 
         /// <summary>Checks a given search for any datasets matching</summary>
@@ -1248,9 +1160,9 @@ namespace Cave.Data
         /// <returns></returns>
         public bool Exist(Search search)
         {
-			return ReadLocked(() => table.Exist(search));
+            return ReadLocked(() => table.Exist(search));
         }
-        
+
         /// <summary>
         /// Inserts a row into the table. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.
         /// </summary>
@@ -1324,7 +1236,7 @@ namespace Cave.Data
                 table.Update(rows, writeTransaction);
             });
         }
-        
+
         /// <summary>
         /// Removes a row from the table.
         /// </summary>
@@ -1349,31 +1261,31 @@ namespace Cave.Data
             });
         }
 
-		/// <summary>Removes all rows from the table matching the specified search.</summary>
-		/// <param name="search">The Search used to identify rows for removal</param>
-		/// <returns>Returns the number of dataset deleted.</returns>
-		public int TryDelete(Search search)
+        /// <summary>Removes all rows from the table matching the specified search.</summary>
+        /// <param name="search">The Search used to identify rows for removal</param>
+        /// <returns>Returns the number of dataset deleted.</returns>
+        public int TryDelete(Search search)
         {
-			int result = 0;
+            int result = 0;
             WriteLocked(delegate
             {
                 result = table.TryDelete(search);
             });
-			return result;
+            return result;
         }
 
-		/// <summary>Removes all rows from the table matching the specified search.</summary>
-		/// <param name="search">The Search used to identify rows for removal</param>
-		/// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
-		/// <returns>Returns the number of dataset deleted.</returns>
-		public int TryDelete(Search search, bool writeTransaction)
+        /// <summary>Removes all rows from the table matching the specified search.</summary>
+        /// <param name="search">The Search used to identify rows for removal</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        /// <returns>Returns the number of dataset deleted.</returns>
+        public int TryDelete(Search search, bool writeTransaction)
         {
-			int result = 0;
+            int result = 0;
             WriteLocked(delegate
             {
                 result = table.TryDelete(search, writeTransaction);
             });
-			return result;
+            return result;
         }
 
         /// <summary>
@@ -1401,15 +1313,15 @@ namespace Cave.Data
             });
         }
 
-		/// <summary>Searches the table for a row with given field value combinations.</summary>
-		/// <param name="search">The search to run</param>
-		/// <param name="resultOption">Options for the search and the result set</param>
-		/// <returns>Returns the ID of the row found or -1</returns>
-		public long FindRow(Search search = default(Search), ResultOption resultOption = default(ResultOption))
+        /// <summary>Searches the table for a row with given field value combinations.</summary>
+        /// <param name="search">The search to run</param>
+        /// <param name="resultOption">Options for the search and the result set</param>
+        /// <returns>Returns the ID of the row found or -1</returns>
+        public long FindRow(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
-			return ReadLocked(() => table.FindRow(search, resultOption));
+            return ReadLocked(() => table.FindRow(search, resultOption));
         }
-        
+
         /// <summary>
         /// Searches the table for rows with given field value combinations.
         /// </summary>
@@ -1418,7 +1330,7 @@ namespace Cave.Data
         /// <returns>Returns the IDs of the rows found</returns>
         public List<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
-			return ReadLocked(() => table.FindRows(search, resultOption));
+            return ReadLocked(() => table.FindRows(search, resultOption));
         }
 
         /// <summary>
@@ -1428,9 +1340,9 @@ namespace Cave.Data
         /// <returns>Returns the IDs of the rows found</returns>
         public List<long> FindRows(Search search)
         {
-			return ReadLocked(() => table.FindRows(search));
+            return ReadLocked(() => table.FindRows(search));
         }
-        
+
         /// <summary>
         /// Searches the table for a single row with given search.
         /// </summary>
@@ -1439,9 +1351,9 @@ namespace Cave.Data
         /// <returns>Returns the row found</returns>
         public Row GetRow(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
-			return ReadLocked(() => table.GetRow(search, resultOption));
+            return ReadLocked(() => table.GetRow(search, resultOption));
         }
-        
+
         /// <summary>
         /// Searches the table for rows with given search.
         /// </summary>
@@ -1450,7 +1362,7 @@ namespace Cave.Data
         /// <returns>Returns the rows found</returns>
         public List<Row> GetRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
-			return ReadLocked(() => table.GetRows(search, resultOption));
+            return ReadLocked(() => table.GetRows(search, resultOption));
         }
 
         /// <summary>
@@ -1460,7 +1372,7 @@ namespace Cave.Data
         /// <returns></returns>
         public long GetNextUsedID(long id)
         {
-			return ReadLocked(() => table.GetNextUsedID(id));
+            return ReadLocked(() => table.GetNextUsedID(id));
         }
 
         /// <summary>
@@ -1469,7 +1381,7 @@ namespace Cave.Data
         /// <returns></returns>
         public long GetNextFreeID()
         {
-			return ReadLocked(() => table.GetNextFreeID());
+            return ReadLocked(() => table.GetNextFreeID());
         }
 
         /// <summary>
@@ -1479,7 +1391,7 @@ namespace Cave.Data
         /// <returns>Returns the rows</returns>
         public virtual List<Row> GetRows(IEnumerable<long> ids)
         {
-			return ReadLocked(() => table.GetRows(ids));
+            return ReadLocked(() => table.GetRows(ids));
         }
 
         /// <summary>
@@ -1488,7 +1400,7 @@ namespace Cave.Data
         /// <returns></returns>
         public List<Row> GetRows()
         {
-			return ReadLocked(() => table.GetRows());
+            return ReadLocked(() => table.GetRows());
         }
 
         /// <summary>Obtains all different field values of a given field</summary>
@@ -1499,7 +1411,7 @@ namespace Cave.Data
         /// <returns></returns>
         public IItemSet<TValue> GetValues<TValue>(string field, bool includeNull = false, IEnumerable<long> ids = null)
         {
-			return ReadLocked(() => table.GetValues<TValue>(field, includeNull, ids));
+            return ReadLocked(() => table.GetValues<TValue>(field, includeNull, ids));
         }
 
         /// <summary>Commits a whole TransactionLog to the table</summary>
@@ -1522,7 +1434,7 @@ namespace Cave.Data
         /// <returns>Returns true on success, false otherwise</returns>
         public bool TryGetStruct(Search search, out T row)
         {
-			var ids = FindRows(search);
+            List<long> ids = FindRows(search);
             if (ids.Count == 1)
             {
                 row = GetStruct(ids[0]);
@@ -1537,11 +1449,11 @@ namespace Cave.Data
         #region MemoryTable<T> additions
         /// <summary>Gets the sequence number.</summary>
         /// <value>The sequence number.</value>
-        public int SequenceNumber { get { return table.SequenceNumber; } }
+        public int SequenceNumber => table.SequenceNumber;
 
         /// <summary>Gets a value indicating whether this instance is readonly.</summary>
         /// <value><c>true</c> if this instance is readonly; otherwise, <c>false</c>.</value>
-        public bool IsReadonly { get { return table.IsReadonly; } }
+        public bool IsReadonly => table.IsReadonly;
 
         #region LoadTable
         /// <summary>Replaces all data present with the data at the given table</summary>
@@ -1596,13 +1508,7 @@ namespace Cave.Data
         /// <summary>
         /// Obtains all IDs
         /// </summary>
-        public List<long> IDs
-        {
-            get
-            {
-				return ReadLocked(() => table.IDs);
-            }
-        }
+        public List<long> IDs => ReadLocked(() => table.IDs);
         #endregion
 
         #region TransactionLog
@@ -1613,8 +1519,8 @@ namespace Cave.Data
         public virtual TransactionLog TransactionLog
         {
             //no need to lock anything here, transaction log is already thread safe
-            get { return table.TransactionLog; }
-            set { table.TransactionLog = value; }
+            get => table.TransactionLog;
+            set => table.TransactionLog = value;
         }
         #endregion
 
@@ -1629,7 +1535,7 @@ namespace Cave.Data
         /// <exception cref="IndexOutOfRangeException"></exception>
         public virtual T GetStructAt(int index)
         {
-			return ReadLocked(() => table.GetStructAt(index));
+            return ReadLocked(() => table.GetStructAt(index));
         }
         #endregion
 

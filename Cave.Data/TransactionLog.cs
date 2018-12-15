@@ -1,55 +1,9 @@
-#region CopyRight 2018
-/*
-    Copyright (c) 2005-2018 Andreas Rohleder (andreas@rohleder.cc)
-    All rights reserved
-*/
-#endregion
-#region License LGPL-3
-/*
-    This program/library/sourcecode is free software; you can redistribute it
-    and/or modify it under the terms of the GNU Lesser General Public License
-    version 3 as published by the Free Software Foundation subsequent called
-    the License.
-
-    You may not use this program/library/sourcecode except in compliance
-    with the License. The License is included in the LICENSE file
-    found at the installation directory or the distribution package.
-
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-#endregion License
-#region Authors & Contributors
-/*
-   Author:
-     Andreas Rohleder <andreas@rohleder.cc>
-
-   Contributors:
- */
-#endregion Authors & Contributors
-
-using Cave.Collections.Generic;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using Cave.Collections.Generic;
 
 namespace Cave.Data
 {
@@ -57,7 +11,7 @@ namespace Cave.Data
     /// Provides a transaction log for database rows changes / deletions
     /// </summary>
     [DebuggerDisplay("{Count} Transactions")]
-    public class TransactionLog 
+    public class TransactionLog
     {
         /// <summary>
         /// Provides the syncronization root
@@ -132,15 +86,15 @@ namespace Cave.Data
             switch (transaction.Type)
             {
                 case TransactionType.Updated:
+                {
+                    //delete older update
+                    if (m_Updated.ContainsKey(transaction.ID))
                     {
-                        //delete older update
-                        if (m_Updated.ContainsKey(transaction.ID))
-                        {
-                            m_List.Remove(m_Updated[transaction.ID]);
-                        }
-                        m_Updated[transaction.ID] = m_List.AddLast(transaction);
-                        return;
+                        m_List.Remove(m_Updated[transaction.ID]);
                     }
+                    m_Updated[transaction.ID] = m_List.AddLast(transaction);
+                    return;
+                }
                 case TransactionType.Deleted:
                     if (m_Deleted.ContainsKey(transaction.ID))
                     {
@@ -499,7 +453,7 @@ namespace Cave.Data
         /// Adds a row deletion to the log
         /// </summary>
         /// <param name="row">The deleted dataset</param>
-        public void AddDeleted(T row) 
+        public void AddDeleted(T row)
         {
             AddDeleted(Layout.GetID(row));
         }
@@ -508,7 +462,7 @@ namespace Cave.Data
         /// Adds a row update to the log
         /// </summary>
         /// <param name="item">The updated dataset</param>
-        public void AddUpdated(T item) 
+        public void AddUpdated(T item)
         {
             Row row = Row.Create(Layout, item);
             long id = Layout.GetID(row);
@@ -519,7 +473,7 @@ namespace Cave.Data
         /// Adds a row insertion to the log
         /// </summary>
         /// <param name="item">The inserted dataset</param>
-        public void AddInserted(T item) 
+        public void AddInserted(T item)
         {
             Row row = Row.Create(Layout, item);
             long id = Layout.GetID(row);
@@ -530,7 +484,7 @@ namespace Cave.Data
         /// Adds a row replacement to the log
         /// </summary>
         /// <param name="item">The replacement dataset</param>
-        public void AddReplaced(T item) 
+        public void AddReplaced(T item)
         {
             Row row = Row.Create(Layout, item);
             long id = Layout.GetID(row);

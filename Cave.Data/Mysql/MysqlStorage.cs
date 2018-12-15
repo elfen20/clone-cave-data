@@ -1,49 +1,3 @@
-#region CopyRight 2018
-/*
-    Copyright (c) 2005-2018 Andreas Rohleder (andreas@rohleder.cc)
-    All rights reserved
-*/
-#endregion
-#region License LGPL-3
-/*
-    This program/library/sourcecode is free software; you can redistribute it
-    and/or modify it under the terms of the GNU Lesser General Public License
-    version 3 as published by the Free Software Foundation subsequent called
-    the License.
-
-    You may not use this program/library/sourcecode except in compliance
-    with the License. The License is included in the LICENSE file
-    found at the installation directory or the distribution package.
-
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-#endregion License
-#region Authors & Contributors
-/*
-   Author:
-     Andreas Rohleder <andreas@rohleder.cc>
-
-   Contributors:
- */
-#endregion Authors & Contributors
-
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -51,15 +5,14 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Text;
 using Cave.Data.Sql;
-using Cave.Text;
 
 namespace Cave.Data.Mysql
 {
-	/// <summary>
-	/// Provides a mysql storage implementation.
-	/// Attention: <see cref="float"/> variables stored at the mysqldatabase loose their last precision digit (a value of 1 may differ by &lt;= 0.000001f)
-	/// </summary>
-	public sealed class MySqlStorage : SqlStorage
+    /// <summary>
+    /// Provides a mysql storage implementation.
+    /// Attention: <see cref="float"/> variables stored at the mysqldatabase loose their last precision digit (a value of 1 may differ by &lt;= 0.000001f)
+    /// </summary>
+    public sealed class MySqlStorage : SqlStorage
     {
         #region protected overrides
 
@@ -70,104 +23,104 @@ namespace Cave.Data.Mysql
         /// <exception cref="System.ArgumentNullException">Field</exception>
         public override object GetLocalValue(FieldProperties field, object databaseValue)
         {
-			if (field == null) { throw new ArgumentNullException("Field"); }
+            if (field == null) { throw new ArgumentNullException("Field"); }
 
-			if (databaseValue != DBNull.Value)
-			{
-				switch (field.DataType)
-				{
-					case DataType.Double:
-					{
-						double d = Convert.ToDouble(databaseValue);
-						if (d >= double.MaxValue) { return double.PositiveInfinity; }
-						if (d <= double.MinValue) { return double.NegativeInfinity; }
-						return d;
-					}
-					case DataType.Single:
-					{
-						float f = Convert.ToSingle(databaseValue);
-						if (f >= float.MaxValue) { return float.PositiveInfinity; }
-						if (f <= float.MinValue) { return float.NegativeInfinity; }
-						return f;
-					}
-				}
-			}
+            if (databaseValue != DBNull.Value)
+            {
+                switch (field.DataType)
+                {
+                    case DataType.Double:
+                    {
+                        double d = Convert.ToDouble(databaseValue);
+                        if (d >= double.MaxValue) { return double.PositiveInfinity; }
+                        if (d <= double.MinValue) { return double.NegativeInfinity; }
+                        return d;
+                    }
+                    case DataType.Single:
+                    {
+                        float f = Convert.ToSingle(databaseValue);
+                        if (f >= float.MaxValue) { return float.PositiveInfinity; }
+                        if (f <= float.MinValue) { return float.NegativeInfinity; }
+                        return f;
+                    }
+                }
+            }
 
             return base.GetLocalValue(field, databaseValue);
         }
 
-		/// <summary>
-		/// Converts a local value into a database value
-		/// </summary>
-		/// <param name="field">The <see cref="FieldProperties" /> of the affected field</param>
-		/// <param name="localValue">The local value to be encoded for the database</param>
-		/// <returns></returns>
-		/// <exception cref="NotSupportedException">You can not store 4 byte utf-8 characters to mysql prior version 5.5.3!</exception>
-		public override object GetDatabaseValue(FieldProperties field, object localValue)
-		{
-			if (field == null)
-			{
-				throw new ArgumentNullException("Field");
-			}
+        /// <summary>
+        /// Converts a local value into a database value
+        /// </summary>
+        /// <param name="field">The <see cref="FieldProperties" /> of the affected field</param>
+        /// <param name="localValue">The local value to be encoded for the database</param>
+        /// <returns></returns>
+        /// <exception cref="NotSupportedException">You can not store 4 byte utf-8 characters to mysql prior version 5.5.3!</exception>
+        public override object GetDatabaseValue(FieldProperties field, object localValue)
+        {
+            if (field == null)
+            {
+                throw new ArgumentNullException("Field");
+            }
 
-			switch (field.DataType)
-			{
-				case DataType.String:
-				{
-					if (localValue == null)
-					{
-						return null;
-					}
+            switch (field.DataType)
+            {
+                case DataType.String:
+                {
+                    if (localValue == null)
+                    {
+                        return null;
+                    }
 
-					if (!SupportsFullUTF8)
-					{
-						//dirty hack: check mysql 3 byte utf-8
-						string value = (string)localValue;
-						foreach (char c in value)
-						{
-							if (Encoding.UTF8.GetByteCount(new char[] { c }) > 3)
-							{
-								throw new NotSupportedException("You can not store 4 byte utf-8 characters to mysql prior version 5.5.3!");
-							}
-						}
-						return DataEncoding.GetBytes(value);
-					}
-					break;
-				}
-				case DataType.Double:
-				{
-					double d = Convert.ToDouble(localValue);
-					if (double.IsPositiveInfinity(d))
-					{
-						return double.MaxValue;
-					}
+                    if (!SupportsFullUTF8)
+                    {
+                        //dirty hack: check mysql 3 byte utf-8
+                        string value = (string)localValue;
+                        foreach (char c in value)
+                        {
+                            if (Encoding.UTF8.GetByteCount(new char[] { c }) > 3)
+                            {
+                                throw new NotSupportedException("You can not store 4 byte utf-8 characters to mysql prior version 5.5.3!");
+                            }
+                        }
+                        return DataEncoding.GetBytes(value);
+                    }
+                    break;
+                }
+                case DataType.Double:
+                {
+                    double d = Convert.ToDouble(localValue);
+                    if (double.IsPositiveInfinity(d))
+                    {
+                        return double.MaxValue;
+                    }
 
-					if (double.IsNegativeInfinity(d))
-					{
-						return double.MinValue;
-					}
+                    if (double.IsNegativeInfinity(d))
+                    {
+                        return double.MinValue;
+                    }
 
-					return d;
-				}
-				case DataType.Single:
-				{
-					float f = Convert.ToSingle(localValue);
-					if (float.IsPositiveInfinity(f))
-					{
-						return float.MaxValue;
-					}
+                    return d;
+                }
+                case DataType.Single:
+                {
+                    float f = Convert.ToSingle(localValue);
+                    if (float.IsPositiveInfinity(f))
+                    {
+                        return float.MaxValue;
+                    }
 
-					if (float.IsNegativeInfinity(f))
-					{
-						return float.MinValue;
-					}
+                    if (float.IsNegativeInfinity(f))
+                    {
+                        return float.MinValue;
+                    }
 
-					return f;
-				}
-			}
+                    return f;
+                }
+            }
 
-			return base.GetDatabaseValue(field, localValue);
-		}
+            return base.GetDatabaseValue(field, localValue);
+        }
 
         /// <summary>
         /// Obtains the <see cref="DataType"/> for the specified fieldtype
@@ -178,11 +131,11 @@ namespace Cave.Data.Mysql
         protected override DataType GetLocalDataType(Type fieldType, uint fieldSize)
         {
             if (fieldType == null)
-			{
-				throw new ArgumentNullException("FieldType");
-			}
+            {
+                throw new ArgumentNullException("FieldType");
+            }
 
-			DataType dataType;
+            DataType dataType;
             if (fieldType.Name == "MySqlDateTime")
             {
                 //fix mysql date time
@@ -243,12 +196,12 @@ namespace Cave.Data.Mysql
             {
                 command.CommandText = string.Format("SET NAMES `{0}` COLLATE `{0}_unicode_ci`; SET CHARACTER SET `{0}`;", CharacterSet);
                 if (LogVerboseMessages)
-				{
-					LogQuery(command);
-				}
-				//return value is not globally defined. some implementations use it correctly, some dont use it, some return positive or negative result enum values
-				//so we ignore this: int affectedRows = 
-				command.ExecuteNonQuery();
+                {
+                    LogQuery(command);
+                }
+                //return value is not globally defined. some implementations use it correctly, some dont use it, some return positive or negative result enum values
+                //so we ignore this: int affectedRows = 
+                command.ExecuteNonQuery();
             }
             return connection;
         }
@@ -277,10 +230,10 @@ namespace Cave.Data.Mysql
         /// </summary>
         public Version Version { get; }
 
-		/// <summary>Creates a new mysql storage instance</summary>
-		/// <param name="connectionString">the connection details</param>
-		/// <param name="options">The options.</param>
-		public MySqlStorage(ConnectionString connectionString, DbConnectionOptions options)
+        /// <summary>Creates a new mysql storage instance</summary>
+        /// <param name="connectionString">the connection details</param>
+        /// <param name="options">The options.</param>
+        public MySqlStorage(ConnectionString connectionString, DbConnectionOptions options)
             : base(connectionString, options)
         {
             VersionString = (string)QueryValue(null, null, "SELECT VERSION()");
@@ -335,7 +288,7 @@ namespace Cave.Data.Mysql
             get
             {
                 List<string> result = new List<string>();
-                var rows = Query(null, "information_schema", "SCHEMATA", "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA;");
+                List<Row> rows = Query(null, "information_schema", "SCHEMATA", "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA;");
                 foreach (Row row in rows)
                 {
                     result.Add((string)row.GetValue(0));
@@ -367,11 +320,11 @@ namespace Cave.Data.Mysql
         public override IDatabase GetDatabase(string database)
         {
             if (!HasDatabase(database))
-			{
-				throw new ArgumentException(string.Format("Database does not exist!"));
-			}
+            {
+                throw new ArgumentException(string.Format("Database does not exist!"));
+            }
 
-			return new MySqlDatabase(this, database);
+            return new MySqlDatabase(this, database);
         }
 
         /// <summary>
@@ -405,7 +358,7 @@ namespace Cave.Data.Mysql
         /// <summary>
         /// Obtains whether the db connections can change the database with the Sql92 "USE Database" command.
         /// </summary>
-        protected override bool DBConnectionCanChangeDataBase { get { return true; } }
+        protected override bool DBConnectionCanChangeDataBase => true;
 
         /// <summary>
         /// Initializes the needed interop assembly and type
@@ -424,42 +377,33 @@ namespace Cave.Data.Mysql
         /// <summary>
         /// true
         /// </summary>
-        public override bool SupportsNamedParameters
-        {
-            get { return true; }
-        }
+        public override bool SupportsNamedParameters => true;
 
         /// <summary>
         /// Obtains wether the connection supports select * groupby
         /// </summary>
-        public override bool SupportsAllFieldsGroupBy
-        {
-            get { return true; }
-        }
+        public override bool SupportsAllFieldsGroupBy => true;
 
         /// <summary>
         /// Obtains the parameter prefix char (?)
         /// </summary>
-        public override string ParameterPrefix
-        {
-            get { return "?"; }
-        }
+        public override string ParameterPrefix => "?";
 
         #region precision members
         /// <summary>
         /// Obtains the maximum <see cref="float"/> precision at the value of 1.0f of this storage engine
         /// </summary>
-        public override float FloatPrecision { get { return 0.00001f; } }
+        public override float FloatPrecision => 0.00001f;
 
         /// <summary>
         /// Obtains the maximum <see cref="DateTime"/> value precision of this storage engine
         /// </summary>
-        public override TimeSpan DateTimePrecision { get { return TimeSpan.FromSeconds(1); } }
+        public override TimeSpan DateTimePrecision => TimeSpan.FromSeconds(1);
 
         /// <summary>
         /// Obtains the maximum <see cref="TimeSpan"/> value precision of this storage engine
         /// </summary>
-        public override TimeSpan TimeSpanPrecision { get { return TimeSpan.FromMilliseconds(1); } }
+        public override TimeSpan TimeSpanPrecision => TimeSpan.FromMilliseconds(1);
 
         /// <summary>
         /// Obtains the maximum <see cref="decimal"/> value precision of this storage engine
@@ -467,10 +411,10 @@ namespace Cave.Data.Mysql
         public override decimal GetDecimalPrecision(float count)
         {
             if (count == 0)
-			{
-				count = 65.30f;
-			}
-			return base.GetDecimalPrecision(count);
+            {
+                count = 65.30f;
+            }
+            return base.GetDecimalPrecision(count);
         }
         #endregion
     }

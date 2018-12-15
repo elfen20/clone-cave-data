@@ -1,56 +1,8 @@
-#region CopyRight 2018
-/*
-    Copyright (c) 2005-2018 Andreas Rohleder (andreas@rohleder.cc)
-    All rights reserved
-*/
-#endregion
-#region License LGPL-3
-/*
-    This program/library/sourcecode is free software; you can redistribute it
-    and/or modify it under the terms of the GNU Lesser General Public License
-    version 3 as published by the Free Software Foundation subsequent called
-    the License.
-
-    You may not use this program/library/sourcecode except in compliance
-    with the License. The License is included in the LICENSE file
-    found at the installation directory or the distribution package.
-
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-#endregion License
-#region Authors & Contributors
-/*
-   Author:
-     Andreas Rohleder <andreas@rohleder.cc>
-
-   Contributors:
- */
-#endregion Authors & Contributors
-
-using Cave.Collections.Generic;
-using Cave.IO;
-using Cave.Text;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Diagnostics;
+using Cave.Collections.Generic;
 
 namespace Cave.Data
 {
@@ -119,34 +71,22 @@ namespace Cave.Data
         /// <summary>
         /// The storage engine the database belongs to
         /// </summary>
-        public IStorage Storage
-        {
-            get { return table.Storage; }
-        }
+        public IStorage Storage => table.Storage;
 
         /// <summary>
         /// Obtains the database the table belongs to
         /// </summary>
-        public IDatabase Database
-        {
-            get { return table.Database; }
-        }
+        public IDatabase Database => table.Database;
 
         /// <summary>
         /// Obtains the name of the table
         /// </summary>
-        public string Name
-        {
-            get { return table.Name; }
-        }
+        public string Name => table.Name;
 
         /// <summary>
         /// Obtains the RowLayout of the table
         /// </summary>
-        public RowLayout Layout
-        {
-            get { return table.Layout; }
-        }
+        public RowLayout Layout => table.Layout;
 
         /// <summary>
         /// Counts the results of a given search
@@ -167,7 +107,9 @@ namespace Cave.Data
         /// </summary>
         public long RowCount
         {
-            get { lock (this)
+            get
+            {
+                lock (this)
                 {
                     return table.RowCount;
                 }
@@ -257,7 +199,7 @@ namespace Cave.Data
                 return table.Exist(search);
             }
         }
-        
+
         /// <summary>
         /// Inserts a row into the table. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.
         /// </summary>
@@ -416,7 +358,7 @@ namespace Cave.Data
                 return table.FindRow(search, resultOption);
             }
         }
-        
+
         /// <summary>
         /// Searches the table for rows with given field value combinations.
         /// </summary>
@@ -430,7 +372,7 @@ namespace Cave.Data
                 return table.FindRows(search, resultOption);
             }
         }
-        
+
         /// <summary>
         /// Searches the table for a single row with given search.
         /// </summary>
@@ -444,7 +386,7 @@ namespace Cave.Data
                 return table.GetRow(search, resultOption);
             }
         }
-        
+
         /// <summary>
         /// Searches the table for rows with given search.
         /// </summary>
@@ -541,11 +483,11 @@ namespace Cave.Data
         #region IMemoryTable members
         /// <summary>Gets the sequence number.</summary>
         /// <value>The sequence number.</value>
-        public int SequenceNumber { get { return table.SequenceNumber; } }
+        public int SequenceNumber => table.SequenceNumber;
 
         /// <summary>Gets a value indicating whether this instance is readonly.</summary>
         /// <value><c>true</c> if this instance is readonly; otherwise, <c>false</c>.</value>
-        public bool IsReadonly { get { return table.IsReadonly; } }
+        public bool IsReadonly => table.IsReadonly;
         #endregion
 
         #region MemoryTable additions
@@ -579,30 +521,30 @@ namespace Cave.Data
         public virtual TransactionLog TransactionLog
         {
             //no need to lock anything here, transaction log is already thread safe
-            get { return table.TransactionLog; }
-            set { table.TransactionLog = value; }
+            get => table.TransactionLog;
+            set => table.TransactionLog = value;
         }
 
-		#endregion
+        #endregion
 
-		/// <summary>Calculates the sum of the specified field name for all matching rows.</summary>
-		/// <param name="fieldName">Name of the field.</param>
-		/// <param name="search">The search.</param>
-		/// <returns></returns>
-		public double Sum(string fieldName, Search search = null)
-		{
-			lock (this)
+        /// <summary>Calculates the sum of the specified field name for all matching rows.</summary>
+        /// <param name="fieldName">Name of the field.</param>
+        /// <param name="search">The search.</param>
+        /// <returns></returns>
+        public double Sum(string fieldName, Search search = null)
+        {
+            lock (this)
             {
                 return table.Sum(fieldName, search);
             }
         }
 
-		/// <summary>
-		/// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
-		/// </summary>
-		/// <param name="row">The row to replace (valid ID needed)</param>
-		/// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
-		public void Replace(Row row, bool writeTransaction)
+        /// <summary>
+        /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
+        /// </summary>
+        /// <param name="row">The row to replace (valid ID needed)</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        public void Replace(Row row, bool writeTransaction)
         {
             lock (this)
             {
@@ -646,7 +588,7 @@ namespace Cave.Data
                 table.Update(row, writeTransaction);
             }
         }
-        
+
         /// <summary>Removes a row from the table.</summary>
         /// <param name="id">The dataset ID to remove</param>
         /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
@@ -658,11 +600,11 @@ namespace Cave.Data
             }
         }
 
-		/// <summary>Removes all rows from the table matching the specified search.</summary>
-		/// <param name="search">The Search used to identify rows for removal</param>
-		/// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
-		/// <returns>Returns the number of dataset deleted.</returns>
-		public int TryDelete(Search search, bool writeTransaction)
+        /// <summary>Removes all rows from the table matching the specified search.</summary>
+        /// <param name="search">The Search used to identify rows for removal</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        /// <returns>Returns the number of dataset deleted.</returns>
+        public int TryDelete(Search search, bool writeTransaction)
         {
             lock (this)
             {
@@ -688,7 +630,7 @@ namespace Cave.Data
     {
         /// <summary>Gets the name of the log source.</summary>
         /// <value>The name of the log source.</value>
-        public virtual string LogSourceName { get { return "SynchronizedMemoryTable <" + Name + ">"; } }
+        public virtual string LogSourceName => "SynchronizedMemoryTable <" + Name + ">";
 
         /// <summary>
         /// Converts the typed instance to an untyped one
@@ -752,7 +694,7 @@ namespace Cave.Data
         }
 
         #region ITable<T> members
-      
+
         /// <summary>
         /// Obtains a row from the table
         /// </summary>
@@ -873,7 +815,7 @@ namespace Cave.Data
                 table.Replace(rows, writeTransaction);
             }
         }
-        
+
         /// <summary>
         /// Searches the table for a single row with given search.
         /// </summary>
@@ -909,7 +851,9 @@ namespace Cave.Data
         /// <returns></returns>
         public T this[long id]
         {
-            get { lock (this)
+            get
+            {
+                lock (this)
                 {
                     return table[id];
                 }
@@ -932,31 +876,22 @@ namespace Cave.Data
         /// <summary>
         /// The storage engine the database belongs to
         /// </summary>
-        public IStorage Storage
-        {
-            get { return table.Storage; }
-        }
+        public IStorage Storage => table.Storage;
 
         /// <summary>
         /// Obtains the database the table belongs to
         /// </summary>
-        public IDatabase Database
-        {
-            get { return table.Database; }
-        }
+        public IDatabase Database => table.Database;
 
         /// <summary>
         /// Obtains the name of the table
         /// </summary>
-        public string Name
-        {
-            get { return table.Name; }
-        }
+        public string Name => table.Name;
 
         /// <summary>
         /// Obtains the RowLayout of the table
         /// </summary>
-        public RowLayout Layout { get { return table.Layout; } }
+        public RowLayout Layout => table.Layout;
 
         /// <summary>
         /// Counts the results of a given search
@@ -977,7 +912,9 @@ namespace Cave.Data
         /// </summary>
         public long RowCount
         {
-            get { lock (this)
+            get
+            {
+                lock (this)
                 {
                     return table.RowCount;
                 }
@@ -1068,24 +1005,24 @@ namespace Cave.Data
             }
         }
 
-		/// <summary>Calculates the sum of the specified field name for all matching rows.</summary>
-		/// <param name="fieldName">Name of the field.</param>
-		/// <param name="search">The search.</param>
-		/// <returns></returns>
-		public double Sum(string fieldName, Search search = null)
-		{
-			lock (this)
+        /// <summary>Calculates the sum of the specified field name for all matching rows.</summary>
+        /// <param name="fieldName">Name of the field.</param>
+        /// <param name="search">The search.</param>
+        /// <returns></returns>
+        public double Sum(string fieldName, Search search = null)
+        {
+            lock (this)
             {
                 return table.Sum(fieldName, search);
             }
         }
 
-		/// <summary>
-		/// Inserts a row into the table. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.
-		/// </summary>
-		/// <param name="row">The row to insert. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.</param>
-		/// <returns>Returns the ID of the inserted dataset</returns>
-		public long Insert(Row row)
+        /// <summary>
+        /// Inserts a row into the table. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.
+        /// </summary>
+        /// <param name="row">The row to insert. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.</param>
+        /// <returns>Returns the ID of the inserted dataset</returns>
+        public long Insert(Row row)
         {
             lock (this)
             {
@@ -1151,7 +1088,7 @@ namespace Cave.Data
                 table.Update(rows, writeTransaction);
             }
         }
-        
+
         /// <summary>
         /// Removes a row from the table.
         /// </summary>
@@ -1225,7 +1162,7 @@ namespace Cave.Data
                 table.Replace(rows, writeTransaction);
             }
         }
-        
+
         /// <summary>
         /// Searches the table for a row with given field value combinations.
         /// </summary>
@@ -1253,7 +1190,7 @@ namespace Cave.Data
                 return table.FindRows(search, resultOption);
             }
         }
-        
+
         /// <summary>
         /// Searches the table for a single row with given search.
         /// </summary>
@@ -1365,7 +1302,7 @@ namespace Cave.Data
         /// <returns>Returns true on success, false otherwise</returns>
         public bool TryGetStruct(Search search, out T row)
         {
-            var ids = FindRows(search);
+            List<long> ids = FindRows(search);
             if (ids.Count == 1)
             {
                 row = GetStruct(ids[0]);
@@ -1380,11 +1317,11 @@ namespace Cave.Data
         #region IMemoryTable members
         /// <summary>Gets the sequence number.</summary>
         /// <value>The sequence number.</value>
-        public int SequenceNumber { get { return table.SequenceNumber; } }
+        public int SequenceNumber => table.SequenceNumber;
 
         /// <summary>Gets a value indicating whether this instance is readonly.</summary>
         /// <value><c>true</c> if this instance is readonly; otherwise, <c>false</c>.</value>
-        public bool IsReadonly { get { return table.IsReadonly; } }
+        public bool IsReadonly => table.IsReadonly;
         #endregion
 
         #region MemoryTable<T> additions
@@ -1429,8 +1366,8 @@ namespace Cave.Data
         public virtual TransactionLog TransactionLog
         {
             //no need to lock anything here, transaction log is already thread safe
-            get { return table.TransactionLog; }
-            set { table.TransactionLog = value; }
+            get => table.TransactionLog;
+            set => table.TransactionLog = value;
         }
         #endregion
 
@@ -1484,7 +1421,7 @@ namespace Cave.Data
                 table.Update(row, writeTransaction);
             }
         }
-        
+
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
         /// </summary>
@@ -1535,7 +1472,7 @@ namespace Cave.Data
                 table.Update(row, writeTransaction);
             }
         }
-        
+
         /// <summary>Removes a row from the table.</summary>
         /// <param name="id">The dataset ID to remove</param>
         /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>

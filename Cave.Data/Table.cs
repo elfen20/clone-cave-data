@@ -1,51 +1,3 @@
-#region CopyRight 2018
-/*
-    Copyright (c) 2005-2018 Andreas Rohleder (andreas@rohleder.cc)
-    All rights reserved
-*/
-#endregion
-#region License LGPL-3
-/*
-    This program/library/sourcecode is free software; you can redistribute it
-    and/or modify it under the terms of the GNU Lesser General Public License
-    version 3 as published by the Free Software Foundation subsequent called
-    the License.
-
-    You may not use this program/library/sourcecode except in compliance
-    with the License. The License is included in the LICENSE file
-    found at the installation directory or the distribution package.
-
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-#endregion License
-#region Authors & Contributors
-/*
-   Author:
-     Andreas Rohleder <andreas@rohleder.cc>
-
-   Contributors:
- */
-#endregion Authors & Contributors
-
-using Cave.Collections.Generic;
-using Cave.Text;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -54,6 +6,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Threading;
+using Cave.Collections.Generic;
 
 namespace Cave.Data
 {
@@ -80,7 +33,7 @@ namespace Cave.Data
                         continue;
                     }
 
-                    var field = layout.GetProperties(i);
+                    FieldProperties field = layout.GetProperties(i);
                     if ((field.Flags & FieldFlags.Index) != 0)
                     {
                         indices[i] = new FieldIndex();
@@ -164,7 +117,7 @@ namespace Cave.Data
             throw new ArgumentException("Layout is not typed!", "Layout");
         }
 
-		internal sealed class Sorter : IComparer<long>
+        internal sealed class Sorter : IComparer<long>
         {
             readonly bool m_Descending;
             readonly int m_FieldNumber;
@@ -189,8 +142,8 @@ namespace Cave.Data
 
             public int Compare(long x, long y)
             {
-                var val1 = m_Table[x].GetValue(m_FieldNumber);
-                var val2 = m_Table[y].GetValue(m_FieldNumber);
+                object val1 = m_Table[x].GetValue(m_FieldNumber);
+                object val2 = m_Table[y].GetValue(m_FieldNumber);
                 if (m_Descending)
                 {
                     return Comparer.Default.Compare(val2, val1);
@@ -211,27 +164,27 @@ namespace Cave.Data
             Database = database ?? throw new ArgumentNullException("Database");
             Layout = layout ?? throw new ArgumentNullException("Layout");
         }
-		#endregion
+        #endregion
 
-		#region SequenceNumber
-		int sequenceNumber;
+        #region SequenceNumber
+        int sequenceNumber;
 
-		/// <summary>Increases the sequence number.</summary>
-		public void IncreaseSequenceNumber() { Interlocked.Increment(ref sequenceNumber); }
+        /// <summary>Increases the sequence number.</summary>
+        public void IncreaseSequenceNumber() { Interlocked.Increment(ref sequenceNumber); }
 
-		/// <summary>Gets the sequence number (counting write commands on this table).</summary>
-		/// <value>The sequence number.</value>
-		public int SequenceNumber => sequenceNumber;
-		#endregion
+        /// <summary>Gets the sequence number (counting write commands on this table).</summary>
+        /// <value>The sequence number.</value>
+        public int SequenceNumber => sequenceNumber;
+        #endregion
 
-		#region ITable Member
+        #region ITable Member
 
-		#region abstract storage functionality
+        #region abstract storage functionality
 
-		/// <summary>
-		/// Obtains the RowCount
-		/// </summary>
-		public abstract long RowCount { get; }
+        /// <summary>
+        /// Obtains the RowCount
+        /// </summary>
+        public abstract long RowCount { get; }
 
         /// <summary>
         /// Clears all rows of the table.
@@ -272,17 +225,17 @@ namespace Cave.Data
         /// </summary>
         /// <param name="row">The row to update</param>
         public abstract void Update(Row row);
-        
+
         /// <summary>
         /// Removes a row from the table.
         /// </summary>
         /// <param name="id">The dataset ID to remove</param>
         public abstract void Delete(long id);
 
-		/// <summary>Removes all rows from the table matching the specified search.</summary>
-		/// <param name="search">The Search used to identify rows for removal</param>
-		/// <returns>Returns the number of dataset deleted.</returns>
-		public abstract int TryDelete(Search search);
+        /// <summary>Removes all rows from the table matching the specified search.</summary>
+        /// <param name="search">The Search used to identify rows for removal</param>
+        /// <returns>Returns the number of dataset deleted.</returns>
+        public abstract int TryDelete(Search search);
 
         /// <summary>
         /// Obtains the next used ID at the table
@@ -297,45 +250,39 @@ namespace Cave.Data
         /// <returns></returns>
         public abstract long GetNextFreeID();
 
-		/// <summary>
-		/// Searches the table for rows with given field value combinations.
-		/// </summary>
-		/// <param name="search">The search to run</param>
-		/// <param name="resultOption">Options for the search and the result set</param>
-		/// <returns>Returns the ID of the row found or -1</returns>
-		public abstract List<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption));
+        /// <summary>
+        /// Searches the table for rows with given field value combinations.
+        /// </summary>
+        /// <param name="search">The search to run</param>
+        /// <param name="resultOption">Options for the search and the result set</param>
+        /// <returns>Returns the ID of the row found or -1</returns>
+        public abstract List<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption));
 
-		/// <summary>
-		/// Obtains the rows with the given ids
-		/// </summary>
-		/// <param name="ids">IDs of the rows to fetch from the table</param>
-		/// <returns>Returns the rows</returns>
-		public abstract List<Row> GetRows(IEnumerable<long> ids);
+        /// <summary>
+        /// Obtains the rows with the given ids
+        /// </summary>
+        /// <param name="ids">IDs of the rows to fetch from the table</param>
+        /// <returns>Returns the rows</returns>
+        public abstract List<Row> GetRows(IEnumerable<long> ids);
 
-		/// <summary>
-		/// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
-		/// </summary>
-		/// <param name="row">The row to replace (valid ID needed)</param>
-		public abstract void Replace(Row row);
+        /// <summary>
+        /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
+        /// </summary>
+        /// <param name="row">The row to replace (valid ID needed)</param>
+        public abstract void Replace(Row row);
 
-		/// <summary>
-		/// Obtains an array with all rows
-		/// </summary>
-		/// <returns></returns>
-		public abstract List<Row> GetRows();
-		#endregion
+        /// <summary>
+        /// Obtains an array with all rows
+        /// </summary>
+        /// <returns></returns>
+        public abstract List<Row> GetRows();
+        #endregion
 
-		#region implemented functionality
+        #region implemented functionality
 
-		/// <summary>Gets all currently used IDs.</summary>
-		/// <value>The IDs.</value>
-		public virtual List<long> IDs
-        {
-            get
-            {
-                return FindRows(Search.None);
-            }
-        }
+        /// <summary>Gets all currently used IDs.</summary>
+        /// <value>The IDs.</value>
+        public virtual List<long> IDs => FindRows(Search.None);
 
         /// <summary>
         /// Counts the results of a given search
@@ -348,62 +295,59 @@ namespace Cave.Data
             return FindRows(search, resultOption).Count;
         }
 
-		/// <summary>Checks a given search for any datasets matching</summary>
-		/// <param name="search"></param>
-		/// <returns></returns>
-		public virtual bool Exist(Search search)
-		{
-			return Count(search) > 0;
-		}
+        /// <summary>Checks a given search for any datasets matching</summary>
+        /// <param name="search"></param>
+        /// <returns></returns>
+        public virtual bool Exist(Search search)
+        {
+            return Count(search) > 0;
+        }
 
-		#region Sum
-		/// <summary>Calculates the sum of the specified field name for all matching rows.</summary>
-		/// <param name="fieldName">Name of the field.</param>
-		/// <param name="search">The search.</param>
-		/// <returns></returns>
-		public virtual double Sum(string fieldName, Search search = null)
-		{
-			double sum = 0;
-			search = search ?? Search.None;
-			int fieldNumber = Layout.GetFieldIndex(fieldName);
-			if (fieldNumber < 0)
+        #region Sum
+        /// <summary>Calculates the sum of the specified field name for all matching rows.</summary>
+        /// <param name="fieldName">Name of the field.</param>
+        /// <param name="search">The search.</param>
+        /// <returns></returns>
+        public virtual double Sum(string fieldName, Search search = null)
+        {
+            double sum = 0;
+            search = search ?? Search.None;
+            int fieldNumber = Layout.GetFieldIndex(fieldName);
+            if (fieldNumber < 0)
             {
                 throw new ArgumentException("Could not find specified field!");
             }
 
-            var field = Layout.GetProperties(fieldNumber);
-			switch (field.DataType)
-			{
-				case DataType.TimeSpan:
-					foreach (var row in GetRows(search))
-					{
-						sum += Convert.ToDouble(((TimeSpan)row.GetValue(fieldNumber)).Ticks);
-					}
-					break;
-				case DataType.Binary:
-				case DataType.DateTime:
-				case DataType.String:
-				case DataType.User:
-				case DataType.Unknown:
-					throw new NotSupportedException($"Sum() is not supported for field {field}!");
-				default:
-					foreach (var row in GetRows(search))
-					{
-						sum += Convert.ToDouble(row.GetValue(fieldNumber));
-					}
-					break;
-			}			
-			return sum;
-		}
-		#endregion
-
-		/// <summary>
-		/// Obtains the underlying storage engine
-		/// </summary>
-		public IStorage Storage
-        {
-            get { return Database.Storage; }
+            FieldProperties field = Layout.GetProperties(fieldNumber);
+            switch (field.DataType)
+            {
+                case DataType.TimeSpan:
+                    foreach (Row row in GetRows(search))
+                    {
+                        sum += Convert.ToDouble(((TimeSpan)row.GetValue(fieldNumber)).Ticks);
+                    }
+                    break;
+                case DataType.Binary:
+                case DataType.DateTime:
+                case DataType.String:
+                case DataType.User:
+                case DataType.Unknown:
+                    throw new NotSupportedException($"Sum() is not supported for field {field}!");
+                default:
+                    foreach (Row row in GetRows(search))
+                    {
+                        sum += Convert.ToDouble(row.GetValue(fieldNumber));
+                    }
+                    break;
+            }
+            return sum;
         }
+        #endregion
+
+        /// <summary>
+        /// Obtains the underlying storage engine
+        /// </summary>
+        public IStorage Storage => Database.Storage;
 
         /// <summary>
         /// Obtains the database instance with table belongs to
@@ -413,16 +357,13 @@ namespace Cave.Data
         /// <summary>
         /// Obtains the name of the table
         /// </summary>
-        public string Name
-        {
-            get { return Layout.Name; }
-        }
+        public string Name => Layout.Name;
 
         /// <summary>
         /// Obtains the RowLayout of the table
         /// </summary>
         public RowLayout Layout { get; }
-        
+
         /// <summary>
         /// Searches the table for a row with given field value combinations.
         /// </summary>
@@ -444,7 +385,7 @@ namespace Cave.Data
 
             return result[0];
         }
-                
+
         /// <summary>
         /// Searches the table for a single row with given search.
         /// </summary>
@@ -461,7 +402,7 @@ namespace Cave.Data
 
             return GetRow(id);
         }
-        
+
         /// <summary>
         /// Searches the table for rows with given field value combinations.
         /// </summary>
@@ -470,7 +411,7 @@ namespace Cave.Data
         /// <returns>Returns the rows found</returns>
         public virtual List<Row> GetRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
-            var ids = FindRows(search, resultOption);
+            List<long> ids = FindRows(search, resultOption);
             return GetRows(ids);
         }
 
@@ -502,7 +443,7 @@ namespace Cave.Data
         /// <summary>
         /// Obtains the field count
         /// </summary>
-        public int FieldCount { get { return Layout.FieldCount; } }
+        public int FieldCount => Layout.FieldCount;
 
         /// <summary>
         /// Sets the specified value to the specified fieldname on all rows
@@ -519,7 +460,7 @@ namespace Cave.Data
 
             foreach (Row row in GetRows())
             {
-                var r = row.GetValues();
+                object[] r = row.GetValues();
                 r[index] = value;
                 Update(new Row(r));
             }
@@ -556,7 +497,7 @@ namespace Cave.Data
             int i = 0;
             count = (count > 0) ? Math.Min(transactions.Count, count) : 1000;
             Trace.TraceInformation("Commiting transaction with {0} rows", count);
-            while(true)
+            while (true)
             {
                 if (!transactions.TryDequeue(out Transaction transaction))
                 {
@@ -845,7 +786,7 @@ namespace Cave.Data
         /// <returns>Returns the rows found</returns>
         public virtual List<T> GetStructs(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
-            var ids = FindRows(search, resultOption);
+            List<long> ids = FindRows(search, resultOption);
             return GetStructs(ids);
         }
 
@@ -874,7 +815,7 @@ namespace Cave.Data
         {
             Update(Row.Create(Layout, row));
         }
-        
+
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
         /// </summary>
@@ -906,13 +847,7 @@ namespace Cave.Data
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        public virtual T this[long id]
-        {
-            get
-            {
-                return GetStruct(id);
-            }
-        }
+        public virtual T this[long id] => GetStruct(id);
 
         /// <summary>
         /// Copies all rows to a given array

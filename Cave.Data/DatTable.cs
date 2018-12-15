@@ -1,52 +1,3 @@
-#region CopyRight 2018
-/*
-    Copyright (c) 2005-2018 Andreas Rohleder (andreas@rohleder.cc)
-    All rights reserved
-*/
-#endregion
-#region License LGPL-3
-/*
-    This program/library/sourcecode is free software; you can redistribute it
-    and/or modify it under the terms of the GNU Lesser General Public License
-    version 3 as published by the Free Software Foundation subsequent called
-    the License.
-
-    You may not use this program/library/sourcecode except in compliance
-    with the License. The License is included in the LICENSE file
-    found at the installation directory or the distribution package.
-
-    Permission is hereby granted, free of charge, to any person obtaining
-    a copy of this software and associated documentation files (the
-    "Software"), to deal in the Software without restriction, including
-    without limitation the rights to use, copy, modify, merge, publish,
-    distribute, sublicense, and/or sell copies of the Software, and to
-    permit persons to whom the Software is furnished to do so, subject to
-    the following conditions:
-
-    The above copyright notice and this permission notice shall be included
-    in all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-    NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-    LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-    OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-    WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
-#endregion License
-#region Authors & Contributors
-/*
-   Author:
-     Andreas Rohleder <andreas@rohleder.cc>
-
-   Contributors:
- */
-#endregion Authors & Contributors
-
-using Cave.Collections.Generic;
-using Cave.IO;
-using Cave.Text;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -54,6 +5,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using Cave.Collections.Generic;
+using Cave.IO;
 
 namespace Cave.Data
 {
@@ -76,7 +29,7 @@ namespace Cave.Data
 
         #region static internal functionality
 
-        static internal RowLayout LoadFieldDefinition(DataReader reader, out int version)
+        internal static RowLayout LoadFieldDefinition(DataReader reader, out int version)
         {
             DateTimeKind dateTimeKind = DateTimeKind.Unspecified;
             DateTimeType dateTimeType = DateTimeType.Undefined;
@@ -127,7 +80,7 @@ namespace Cave.Data
                         }
                         break;
                 }
-                
+
                 Type valueType = null;
                 if ((dataType & DataType.MaskRequireValueType) != 0)
                 {
@@ -156,7 +109,7 @@ namespace Cave.Data
             return RowLayout.CreateUntyped(layoutName, fields.ToArray());
         }
 
-        static internal void WriteFieldDefinition(DataWriter writer, RowLayout layout, int version)
+        internal static void WriteFieldDefinition(DataWriter writer, RowLayout layout, int version)
         {
             if (version < 1)
             {
@@ -209,7 +162,7 @@ namespace Cave.Data
             }
         }
 
-        static internal byte[] GetData(RowLayout layout, Row row, int version)
+        internal static byte[] GetData(RowLayout layout, Row row, int version)
         {
             if (version < 1)
             {
@@ -224,97 +177,97 @@ namespace Cave.Data
             using (MemoryStream buffer = new MemoryStream())
             {
                 DataWriter writer = new DataWriter(buffer);
-				for (int i = 0; i < layout.FieldCount; i++)
-				{
-					FieldProperties fieldProperties = layout.GetProperties(i);
-					switch (fieldProperties.DataType)
-					{
-						case DataType.Binary:
-						{
-							byte[] data = (byte[])row.GetValue(i);
-							if (version < 3)
-							{
-								if (data == null)
+                for (int i = 0; i < layout.FieldCount; i++)
+                {
+                    FieldProperties fieldProperties = layout.GetProperties(i);
+                    switch (fieldProperties.DataType)
+                    {
+                        case DataType.Binary:
+                        {
+                            byte[] data = (byte[])row.GetValue(i);
+                            if (version < 3)
+                            {
+                                if (data == null)
                                 {
                                     data = new byte[0];
                                 }
 
                                 writer.Write(data.Length);
-								writer.Write(data);
-							}
-							else
-							{
-								writer.WritePrefixed(data);
-							}
-							break;
-						}
-						case DataType.Bool: writer.Write((bool)row.GetValue(i)); break;
-						case DataType.TimeSpan: writer.Write(((TimeSpan)row.GetValue(i)).Ticks); break;
-						case DataType.DateTime: writer.Write(((DateTime)row.GetValue(i)).Ticks); break;
-						case DataType.Single: writer.Write((float)row.GetValue(i)); break;
-						case DataType.Double: writer.Write((double)row.GetValue(i)); break;
-						case DataType.Int8: writer.Write((sbyte)row.GetValue(i)); break;
-						case DataType.Int16: writer.Write((short)row.GetValue(i)); break;
-						case DataType.UInt8: writer.Write((byte)row.GetValue(i)); break;
-						case DataType.UInt16: writer.Write((ushort)row.GetValue(i)); break;
-						case DataType.Int32: if (version == 1) { writer.Write((int)row.GetValue(i)); break; } writer.Write7BitEncoded32((int)row.GetValue(i)); break;
-						case DataType.Int64: if (version == 1) { writer.Write((long)row.GetValue(i)); break; } writer.Write7BitEncoded64((long)row.GetValue(i)); break;
-						case DataType.UInt32: if (version == 1) { writer.Write((uint)row.GetValue(i)); break; } writer.Write7BitEncoded32((uint)row.GetValue(i)); break;
-						case DataType.UInt64: if (version == 1) { writer.Write((ulong)row.GetValue(i)); break; } writer.Write7BitEncoded64((ulong)row.GetValue(i)); break;
-						case DataType.Char: writer.Write((char)row.GetValue(i)); break;
-						case DataType.Decimal: writer.Write((decimal)row.GetValue(i)); break;
+                                writer.Write(data);
+                            }
+                            else
+                            {
+                                writer.WritePrefixed(data);
+                            }
+                            break;
+                        }
+                        case DataType.Bool: writer.Write((bool)row.GetValue(i)); break;
+                        case DataType.TimeSpan: writer.Write(((TimeSpan)row.GetValue(i)).Ticks); break;
+                        case DataType.DateTime: writer.Write(((DateTime)row.GetValue(i)).Ticks); break;
+                        case DataType.Single: writer.Write((float)row.GetValue(i)); break;
+                        case DataType.Double: writer.Write((double)row.GetValue(i)); break;
+                        case DataType.Int8: writer.Write((sbyte)row.GetValue(i)); break;
+                        case DataType.Int16: writer.Write((short)row.GetValue(i)); break;
+                        case DataType.UInt8: writer.Write((byte)row.GetValue(i)); break;
+                        case DataType.UInt16: writer.Write((ushort)row.GetValue(i)); break;
+                        case DataType.Int32: if (version == 1) { writer.Write((int)row.GetValue(i)); break; } writer.Write7BitEncoded32((int)row.GetValue(i)); break;
+                        case DataType.Int64: if (version == 1) { writer.Write((long)row.GetValue(i)); break; } writer.Write7BitEncoded64((long)row.GetValue(i)); break;
+                        case DataType.UInt32: if (version == 1) { writer.Write((uint)row.GetValue(i)); break; } writer.Write7BitEncoded32((uint)row.GetValue(i)); break;
+                        case DataType.UInt64: if (version == 1) { writer.Write((ulong)row.GetValue(i)); break; } writer.Write7BitEncoded64((ulong)row.GetValue(i)); break;
+                        case DataType.Char: writer.Write((char)row.GetValue(i)); break;
+                        case DataType.Decimal: writer.Write((decimal)row.GetValue(i)); break;
 
-						case DataType.String:
-						case DataType.User:
-						{
-							object data = row.GetValue(i);
-							if (data == null)
-							{
-								writer.WritePrefixed((string)null);
-							}
-							else
-							{
-								string text = data.ToString();
-								//check for invalid characters
-								switch (fieldProperties.StringEncoding)
-								{
-									case StringEncoding.ASCII:
-										if (!ASCII.IsClean(text))
+                        case DataType.String:
+                        case DataType.User:
+                        {
+                            object data = row.GetValue(i);
+                            if (data == null)
+                            {
+                                writer.WritePrefixed((string)null);
+                            }
+                            else
+                            {
+                                string text = data.ToString();
+                                //check for invalid characters
+                                switch (fieldProperties.StringEncoding)
+                                {
+                                    case StringEncoding.ASCII:
+                                        if (!ASCII.IsClean(text))
                                         {
                                             throw new InvalidDataException(string.Format("Invalid character at field {0}", fieldProperties));
                                         }
 
                                         break;
-									case StringEncoding.UTF16:
-										text = Encoding.Unicode.GetString(Encoding.Unicode.GetBytes(text));
-										break;
-									case StringEncoding.UTF32:
-										text = Encoding.Unicode.GetString(Encoding.UTF32.GetBytes(text));
-										break;
-									case StringEncoding.UTF8: break;
-									default: throw new NotImplementedException();
-								}
-								writer.WritePrefixed(text);
-							}
-							break;
-						}
+                                    case StringEncoding.UTF16:
+                                        text = Encoding.Unicode.GetString(Encoding.Unicode.GetBytes(text));
+                                        break;
+                                    case StringEncoding.UTF32:
+                                        text = Encoding.Unicode.GetString(Encoding.UTF32.GetBytes(text));
+                                        break;
+                                    case StringEncoding.UTF8: break;
+                                    default: throw new NotImplementedException();
+                                }
+                                writer.WritePrefixed(text);
+                            }
+                            break;
+                        }
 
-						case DataType.Enum:
-						{
-							long value = Convert.ToInt64(row.GetValue(i));
-							writer.Write7BitEncoded64(value);
-							break;
-						}
+                        case DataType.Enum:
+                        {
+                            long value = Convert.ToInt64(row.GetValue(i));
+                            writer.Write7BitEncoded64(value);
+                            break;
+                        }
 
-						default:
-							throw new NotImplementedException(string.Format("Datatype {0} not implemented!", fieldProperties.DataType));
-					}
-				}
+                        default:
+                            throw new NotImplementedException(string.Format("Datatype {0} not implemented!", fieldProperties.DataType));
+                    }
+                }
                 return buffer.ToArray();
             }
         }
 
-        static internal Row ReadCurrentRow(DataReader reader, int version, RowLayout layout)
+        internal static Row ReadCurrentRow(DataReader reader, int version, RowLayout layout)
         {
             if (version < 1)
             {
@@ -403,7 +356,7 @@ namespace Cave.Data
             m_FileStream = File.Open(m_DataFile, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
             WriteFieldDefinition(new DataWriter(m_FileStream), Layout, Version);
             m_CurrentLength = m_FileStream.Position;
-			File.Delete(m_IndexFile);
+            File.Delete(m_IndexFile);
             m_Index = new DatIndex(m_IndexFile);
         }
 
@@ -534,7 +487,7 @@ namespace Cave.Data
                     throw new DataException(string.Format("Database corrupt!"));
                 }
             }
-			IncreaseSequenceNumber();
+            IncreaseSequenceNumber();
             return id;
         }
         #endregion
@@ -753,20 +706,20 @@ namespace Cave.Data
             m_Index.Free(entry);
         }
 
-		/// <summary>Removes all rows from the table matching the specified search.</summary>
-		/// <param name="search">The Search used to identify rows for removal</param>
-		/// <returns>Returns the number of dataset deleted.</returns>
-		public override int TryDelete(Search search)
-		{
-			var ids = FindRows(search);
-			Delete(ids);
-			return ids.Count;
-		}
+        /// <summary>Removes all rows from the table matching the specified search.</summary>
+        /// <param name="search">The Search used to identify rows for removal</param>
+        /// <returns>Returns the number of dataset deleted.</returns>
+        public override int TryDelete(Search search)
+        {
+            List<long> ids = FindRows(search);
+            Delete(ids);
+            return ids.Count;
+        }
 
-		/// <summary>
-		/// Clears all rows of the table.
-		/// </summary>
-		public override void Clear()
+        /// <summary>
+        /// Clears all rows of the table.
+        /// </summary>
+        public override void Clear()
         {
             Recreate();
         }
@@ -774,13 +727,7 @@ namespace Cave.Data
         /// <summary>
         /// Obtains the RowCount
         /// </summary>
-        public override long RowCount
-        {
-            get
-            {
-                return m_Index == null ? 0 : m_Index.Count;
-            }
-        }
+        public override long RowCount => m_Index == null ? 0 : m_Index.Count;
 
         /// <summary>
         /// Obtains the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!)
@@ -849,7 +796,7 @@ namespace Cave.Data
         {
             List<Row> result = new List<Row>((int)RowCount);
             m_FileStream.Position = m_Start;
-            DataReader reader  = new DataReader(m_FileStream);
+            DataReader reader = new DataReader(m_FileStream);
             while (m_FileStream.Position < m_FileStream.Length)
             {
                 Row row = ReadCurrentRow(reader, Version, Layout);
@@ -1151,10 +1098,7 @@ namespace Cave.Data
         /// <returns></returns>
         public virtual T this[long id]
         {
-            get
-            {
-                return GetStruct(id);
-            }
+            get => GetStruct(id);
             set
             {
                 long i = Layout.GetID(value);
