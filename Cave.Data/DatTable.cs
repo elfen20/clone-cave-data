@@ -586,7 +586,7 @@ namespace Cave.Data
             }
 
             search.LoadLayout(Layout);
-            SortedDictionary<long, Row> rows = new SortedDictionary<long, Row>();
+            FakeSortedDictionary<long, Row> rows = new FakeSortedDictionary<long, Row>();
             bool found = FindFirst(r => search.Check(r), out Row row);
             while (found)
             {

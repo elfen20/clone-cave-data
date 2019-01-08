@@ -20,6 +20,7 @@ namespace Cave.Data
         /// </summary>
         /// <param name="expected">The expected layout</param>
         /// <param name="current">The layout to check</param>
+        /// <param name="fieldPropertiesConversion">field conversion function to use</param>
         public static void CheckLayout(RowLayout expected, RowLayout current, Func<FieldProperties, FieldProperties> fieldPropertiesConversion = null)
         {
             if (expected == null)
