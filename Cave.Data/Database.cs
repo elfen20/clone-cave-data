@@ -281,6 +281,10 @@ namespace Cave.Data
         public abstract bool Closed { get; }
         #endregion
 
+        /// <summary>
+        /// Database {Name} [in]secure
+        /// </summary>
+        /// <returns>Database {Name} [in]secure</returns>
         public override string ToString()
         {
             if (IsSecure)

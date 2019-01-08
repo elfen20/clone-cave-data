@@ -29,7 +29,7 @@ namespace Cave.Data
         /// <exception cref="System.InvalidOperationException">
         /// </exception>
         /// <exception cref="System.NotSupportedException"></exception>
-        internal static List<long> FindRows(RowLayout layout, IFieldIndex[] indices, SortedDictionary<long, Row> table, Search search, ResultOption resultOption, bool skipSearch = false)
+        internal static List<long> FindRows(RowLayout layout, IFieldIndex[] indices, FakeSortedDictionary<long, Row> table, Search search, ResultOption resultOption, bool skipSearch = false)
         {
             if (resultOption == null)
             {
@@ -264,7 +264,7 @@ namespace Cave.Data
         long m_NextFreeID = 1;
 
         /// <summary>The rows (id, row) dictionary</summary>
-        SortedDictionary<long, Row> m_Items;
+        FakeSortedDictionary<long, Row> m_Items;
 
         /// <summary>The indices for fast lookups</summary>
         FieldIndex[] m_Indices;
@@ -294,7 +294,7 @@ namespace Cave.Data
         public MemoryTable(IDatabase database, RowLayout layout, MemoryTableOptions options = 0)
             : base(database, layout)
         {
-            m_Items = new SortedDictionary<long, Row>();
+            m_Items = new FakeSortedDictionary<long, Row>();
             m_MemoryTableOptions = options;
             m_Indices = CreateIndex(Layout, m_MemoryTableOptions);
         }
@@ -860,7 +860,7 @@ namespace Cave.Data
                 Trace.TraceInformation("Clear {0}", this);
             }
 
-            m_Items = new SortedDictionary<long, Row>();
+            m_Items = new FakeSortedDictionary<long, Row>();
             m_Indices = CreateIndex(Layout, m_MemoryTableOptions);
             IncreaseSequenceNumber();
         }
@@ -985,7 +985,7 @@ namespace Cave.Data
         long m_NextFreeID = 1;
 
         /// <summary>The rows (id, row) dictionary</summary>
-        SortedDictionary<long, Row> m_Items = new SortedDictionary<long, Row>();
+        FakeSortedDictionary<long, Row> m_Items = new FakeSortedDictionary<long, Row>();
 
         /// <summary>The indices for fast lookups</summary>
         FieldIndex[] m_Indices;
@@ -1016,7 +1016,7 @@ namespace Cave.Data
         public MemoryTable(IDatabase database, RowLayout layout, MemoryTableOptions options = 0)
             : base(database, layout)
         {
-            m_Items = new SortedDictionary<long, Row>();
+            m_Items = new FakeSortedDictionary<long, Row>();
             m_MemoryTableOptions = options;
             m_Indices = CreateIndex(Layout, m_MemoryTableOptions);
         }
@@ -1751,7 +1751,7 @@ namespace Cave.Data
                 m_NextFreeID = 1;
             }
 
-            m_Items = new SortedDictionary<long, Row>();
+            m_Items = new FakeSortedDictionary<long, Row>();
             m_Indices = CreateIndex(Layout, m_MemoryTableOptions);
             IncreaseSequenceNumber();
         }

@@ -134,8 +134,9 @@ namespace Cave.Data
         /// <summary>
         /// Reads a row from the file
         /// </summary>
-        /// <param name="row"></param>
-        /// <returns></returns>
+        /// <param name="checkLayout">Check layout prior read</param>
+        /// <param name="row">The read row</param>
+        /// <returns>Returns true is the row was read, false otherwise</returns>
         public bool ReadRow<T>(bool checkLayout, out T row) where T : struct
         {
             RowLayout layout = RowLayout.CreateTyped(typeof(T));

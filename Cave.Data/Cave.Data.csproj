@@ -10,7 +10,7 @@
     <PackageLicenseUrl>https://www.gnu.org/licenses/lgpl-3.0.en.html</PackageLicenseUrl>
     <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>Cave.Data.snk</AssemblyOriginatorKeyFile>
-    <Version>1.0.0</Version>
+    <Version>1.0.1</Version>
     <PackageIconUrl>https://www.cavesystems.de/favicon.ico</PackageIconUrl>
     <PackageTags>CaveSystems Database</PackageTags>
     <PackageProjectUrl>https://github.com/CaveSystems/cave-data</PackageProjectUrl>
@@ -20,11 +20,11 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <AssemblyVersion>1.0.0</AssemblyVersion>
-    <FileVersion>2018.1215.944.237</FileVersion>
+    <AssemblyVersion>1.0.1</AssemblyVersion>
+    <FileVersion>2019.108.1722.309</FileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DebugType>pdbonly</DebugType>
+    <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -62,12 +62,12 @@
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)'=='net20' OR '$(TargetFramework)'=='netstandard1.3'">
-    <PackageReference Include="Cave.Backports" Version="1.0.0" />
+    <PackageReference Include="Cave.Backports" Version="1.0.1" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Cave.Compression" Version="1.0.0" />
-    <PackageReference Include="Cave.IO" Version="1.0.0" />
-    <PackageReference Include="Cave.Extensions" Version="1.0.0" />
+    <PackageReference Include="Cave.IO" Version="1.0.1" />
+    <PackageReference Include="Cave.Extensions" Version="1.0.1" />
     <PackageReference Include="Cave.Collections" Version="1.0.1" />
     <PackageReference Include="Cave.Platform" Version="1.0.0" />
     <PackageReference Include="Cave.BaseX" Version="1.0.0" />

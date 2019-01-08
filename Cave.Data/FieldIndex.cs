@@ -1,10 +1,10 @@
+using Cave.Collections.Generic;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Cave.Collections.Generic;
 
 namespace Cave.Data
 {
@@ -72,7 +72,7 @@ namespace Cave.Data
         /// <summary>
         /// resolves value to IDs
         /// </summary>
-        SortedDictionary<object, Set<long>> m_Index;
+        FakeSortedDictionary<object, Set<long>> m_Index;
 
         readonly object Null = new BoxedValue(null);
 #endif
@@ -85,9 +85,9 @@ namespace Cave.Data
         public FieldIndex()
         {
 #if USE_BOXING
-            m_Index = new SortedDictionary<BoxedValue, Set<long>>();
+            m_Index = new FakeSortedDictionary<BoxedValue, Set<long>>();
 #else
-            m_Index = new SortedDictionary<object, Set<long>>();
+            m_Index = new FakeSortedDictionary<object, Set<long>>();
 #endif
         }
 
@@ -217,9 +217,9 @@ namespace Cave.Data
 
         class FieldIndexEnumeration<T> : IEnumerable<long>
         {
-            SortedDictionary<T, Set<long>> idx;
+            FakeSortedDictionary<T, Set<long>> idx;
 
-            public FieldIndexEnumeration(SortedDictionary<T, Set<long>> idx)
+            public FieldIndexEnumeration(FakeSortedDictionary<T, Set<long>> idx)
             {
                 this.idx = idx;
             }
@@ -237,11 +237,11 @@ namespace Cave.Data
 
         class FieldIndexEnumerator<T> : IEnumerator<long>
         {
-            SortedDictionary<T, Set<long>> idx;
+            FakeSortedDictionary<T, Set<long>> idx;
             IEnumerator outer;
             IEnumerator inner;
 
-            public FieldIndexEnumerator(SortedDictionary<T, Set<long>> idx)
+            public FieldIndexEnumerator(FakeSortedDictionary<T, Set<long>> idx)
             {
                 this.idx = idx;
                 Reset();
