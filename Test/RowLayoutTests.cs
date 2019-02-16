@@ -11,10 +11,10 @@ using Test.Cave;
 namespace Test.Cave.Data
 {
     [TestFixture]
-    public class Test_RowLayout
+    public class RowLayoutTests
     {
         [Test]
-        public void Test_RowLayout_Check()
+        public void CheckLayout()
         {
             RowLayout layoutA = RowLayout.CreateTyped(typeof(TestStructBug));
             List<FieldProperties> fields = new List<FieldProperties>();
@@ -33,12 +33,11 @@ namespace Test.Cave.Data
         }
 
         [Test]
-        public void Text_RowLayout_TypedCheck()
+        public void TypedCheck()
         {
             RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
             Assert.AreEqual(layout.IDField.Name, layout.IDField.NameAtDatabase);
             Assert.AreEqual(layout.IDFieldIndex, 0);
-
         }
     }
 }

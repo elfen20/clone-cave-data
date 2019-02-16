@@ -7,7 +7,7 @@ namespace Test.Cave.Data
     public class TestRunner
     {
         [STAThread]
-        public static int Main2()
+        public static int Main()
         {
             int errorCount = 0;
             foreach (Type t in typeof(TestRunner).Assembly.GetTypes())

@@ -445,7 +445,7 @@ namespace Cave.Data
         /// <returns></returns>
         public override List<Row> GetRows()
         {
-            return m_Items.Values.ToList();
+            return m_Items.Values.AsList();
         }
 
         /// <summary>Obtains the rows with the given ids</summary>
@@ -1197,7 +1197,7 @@ namespace Cave.Data
         /// <returns></returns>
         public override List<Row> GetRows()
         {
-            return m_Items.Values.ToList();
+            return m_Items.Values.AsList();
         }
 
         /// <summary>Obtains the rows with the given ids</summary>

@@ -1,31 +1,32 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Cave.Data
 {
     class FakeSortedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
     {
-        IDictionary<TKey, TValue> dict;
-        TKey[] keys;
+        IDictionary<TKey, TValue> unsorted;
+        TKey[] sortedKeys;
 
         public FakeSortedDictionary()
         {
-            dict = new Dictionary<TKey, TValue>();
+            unsorted = new Dictionary<TKey, TValue>();
         }
 
         public FakeSortedDictionary(int capacity)
         {
-            dict = new Dictionary<TKey, TValue>(capacity);
+            unsorted = new Dictionary<TKey, TValue>(capacity);
         }
 
         public TValue this[TKey key]
         {
-            get => dict[key];
+            get => unsorted[key];
             set
             {
-                dict[key] = value;
-                keys = null;
+                unsorted[key] = value;
+                sortedKeys = null;
             }
         }
 
@@ -33,80 +34,92 @@ namespace Cave.Data
         {
             get
             {
-                if (keys == null)
+                if (sortedKeys == null)
                 {
-                    keys = new TKey[dict.Count];
-                    dict.Keys.CopyTo(keys, 0);
-                    Array.Sort(keys);
+                    sortedKeys = new TKey[unsorted.Count];
+                    unsorted.Keys.CopyTo(sortedKeys, 0);
+                    Array.Sort(sortedKeys);
                 }
-                return keys;
+                return sortedKeys;
             }
         }
 
-        public ICollection<TValue> Values => dict.Values;
+        public ICollection<TValue> Values
+        {
+            get
+            {
+                return Keys.Select(k => unsorted[k]).ToList();
+            }
+        }
 
-        public int Count => dict.Count;
+        public int Count => unsorted.Count;
 
-        public bool IsReadOnly => dict.IsReadOnly;
+        public bool IsReadOnly => unsorted.IsReadOnly;
 
         public void Add(TKey key, TValue value)
         {
-            dict.Add(key, value);
-            keys = null;
+            unsorted.Add(key, value);
+            sortedKeys = null;
         }
 
         public void Add(KeyValuePair<TKey, TValue> item)
         {
-            dict.Add(item);
-            keys = null;
+            unsorted.Add(item);
+            sortedKeys = null;
         }
 
         public void Clear()
         {
-            dict.Clear();
-            keys = null;
+            unsorted.Clear();
+            sortedKeys = null;
         }
 
         public bool Contains(KeyValuePair<TKey, TValue> item)
         {
-            return dict.Contains(item);
+            return unsorted.Contains(item);
         }
 
         public bool ContainsKey(TKey key)
         {
-            return dict.ContainsKey(key);
+            return unsorted.ContainsKey(key);
         }
 
         public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
         {
-            dict.CopyTo(array, arrayIndex);
-        }
-
-        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
-        {
-            return dict.GetEnumerator();
+            unsorted.CopyTo(array, arrayIndex);
         }
 
         public bool Remove(TKey key)
         {
-            keys = null;
-            return dict.Remove(key);
+            sortedKeys = null;
+            return unsorted.Remove(key);
         }
 
         public bool Remove(KeyValuePair<TKey, TValue> item)
         {
-            keys = null;
-            return dict.Remove(item);
+            sortedKeys = null;
+            return unsorted.Remove(item);
         }
 
         public bool TryGetValue(TKey key, out TValue value)
         {
-            return dict.TryGetValue(key, out value);
+            return unsorted.TryGetValue(key, out value);
         }
 
-        IEnumerator IEnumerable.GetEnumerator()
+        public IList<KeyValuePair<TKey, TValue>> ToArray()
         {
-            return dict.GetEnumerator();
+            var count = unsorted.Count;
+            var result = new KeyValuePair<TKey, TValue>[count];
+            int i = 0;
+            foreach (var key in Keys)
+            {
+                result[i++] = new KeyValuePair<TKey, TValue>(key, unsorted[key]);
+            }
+            return result;
         }
+
+        public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => ToArray().GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => ToArray().GetEnumerator();
     }
 }

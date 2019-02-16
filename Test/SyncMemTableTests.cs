@@ -10,10 +10,10 @@ using Cave;
 namespace Test.Cave.Data
 {
     [TestFixture]
-    public class Tests_SynchronizedMemoryTable
+    public class SyncMemTableTests
     {
         [Test]
-        public void Test_SynchronizedMemoryTable_SynchronizedMemoryTable()
+        public void Default()
         {
             {
                 // Create SynchronizeMemoryTable from Layout
@@ -60,7 +60,7 @@ namespace Test.Cave.Data
         }
 
         [Test]
-        public void Test_SynchronizedMemoryTable_LoadTable()
+        public void LoadTable()
         {
             RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
             MemoryTable l_Memory = new MemoryTable(layout);
@@ -102,7 +102,7 @@ namespace Test.Cave.Data
         }
 
         [Test]
-        public void Test_SynchronizedMemoryTable_Count()
+        public void Count()
         {
             // SynchronizedMemoryTable
             {
@@ -163,7 +163,7 @@ namespace Test.Cave.Data
         }
 
         [Test]
-        public void Test_SynchronizedMemoryTable_Clear()
+        public void Clear()
         {
             RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
             MemoryTable l_Memory = new MemoryTable(layout);
@@ -193,7 +193,7 @@ namespace Test.Cave.Data
         }
 
         [Test]
-        public void Test_SynchronizedMemoryTable_GetRow()
+        public void GetRow()
         {
             RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
             // SynchronizedMemoryTable
@@ -453,7 +453,7 @@ namespace Test.Cave.Data
         }
 
         [Test]
-        public void Test_SynchronizedMemoryTable_GetRowAt()
+        public void GetRowAt()
         {
             RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
             MemoryTable l_Memory = new MemoryTable(layout);
@@ -507,7 +507,7 @@ namespace Test.Cave.Data
         }
 
         [Test]
-        public void Test_SynchronizedMemoryTable_Set()
+        public void Set()
         {
             RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
             MemoryTable l_Memory = new MemoryTable(layout);
@@ -542,7 +542,7 @@ namespace Test.Cave.Data
         }
 
         [Test]
-        public void Test_SynchronizedMemoryTable_Exist()
+        public void Exist()
         {
             RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
             MemoryTable l_Memory = new MemoryTable(layout);
@@ -573,7 +573,7 @@ namespace Test.Cave.Data
         }
 
         [Test]
-        public void Test_SynchronizedMemoryTable_Insert()
+        public void Insert()
         {
             RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
 
@@ -624,7 +624,7 @@ namespace Test.Cave.Data
         }
 
         [Test]
-        public void Test_SynchronizedMemoryTable_Update()
+        public void Update()
         {
             RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
             MemoryTable l_Memory = new MemoryTable(layout);
@@ -729,7 +729,7 @@ namespace Test.Cave.Data
         }
 
         [Test]
-        public void Test_SynchronizedMemoryTable_Delete()
+        public void Delete()
         {
             // SynchronizedMemoryTable
             {
@@ -902,7 +902,7 @@ namespace Test.Cave.Data
         }
 
         [Test]
-        public void Test_SynchronizedMemoryTable_Replace()
+        public void Replace()
         {
             RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
             // SynchronizedMemoryTable
@@ -1009,7 +1009,7 @@ namespace Test.Cave.Data
         }
 
         [Test]
-        public void Test_SynchronizedMemoryTable_FindRow()
+        public void FindRow()
         {
             RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
             // SynchronizedMemoryTable
@@ -1147,7 +1147,7 @@ namespace Test.Cave.Data
         }
 
         [Test]
-        public void Test_SynchronizedMemoryTable_GetValues()
+        public void GetValues()
         {
             RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
             // SynchronizedMemoryTable
@@ -1253,7 +1253,7 @@ namespace Test.Cave.Data
         }
 
         [Test]
-        public void Test_SynchronizedMemoryTable_ToMemory()
+        public void ToMemory()
         {
 
             // SynchronizedMemoryTable
@@ -1301,7 +1301,7 @@ namespace Test.Cave.Data
         }
 
         [Test]
-        public void Test_SynchronizedMemoryTable_SetRows()
+        public void SetRows()
         {
             RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
             // SynchronizedMemoryTable
@@ -1338,7 +1338,7 @@ namespace Test.Cave.Data
         }
 
         [Test]
-        public void Test_GetNextUsedID()
+        public void GetNextUsedID()
         {
             // SynchronizedMemoryTable
             {
@@ -1381,7 +1381,7 @@ namespace Test.Cave.Data
         }
 
         [Test]
-        public void Test_SynchronizedMemoryTable_GetStructs()
+        public void GetStructs()
         {
             SynchronizedMemoryTable<TestStructClean> l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
             List<TestStructClean> l_List = new List<TestStructClean>();
