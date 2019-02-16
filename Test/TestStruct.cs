@@ -29,6 +29,13 @@ namespace Test.Cave
         public string Source;
         [Field]
         public TestEnum Level;
+        [Field]
+        public int Integer;
+
+        public override string ToString()
+        {
+            return $"{ID} {Content} {DateTime} {Name} {Source} {Level} {Integer}";
+        }
     }
 
 
