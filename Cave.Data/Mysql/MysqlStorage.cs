@@ -181,7 +181,7 @@ namespace Cave.Data.Mysql
                     "Port=" + ConnectionString.GetPort(3306) + ";" +
                     "CharSet=" + (SupportsFullUTF8 ? "utf8mb4" : "utf8") + ";" +
                     //"Protocol=socket;" +
-                    //"Allow Zero Datetime=true;" +
+                    "Allow Zero Datetime=true;" +
                     (requireSSL ? "SslMode=Required;" : "SslMode=Preferred;");
         }
 
