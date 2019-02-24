@@ -415,6 +415,7 @@ namespace Cave.Data.Sql
                     case DateTimeType.BigIntHumanReadable: return dt.ToString(CaveSystemData.BigIntDateTimeFormat);
                     case DateTimeType.BigIntTicks: return dt.Ticks.ToString();
                     case DateTimeType.DecimalSeconds: return (dt.Ticks / (decimal)TimeSpan.TicksPerSecond).ToString();
+                    case DateTimeType.DoubleSeconds: return (dt.Ticks / (double)TimeSpan.TicksPerSecond).ToString();
                     default: throw new NotImplementedException();
                 }
             }
@@ -464,9 +465,23 @@ namespace Cave.Data.Sql
                     return localValue.ToString();
 
                 case DataType.TimeSpan:
-                    return ((TimeSpan)localValue).TotalSeconds;
+                {
+                    TimeSpan value = (TimeSpan)localValue;
+                    switch (field.DateTimeType)
+                    {
+                        case DateTimeType.Undefined:
+                        case DateTimeType.Native: return value;
+
+                        case DateTimeType.BigIntHumanReadable: return long.Parse(new DateTime(value.Ticks).ToString(CaveSystemData.BigIntDateTimeFormat));
+                        case DateTimeType.BigIntTicks: return value.Ticks;
+                        case DateTimeType.DecimalSeconds: return ((decimal)value.Ticks / TimeSpan.TicksPerSecond);
+                        case DateTimeType.DoubleSeconds: return ((double)value.Ticks / TimeSpan.TicksPerSecond);
+                        default: throw new NotImplementedException();
+                    }
+                }
 
                 case DataType.DateTime:
+                {
                     if ((DateTime)localValue == default(DateTime))
                     {
                         return null;
@@ -509,8 +524,10 @@ namespace Cave.Data.Sql
                         case DateTimeType.BigIntHumanReadable: return long.Parse(value.ToString(CaveSystemData.BigIntDateTimeFormat));
                         case DateTimeType.BigIntTicks: return value.Ticks;
                         case DateTimeType.DecimalSeconds: return ((decimal)value.Ticks / TimeSpan.TicksPerSecond);
+                        case DateTimeType.DoubleSeconds: return ((double)value.Ticks / TimeSpan.TicksPerSecond);
                         default: throw new NotImplementedException();
                     }
+                }
             }
             return localValue;
         }
@@ -577,21 +594,47 @@ namespace Cave.Data.Sql
                             case DateTimeType.DecimalSeconds:
                                 ticks = (long)decimal.Round((decimal)databaseValue * TimeSpan.TicksPerSecond);
                                 break;
+
+                            case DateTimeType.DoubleSeconds:
+                                ticks = (long)Math.Round((double)databaseValue * TimeSpan.TicksPerSecond);
+                                break;
                         }
                     }
                     return new DateTime(ticks, field.DateTimeKind);
                 }
                 case DataType.TimeSpan:
                 {
-                    if (databaseValue == null || databaseValue.Equals(DBNull.Value))
+                    long ticks = 0;
+                    if (databaseValue != null && !databaseValue.Equals(DBNull.Value))
                     {
-                        return TimeSpan.Zero;
+                        switch (field.DateTimeType)
+                        {
+                            default: throw new NotSupportedException(string.Format("DateTimeType {0} is not supported", field.DateTimeType));
+
+                            case DateTimeType.BigIntHumanReadable:
+                                ticks = DateTime.ParseExact(databaseValue.ToString(), CaveSystemData.BigIntDateTimeFormat, CultureInfo.InvariantCulture).Ticks;
+                                break;
+
+                            case DateTimeType.Undefined:
+                            case DateTimeType.Native:
+                                try { ticks = ((TimeSpan)Convert.ChangeType(databaseValue, typeof(TimeSpan), CultureInfo.InvariantCulture)).Ticks; }
+                                catch { ticks = 0; }
+                                break;
+
+                            case DateTimeType.BigIntTicks:
+                                ticks = (long)databaseValue;
+                                break;
+
+                            case DateTimeType.DecimalSeconds:
+                                ticks = (long)decimal.Round((decimal)databaseValue * TimeSpan.TicksPerSecond);
+                                break;
+
+                            case DateTimeType.DoubleSeconds:
+                                ticks = (long)Math.Round((double)databaseValue * TimeSpan.TicksPerSecond);
+                                break;
+                        }
                     }
-                    if (databaseValue is TimeSpan)
-                    {
-                        return (TimeSpan)databaseValue;
-                    }
-                    return TimeSpan.FromSeconds((double)databaseValue);
+                    return new TimeSpan(ticks);
                 }
             }
             if (databaseValue == DBNull.Value)
@@ -744,9 +787,6 @@ namespace Cave.Data.Sql
             //check if datatype is replacement for missing sql type
             switch (field.DataType)
             {
-                case DataType.TimeSpan:
-                    return new FieldProperties(field, DataType.Double);
-
                 case DataType.Enum:
                     return new FieldProperties(field, DataType.Int64);
 
@@ -754,6 +794,7 @@ namespace Cave.Data.Sql
                     return new FieldProperties(field, DataType.String);
 
                 case DataType.DateTime:
+                case DataType.TimeSpan:
                     switch (field.DateTimeType)
                     {
                         case DateTimeType.Undefined:
@@ -761,6 +802,7 @@ namespace Cave.Data.Sql
                         case DateTimeType.BigIntHumanReadable: return new FieldProperties(field, DataType.Int64);
                         case DateTimeType.BigIntTicks: return new FieldProperties(field, DataType.Int64);
                         case DateTimeType.DecimalSeconds: return new FieldProperties(field, DataType.Decimal, 65.30f);
+                        case DateTimeType.DoubleSeconds: return new FieldProperties(field, DataType.Double);
                         default: throw new NotImplementedException();
                     }
             }

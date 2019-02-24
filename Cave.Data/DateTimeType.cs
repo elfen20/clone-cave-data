@@ -29,5 +29,10 @@ namespace Cave
         /// Use a decimal field with full available decimal precision (default 65,30)
         /// </summary>
         DecimalSeconds = 4,
+
+        /// <summary>
+        /// Use a decimal field with full available decimal precision (default 65,30)
+        /// </summary>
+        DoubleSeconds = 5,
     }
 }

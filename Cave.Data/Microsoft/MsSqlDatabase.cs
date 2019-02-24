@@ -153,9 +153,47 @@ namespace Cave.Data.Microsoft
 
                     case DataType.Bool: queryText.Append("BIT"); break;
 
-                    case DataType.DateTime: queryText.Append("DATETIME"); break;
+                    case DataType.DateTime:
+                        switch (fieldProperties.DateTimeType)
+                        {
+                            case DateTimeType.Undefined:
+                            case DateTimeType.Native:
+                                queryText.Append("DATETIME");
+                                break;
+                            case DateTimeType.DoubleSeconds:
+                                queryText.Append("FLOAT(53)");
+                                break;
+                            case DateTimeType.DecimalSeconds:
+                                queryText.Append("NUMERIC(28,8)");
+                                break;
+                            case DateTimeType.BigIntHumanReadable:
+                            case DateTimeType.BigIntTicks:
+                                queryText.Append("BIGINT");
+                                break;
+                            default: throw new NotImplementedException();
+                        }
+                        break;
 
-                    case DataType.TimeSpan: queryText.Append("FLOAT(53)"); break;
+                    case DataType.TimeSpan:
+                        switch (fieldProperties.DateTimeType)
+                        {
+                            case DateTimeType.Undefined:
+                            case DateTimeType.Native:
+                                queryText.Append("TIMESPAN");
+                                break;
+                            case DateTimeType.DoubleSeconds:
+                                queryText.Append("FLOAT(53)");
+                                break;
+                            case DateTimeType.DecimalSeconds:
+                                queryText.Append("NUMERIC(28,8)");
+                                break;
+                            case DateTimeType.BigIntHumanReadable:
+                            case DateTimeType.BigIntTicks:
+                                queryText.Append("BIGINT");
+                                break;
+                            default: throw new NotImplementedException();
+                        }
+                        break;
 
                     case DataType.Int8:
                         queryText.Append("SMALLINT");

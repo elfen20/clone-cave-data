@@ -135,18 +135,7 @@ namespace Cave.Data
                             string str = values[i].ToString();
                             result.Append(str);
                             break;
-                        }
-                        case DataType.TimeSpan:
-                        {
-                            if (!Properties.SaveDefaultValues && (values[i].Equals(TimeSpan.Zero)))
-                            {
-                                break;
-                            }
-
-                            string str = values[i].ToString();
-                            result.Append(str);
-                            break;
-                        }
+                        }                        
                         case DataType.Decimal:
                         {
                             if (!Properties.SaveDefaultValues && (values[i].Equals(0m)))
@@ -178,6 +167,17 @@ namespace Cave.Data
 
                             double value = (double)values[i];
                             result.Append(value.ToString("R", Properties.Culture));
+                            break;
+                        }
+                        case DataType.TimeSpan:
+                        {
+                            if (!Properties.SaveDefaultValues && (values[i].Equals(TimeSpan.Zero)))
+                            {
+                                break;
+                            }
+
+                            string str = values[i].ToString();
+                            result.Append(str);
                             break;
                         }
                         case DataType.DateTime:

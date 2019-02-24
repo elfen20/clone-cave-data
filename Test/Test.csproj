@@ -2,9 +2,9 @@
   <PropertyGroup>
     <TargetFrameworks>net45</TargetFrameworks>
     <IsPackable>false</IsPackable>
-    <Version>1.0.3</Version>
-    <AssemblyVersion>1.0.3</AssemblyVersion>
-    <FileVersion>2019.224.1500.735</FileVersion>
+    <Version>1.0.4</Version>
+    <AssemblyVersion>1.0.4</AssemblyVersion>
+    <FileVersion>2019.224.1513.746</FileVersion>
     <StartupObject>Test.Cave.Data.TestRunner</StartupObject>
     <ApplicationIcon />
     <OutputType>Exe</OutputType>

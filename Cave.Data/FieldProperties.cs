@@ -84,6 +84,7 @@ namespace Cave
                 if (attribute is DescriptionAttribute descriptionAttribute)
                 {
                     description = descriptionAttribute.Description;
+                    continue;
                 }
                 if (attribute is DateTimeFormatAttribute dateTimeFormatAttribute)
                 {
@@ -94,16 +95,36 @@ namespace Cave
                         case DateTimeType.BigIntTicks:
                         case DateTimeType.BigIntHumanReadable: databaseDataType = DataType.Int64; break;
                         case DateTimeType.DecimalSeconds: databaseDataType = DataType.Decimal; break;
+                        case DateTimeType.DoubleSeconds: databaseDataType = DataType.Double; break;
 
                         case DateTimeType.Undefined:
                         case DateTimeType.Native: databaseDataType = DataType.DateTime; break;
 
                         default: throw new NotImplementedException(string.Format("DateTimeType {0} is not implemented!", dateTimeType));
                     }
+                    continue;
+                }
+                if (attribute is TimeSpanFormatAttribute timeSpanFormatAttribute)
+                {
+                    dateTimeType = timeSpanFormatAttribute.Type;
+                    switch (dateTimeType)
+                    {
+                        case DateTimeType.BigIntTicks:
+                        case DateTimeType.BigIntHumanReadable: databaseDataType = DataType.Int64; break;
+                        case DateTimeType.DecimalSeconds: databaseDataType = DataType.Decimal; break;
+                        case DateTimeType.DoubleSeconds: databaseDataType = DataType.Double; break;
+
+                        case DateTimeType.Undefined:
+                        case DateTimeType.Native: databaseDataType = DataType.TimeSpan; break;
+
+                        default: throw new NotImplementedException(string.Format("DateTimeType {0} is not implemented!", dateTimeType));
+                    }
+                    continue;
                 }
                 if (attribute is StringFormatAttribute stringFormatAttribute)
                 {
                     stringEncoding = stringFormatAttribute.Encoding;
+                    continue;
                 }
             }
             if (databaseName == null)
@@ -334,8 +355,16 @@ namespace Cave
                 case DataType.UInt32:
                 case DataType.UInt64:
                 case DataType.Char:
-                case DataType.Single:
+                case DataType.Single:                
+                    break;
                 case DataType.TimeSpan:
+                    if (DateTimeType == DateTimeType.Undefined)
+                    {
+                        DateTimeType = DateTimeType.Native;
+#if DEBUG
+                        Trace.TraceWarning("Field {0} DateTimeType undefined! Falling back to native date time type. (Precisision may be only seconds!)", this);
+#endif
+                    }
                     break;
                 case DataType.DateTime:
                     if (DateTimeType == DateTimeType.Undefined)
@@ -465,6 +494,40 @@ namespace Cave
 
             switch (DataType)
             {
+                case DataType.TimeSpan:
+                {
+                    if (string.IsNullOrEmpty(text) || text == "null")
+                    {
+                        return default(TimeSpan);
+                    }
+
+                    switch (DateTimeType)
+                    {
+                        default: throw new NotSupportedException(string.Format("DateTimeType {0} is not supported", DateTimeType));
+
+                        case DateTimeType.BigIntHumanReadable:
+                            return new TimeSpan(DateTime.ParseExact(text, CaveSystemData.BigIntDateTimeFormat, culture).Ticks);
+
+                        case DateTimeType.Undefined:
+                        case DateTimeType.Native:
+                            if (stringMarker != null)
+                            {
+                                text = text.Unbox(stringMarker, false);
+                            }
+
+                            return TimeSpan.Parse(text);
+
+                        case DateTimeType.BigIntTicks:
+                            return new TimeSpan(long.Parse(text, culture));
+
+                        case DateTimeType.DecimalSeconds:
+                            return new TimeSpan((long)decimal.Round(decimal.Parse(text, culture) * TimeSpan.TicksPerSecond));
+
+                        case DateTimeType.DoubleSeconds:
+                            return new TimeSpan((long)Math.Round(double.Parse(text, culture) * TimeSpan.TicksPerSecond));
+                    }
+                }
+
                 case DataType.DateTime:
                 {
                     if (string.IsNullOrEmpty(text) || text == "null")
@@ -493,6 +556,9 @@ namespace Cave
 
                         case DateTimeType.DecimalSeconds:
                             return new DateTime((long)decimal.Round(decimal.Parse(text, culture) * TimeSpan.TicksPerSecond), DateTimeKind);
+
+                        case DateTimeType.DoubleSeconds:
+                            return new DateTime((long)Math.Round(double.Parse(text, culture) * TimeSpan.TicksPerSecond), DateTimeKind);
                     }
                 }
                 case DataType.Binary:
@@ -516,13 +582,6 @@ namespace Cave
                     }
 
                     return (text.ToLower() == "true" || text.ToLower() == "yes" || text == "1");
-                case DataType.TimeSpan:
-                    if (text.Length == 0)
-                    {
-                        return TimeSpan.Zero;
-                    }
-
-                    return new TimeSpan(long.Parse(text));
                 case DataType.Single:
                     if (text.Length == 0)
                     {
@@ -724,6 +783,7 @@ namespace Cave
                         case DateTimeType.Native: return dt.ToString(StringExtensions.InterOpDateTimeFormat).Box(stringMarker);
                         case DateTimeType.BigIntTicks: return dt.Ticks.ToString();
                         case DateTimeType.DecimalSeconds: return (dt.Ticks / (decimal)TimeSpan.TicksPerSecond).ToString(culture);
+                        case DateTimeType.DoubleSeconds: return (dt.Ticks / (double)TimeSpan.TicksPerSecond).ToString(culture);
                     }
                 }
                 case DataType.Binary:
@@ -952,12 +1012,14 @@ namespace Cave
                 //only this typed, other is db -> check conversions
                 switch (DataType)
                 {
+                    case DataType.TimeSpan:
                     case DataType.DateTime:
                         switch (DateTimeType)
                         {
                             case DateTimeType.BigIntTicks:
                             case DateTimeType.BigIntHumanReadable: return (other.DataType == DataType.Int64);
                             case DateTimeType.DecimalSeconds: return (other.DataType == DataType.Decimal);
+                            case DateTimeType.DoubleSeconds: return (other.DataType == DataType.Double);
                             case DateTimeType.Undefined:
                             case DateTimeType.Native: return (other.DataType == DataType.DateTime);
                             default: return false;
@@ -985,12 +1047,14 @@ namespace Cave
             //only other typed, other is db -> check conversions
             switch (other.DataType)
             {
+                case DataType.TimeSpan:
                 case DataType.DateTime:
                     switch (other.DateTimeType)
                     {
                         case DateTimeType.BigIntTicks:
                         case DateTimeType.BigIntHumanReadable: return (DataType == DataType.Int64);
                         case DateTimeType.DecimalSeconds: return (DataType == DataType.Decimal);
+                        case DateTimeType.DoubleSeconds: return (DataType == DataType.Double);
                         case DateTimeType.Undefined:
                         case DateTimeType.Native: return (DataType == DataType.DateTime);
                         default: throw new NotImplementedException(string.Format("Missing implementation for DateTimeType {0}", other.DateTimeType));

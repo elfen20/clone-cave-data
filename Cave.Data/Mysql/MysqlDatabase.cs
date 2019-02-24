@@ -162,8 +162,46 @@ namespace Cave.Data.Mysql
                         }
                         break;
                     case DataType.Bool: queryText.Append("TINYINT(1)"); break;
-                    case DataType.DateTime: queryText.Append("DATETIME"); break;
-                    case DataType.TimeSpan: queryText.Append("DOUBLE"); break;
+                    case DataType.DateTime:
+                        switch (fieldProperties.DateTimeType)
+                        {
+                            case DateTimeType.Undefined:
+                            case DateTimeType.Native:
+                                queryText.Append("DATETIME");
+                                break;
+                            case DateTimeType.DoubleSeconds:
+                                queryText.Append("DOUBLE");
+                                break;
+                            case DateTimeType.DecimalSeconds:
+                                queryText.Append("DECIMAL(65,30)");
+                                break;
+                            case DateTimeType.BigIntHumanReadable:
+                            case DateTimeType.BigIntTicks:
+                                queryText.Append("BIGINT");
+                                break;
+                            default: throw new NotImplementedException();
+                        }
+                        break;                        
+                    case DataType.TimeSpan:
+                        switch (fieldProperties.DateTimeType )
+                        {
+                            case DateTimeType.Undefined:
+                            case DateTimeType.Native:
+                                queryText.Append("TIMESPAN");
+                                break;
+                            case DateTimeType.DoubleSeconds:
+                                queryText.Append("DOUBLE");
+                                break;
+                            case DateTimeType.DecimalSeconds:
+                                queryText.Append("DECIMAL(65,30)");
+                                break;
+                            case DateTimeType.BigIntHumanReadable:
+                            case DateTimeType.BigIntTicks:
+                                queryText.Append("BIGINT");
+                                break;
+                            default: throw new NotImplementedException();
+                        }                        
+                        break;
                     case DataType.Int8: queryText.Append("TINYINT"); break;
                     case DataType.Int16: queryText.Append("SMALLINT"); break;
                     case DataType.Int32: queryText.Append("INTEGER"); break;
