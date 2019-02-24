@@ -587,6 +587,10 @@ namespace Cave.Data.Sql
                     {
                         return TimeSpan.Zero;
                     }
+                    if (databaseValue is TimeSpan)
+                    {
+                        return (TimeSpan)databaseValue;
+                    }
                     return TimeSpan.FromSeconds((double)databaseValue);
                 }
             }
