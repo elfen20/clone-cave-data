@@ -64,10 +64,11 @@ namespace Cave.Data.Sql
                 LinkedListNode<SqlConnection> selectedNode = null;
                 while (nextNode != null)
                 {
-                    //get current and next node
+                    // get current and next node
                     LinkedListNode<SqlConnection> currentNode = nextNode;
                     nextNode = currentNode.Next;
-                    //remove dead and old connections
+
+                    // remove dead and old connections
                     if ((currentNode.Value.State != ConnectionState.Open) || (DateTime.UtcNow > currentNode.Value.LastUsed + m_Timeout.Value))
                     {
                         Trace.TraceInformation(string.Format("Closing connection {0} (livetime exceeded) (Idle:{1} Used:{2})", currentNode.Value, m_Queue.Count, m_Used.Count));
@@ -75,25 +76,29 @@ namespace Cave.Data.Sql
                         m_Queue.Remove(currentNode);
                         continue;
                     }
-                    //allow only connection with matching db name ?
+
+                    // allow only connection with matching db name ?
                     if (!m_Storage.DBConnectionCanChangeDataBase)
                     {
-                        //check if database name matches
+                        // check if database name matches
                         if (currentNode.Value.Database != database) { continue; }
                     }
-                    //set selected node 
+
+                    // set selected node
                     selectedNode = currentNode;
-                    //break if we found a perfect match
+
+                    // break if we found a perfect match
                     if (currentNode.Value.Database == database) { break; }
                 }
                 if (selectedNode != null)
                 {
-                    //remove node
+                    // remove node
                     m_Queue.Remove(selectedNode);
                     m_Used.Add(selectedNode.Value);
                     return selectedNode.Value;
                 }
-                //nothing found
+
+                // nothing found
                 return null;
             }
 
@@ -184,7 +189,7 @@ namespace Cave.Data.Sql
         /// <value>The connection close timeout.</value>
         public TimeSpan ConnectionCloseTimeout { get => m_Pool.ConnectionCloseTimeout; set => m_Pool.ConnectionCloseTimeout = value; }
 
-        #region helper LogQuery        
+        #region helper LogQuery
         /// <summary>Logs the query in verbose mode.</summary>
         /// <param name="command">The command.</param>
         protected internal void LogQuery(IDbCommand command)
@@ -298,12 +303,14 @@ namespace Cave.Data.Sql
             {
                 throw new ArgumentNullException("String");
             }
-            //escape escape char
+
+            // escape escape char
             if (-1 != text.IndexOf('\\'))
             {
                 text = text.Replace("\\", "\\\\");
             }
-            //escape invalid chars
+
+            // escape invalid chars
             if (-1 != text.IndexOf('\0'))
             {
                 text = text.Replace("\0", "\\0");
@@ -636,7 +643,7 @@ namespace Cave.Data.Sql
         #region database connection and command
 
         /// <summary>
-        /// Closes and clears all cached connections. 
+        /// Closes and clears all cached connections.
         /// </summary>
         /// <exception cref="ObjectDisposedException">SqlConnection.</exception>
         public void ClearCachedConnections()
@@ -770,7 +777,7 @@ namespace Cave.Data.Sql
                 throw new ArgumentNullException("LocalField");
             }
 
-            //check if datatype is replacement for missing sql type
+            // check if datatype is replacement for missing sql type
             switch (field.DataType)
             {
                 case DataType.Enum:
@@ -809,11 +816,13 @@ namespace Cave.Data.Sql
             {
                 throw new ArgumentNullException("Reader");
             }
-            //check columns (name, number and type)
+
+            // check columns (name, number and type)
             DataTable schemaTable = reader.GetSchemaTable();
 
             List<FieldProperties> fields = new List<FieldProperties>();
-            //check fieldcount
+
+            // check fieldcount
             int fieldCount = reader.FieldCount;
             if (fieldCount != schemaTable.Rows.Count)
             {
@@ -827,7 +836,7 @@ namespace Cave.Data.Sql
                 object isHidden = row["IsHidden"];
                 if ((isHidden != DBNull.Value) && (bool)isHidden)
                 {
-                    //continue;
+                    // continue;
                 }
 
                 string fieldName = (string)row["ColumnName"];
@@ -859,8 +868,8 @@ namespace Cave.Data.Sql
                     fieldFlags |= FieldFlags.Unique;
                 }
 
-                //TODO detect bigint timestamps
-                //TODO detect string encoding
+                // TODO detect bigint timestamps
+                // TODO detect string encoding
                 FieldProperties properties = new FieldProperties(source, fieldFlags, dataType, fieldType, fieldSize, fieldName, dataType, DateTimeType.Native, DateTimeKind.Utc, StringEncoding.UTF8, fieldName, null, null, null);
                 properties = GetDatabaseFieldProperties(properties);
                 fields.Add(properties);
@@ -1047,9 +1056,11 @@ namespace Cave.Data.Sql
                     using (IDataReader reader = command.ExecuteReader(CommandBehavior.KeyInfo))
                     {
                         string name = table ?? cmd;
-                        //read schema
+
+                        // read schema
                         RowLayout layout = ReadSchema(reader, name);
-                        //load rows
+
+                        // load rows
                         if (!reader.Read())
                         {
                             throw new InvalidDataException(string.Format("Error while reading row data!") + "\n" + string.Format("No result dataset available!") + string.Format("\n Database: {0}\n Table: {1}\n Command: {2}", database, table, cmd));
@@ -1117,7 +1128,8 @@ namespace Cave.Data.Sql
             {
                 throw new ObjectDisposedException(ToString());
             }
-            //get command
+
+            // get command
             for (int i = 1; ; i++)
             {
                 SqlConnection connection = GetConnection(database);
@@ -1127,22 +1139,22 @@ namespace Cave.Data.Sql
                     using (IDbCommand command = CreateCommand(connection, cmd, parameters))
                     using (IDataReader reader = command.ExecuteReader(CommandBehavior.KeyInfo))
                     {
-                        //set layout
+                        // set layout
                         RowLayout schema = layout;
                         if (schema == null)
                         {
-                            //read layout from schema
+                            // read layout from schema
                             string name = table ?? cmd;
                             schema = ReadSchema(reader, name);
                             layout = schema;
                         }
                         else if (DoSchemaCheckOnQuery)
                         {
-                            //read schema
+                            // read schema
                             CheckLayout(table, schema, layout);
                         }
 
-                        //load rows
+                        // load rows
                         List<Row> result = new List<Row>();
                         while (reader.Read())
                         {
@@ -1210,26 +1222,30 @@ namespace Cave.Data.Sql
             for (int i = 1; ; i++)
             {
                 SqlConnection connection = GetConnection(database);
-                //prepare result
+
+                // prepare result
                 List<T> result = new List<T>();
-                //get reader
+
+                // get reader
                 bool error = false;
                 try
                 {
-                    //todo find a way to prevent the recreation of this layout instance all the time
+                    // todo find a way to prevent the recreation of this layout instance all the time
                     RowLayout layout = RowLayout.CreateTyped(typeof(T));
                     using (IDbCommand command = CreateCommand(connection, cmd, parameters))
                     using (IDataReader reader = command.ExecuteReader(CommandBehavior.KeyInfo))
                     {
                         if (DoSchemaCheckOnQuery)
                         {
-                            //read schema
+                            // read schema
                             string name = table ?? cmd;
                             RowLayout schema = ReadSchema(reader, name);
-                            //check schema
+
+                            // check schema
                             CheckLayout(table, schema, layout);
                         }
-                        //load rows
+
+                        // load rows
                         while (reader.Read())
                         {
                             Row row = ReadRow(layout, reader);

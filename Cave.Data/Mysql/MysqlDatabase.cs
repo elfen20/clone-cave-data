@@ -181,7 +181,7 @@ namespace Cave.Data.Mysql
                                 break;
                             default: throw new NotImplementedException();
                         }
-                        break;                        
+                        break;
                     case DataType.TimeSpan:
                         switch (fieldProperties.DateTimeType )
                         {
@@ -200,7 +200,7 @@ namespace Cave.Data.Mysql
                                 queryText.Append("BIGINT");
                                 break;
                             default: throw new NotImplementedException();
-                        }                        
+                        }
                         break;
                     case DataType.Int8: queryText.Append("TINYINT"); break;
                     case DataType.Int16: queryText.Append("SMALLINT"); break;

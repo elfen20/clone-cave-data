@@ -565,7 +565,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the row struct with the specified index. 
+        /// Obtains the row struct with the specified index.
         /// This allows the cache to be used as virtual list for listviews, ...
         /// Note that indices will change on each update!.
         /// </summary>

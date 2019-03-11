@@ -87,7 +87,7 @@ namespace Cave.Data
             {
                 case TransactionType.Updated:
                 {
-                    //delete older update
+                    // delete older update
                     if (m_Updated.ContainsKey(transaction.ID))
                     {
                         m_List.Remove(m_Updated[transaction.ID]);
@@ -100,7 +100,8 @@ namespace Cave.Data
                     {
                         throw new InvalidOperationException("Cannot delete row twice!");
                     }
-                    //delete previous update
+
+                    // delete previous update
                     if (m_Updated.ContainsKey(transaction.ID))
                     {
                         m_List.Remove(m_Updated[transaction.ID]);
@@ -113,7 +114,7 @@ namespace Cave.Data
                     return;
 
                 case TransactionType.Replaced:
-                    //delete previous update
+                    // delete previous update
                     if (m_Updated.ContainsKey(transaction.ID))
                     {
                         m_List.Remove(m_Updated[transaction.ID]);
@@ -122,7 +123,8 @@ namespace Cave.Data
                             throw new KeyNotFoundException();
                         }
                     }
-                    //delete previous deletion
+
+                    // delete previous deletion
                     if (m_Deleted.ContainsKey(transaction.ID))
                     {
                         m_List.Remove(m_Deleted[transaction.ID]);
@@ -131,7 +133,8 @@ namespace Cave.Data
                             throw new KeyNotFoundException();
                         }
                     }
-                    //delete previous replace
+
+                    // delete previous replace
                     if (m_Replaced.ContainsKey(transaction.ID))
                     {
                         m_List.Remove(m_Replaced[transaction.ID]);

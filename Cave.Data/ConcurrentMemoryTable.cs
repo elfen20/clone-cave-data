@@ -103,14 +103,16 @@ namespace Cave.Data
                             watch = new Stopwatch();
                             watch.Start();
                         }
-                        //spin until noone is reading anymore or spincount is reached
+
+                        // spin until noone is reading anymore or spincount is reached
                         while (readLock > 0 && watch.ElapsedMilliseconds < wait)
                         {
                             Monitor.Exit(this);
                             Thread.Sleep(1);
                             Monitor.Enter(this);
                         }
-                        //if spinning completed and we are still waiting on readers, keep lock until all readers are finished
+
+                        // if spinning completed and we are still waiting on readers, keep lock until all readers are finished
                         while (readLock > 0)
                         {
                             Thread.Sleep(0);
@@ -118,7 +120,7 @@ namespace Cave.Data
                     }
                     else
                     {
-                        //spin until noone is reading anymore, this may wait forever if there is no gap between reading processes
+                        // spin until noone is reading anymore, this may wait forever if there is no gap between reading processes
                         while (readLock > 0)
                         {
                             Monitor.Exit(this);
@@ -132,7 +134,7 @@ namespace Cave.Data
                     Trace.TraceInformation("WriteLock <green>acquired (read lock <magenta>{0}<default>)", readLock);
                 }
 
-                //write
+                // write
                 try
                 {
                     action.Invoke();
@@ -325,7 +327,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Inserts rows into the table using a transaction. 
+        /// Inserts rows into the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         public void Insert(IEnumerable<Row> rows)
@@ -350,7 +352,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Updates rows at the table using a transaction. 
+        /// Updates rows at the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         public void Update(IEnumerable<Row> rows)
@@ -619,7 +621,7 @@ namespace Cave.Data
         /// </summary>
         public virtual TransactionLog TransactionLog
         {
-            //no need to lock anything here, transaction log is already thread safe
+            // no need to lock anything here, transaction log is already thread safe
             get => table.TransactionLog;
             set => table.TransactionLog = value;
         }
@@ -712,7 +714,7 @@ namespace Cave.Data
 
         #endregion
 
-        #region ToString and eXtended Text        
+        #region ToString and eXtended Text
         /// <summary>Returns a <see cref="string" /> that represents this instance.</summary>
         /// <returns>A <see cref="string" /> that represents this instance.</returns>
         public override string ToString()
@@ -800,14 +802,16 @@ namespace Cave.Data
                             watch = new Stopwatch();
                             watch.Start();
                         }
-                        //spin until noone is reading anymore or spincount is reached
+
+                        // spin until noone is reading anymore or spincount is reached
                         while (readLock > 0 && watch.ElapsedMilliseconds < wait)
                         {
                             Monitor.Exit(this);
                             Thread.Sleep(1);
                             Monitor.Enter(this);
                         }
-                        //if spinning completed and we are still waiting on readers, keep lock until all readers are finished
+
+                        // if spinning completed and we are still waiting on readers, keep lock until all readers are finished
                         while (readLock > 0)
                         {
                             Thread.Sleep(0);
@@ -815,7 +819,7 @@ namespace Cave.Data
                     }
                     else
                     {
-                        //spin until noone is reading anymore, this may wait forever if there is no gap between reading processes
+                        // spin until noone is reading anymore, this may wait forever if there is no gap between reading processes
                         while (readLock > 0)
                         {
                             Monitor.Exit(this);
@@ -825,7 +829,7 @@ namespace Cave.Data
                     }
                 }
 
-                //write
+                // write
                 try { action.Invoke(); }
                 finally { Monitor.Exit(this); }
             }
@@ -903,7 +907,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Inserts rows into the table using a transaction. 
+        /// Inserts rows into the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         public void Insert(IEnumerable<T> rows)
@@ -1180,7 +1184,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Inserts rows into the table using a transaction. 
+        /// Inserts rows into the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         public void Insert(IEnumerable<Row> rows)
@@ -1216,7 +1220,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Updates rows at the table using a transaction. 
+        /// Updates rows at the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         public void Update(IEnumerable<Row> rows)
@@ -1519,7 +1523,7 @@ namespace Cave.Data
         /// </summary>
         public virtual TransactionLog TransactionLog
         {
-            //no need to lock anything here, transaction log is already thread safe
+            // no need to lock anything here, transaction log is already thread safe
             get => table.TransactionLog;
             set => table.TransactionLog = value;
         }
@@ -1662,7 +1666,7 @@ namespace Cave.Data
 
         #endregion
 
-        #region ToString and eXtended Text        
+        #region ToString and eXtended Text
         /// <summary>Returns a <see cref="string" /> that represents this instance.</summary>
         /// <returns>A <see cref="string" /> that represents this instance.</returns>
         public override string ToString()

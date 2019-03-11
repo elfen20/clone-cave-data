@@ -92,8 +92,9 @@ namespace Cave.Data.Postgres
                 {
                     LogQuery(command);
                 }
-                //return value is not globally defined. some implementations use it correctly, some dont use it, some return positive or negative result enum values
-                //so we ignore this: int affectedRows = 
+
+                // return value is not globally defined. some implementations use it correctly, some dont use it, some return positive or negative result enum values
+                // so we ignore this: int affectedRows =
                 command.ExecuteNonQuery();
             }
             return connection;
@@ -153,7 +154,8 @@ namespace Cave.Data.Postgres
         public string GetObjectName(string name)
         {
             return name.ReplaceInvalidChars(ASCII.Strings.Letters + ASCII.Strings.Digits, "_");
-            //.ToLower().ReplaceInvalidChars(ASCII.Strings.LowercaseLetters + ASCII.Strings.Digits, "_");
+
+            // .ToLower().ReplaceInvalidChars(ASCII.Strings.LowercaseLetters + ASCII.Strings.Digits, "_");
         }
 
         /// <summary>

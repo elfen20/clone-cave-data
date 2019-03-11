@@ -355,7 +355,7 @@ namespace Cave
                 case DataType.UInt32:
                 case DataType.UInt64:
                 case DataType.Char:
-                case DataType.Single:                
+                case DataType.Single:
                     break;
                 case DataType.TimeSpan:
                     if (DateTimeType == DateTimeType.Undefined)
@@ -705,22 +705,25 @@ namespace Cave
 
             if (!m_ParserUsed)
             {
-                //lookup static Parse(string) method first
+                // lookup static Parse(string) method first
                 m_StaticParse = ValueType.GetMethod("Parse", BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string) }, null);
-                //if there is none, search constructor(string)
+
+                // if there is none, search constructor(string)
                 if (m_StaticParse == null)
                 {
                     m_Constructor = ValueType.GetConstructor(new Type[] { typeof(string) });
                 }
                 m_ParserUsed = true;
             }
-            //has static Parse(string) ?
+
+            // has static Parse(string) ?
             if (m_StaticParse != null)
             {
-                //use method to parse value
+                // use method to parse value
                 return m_StaticParse.Invoke(null, new object[] { text });
             }
-            //has constructor(string) ?
+
+            // has constructor(string) ?
             if (m_Constructor != null)
             {
                 return m_Constructor.Invoke(new object[] { text });
@@ -762,7 +765,7 @@ namespace Cave
                     }
                     if (jsonMode)
                     {
-                        //javascript uses time/date in milliseconds. var timeInMsec = new Date() - pastDate;
+                        // javascript uses time/date in milliseconds. var timeInMsec = new Date() - pastDate;
                         return (dt - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind)).TotalMilliseconds.ToString(culture);
                     }
                     switch (DateTimeType)
@@ -792,7 +795,7 @@ namespace Cave
                 }
                 case DataType.TimeSpan:
                 {
-                    //json does not support 64bit integers, so we transmit it as string
+                    // json does not support 64bit integers, so we transmit it as string
                     return jsonMode ? ((TimeSpan)value).TotalMilliseconds.ToString(culture) : ((TimeSpan)value).Ticks.ToString();
                 }
                 case DataType.Single:
@@ -821,7 +824,7 @@ namespace Cave
                 case DataType.Int32: return ((int)value).ToString(culture);
                 case DataType.Int64:
                 {
-                    //json does not support 64bit integers, so we transmit it as string
+                    // json does not support 64bit integers, so we transmit it as string
                     return jsonMode ? ((long)value).ToString(culture).Box(stringMarker) : ((long)value).ToString(culture);
                 }
                 case DataType.UInt8: return ((byte)value).ToString(culture);
@@ -829,7 +832,7 @@ namespace Cave
                 case DataType.UInt32: return ((uint)value).ToString(culture);
                 case DataType.UInt64:
                 {
-                    //json does not support 64bit integers, so we transmit it as string
+                    // json does not support 64bit integers, so we transmit it as string
                     return jsonMode ? ((long)value).ToString(culture).Box(stringMarker) : ((ulong)value).ToString(culture);
                 }
                 case DataType.Enum: return value.ToString().Box(stringMarker);
@@ -855,7 +858,8 @@ namespace Cave
             {
                 throw new InvalidOperationException(string.Format("This function requires a valid ValueType!"));
             }
-            //handle enum
+
+            // handle enum
             if (DataType != DataType.Enum)
             {
                 throw new ArgumentException(string.Format("DataType is not an enum!"));
@@ -892,8 +896,8 @@ namespace Cave
                     case DataType.Char: return "char";
 
                     default:
-                        //case DataType.User: 
-                        //case DataType.Enum:
+                        // case DataType.User:
+                        // case DataType.Enum:
                         if (ValueType != null)
                         {
                             return ValueType.Name;
@@ -954,7 +958,8 @@ namespace Cave
             {
                 return false;
             }
-            //check name
+
+            // check name
             if ((other.Name != Name) && (other.Name != NameAtDatabase) && (other.NameAtDatabase != Name))
             {
                 char[] splitters = " ,;".ToCharArray();
@@ -965,21 +970,23 @@ namespace Cave
 
                 return true == other.AlternativeNames?.Split(splitters, StringSplitOptions.RemoveEmptyEntries).Any(n => n == Name || n == NameAtDatabase);
             }
-            //check flags
+
+            // check flags
             if ((other.Flags & FieldFlags.MatchMask) != (Flags & FieldFlags.MatchMask))
             {
                 return false;
             }
-            //additional checks
+
+            // additional checks
             if (FieldInfo != null)
             {
                 if (other.FieldInfo != null)
                 {
-                    //both typed, full match needed
+                    // both typed, full match needed
                     return (other.ValueType == ValueType);
                 }
 
-                //only this typed, other is db -> check conversions
+                // only this typed, other is db -> check conversions
                 switch (DataType)
                 {
                     case DataType.TimeSpan:
@@ -1000,7 +1007,7 @@ namespace Cave
 
             if (other.FieldInfo == null)
             {
-                //TODO check if this is enough
+                // TODO check if this is enough
                 if (DataType == other.DataType)
                 {
                     return true;
@@ -1009,7 +1016,7 @@ namespace Cave
                 return TypeAtDatabase == other.TypeAtDatabase;
             }
 
-            //only other typed, other is db -> check conversions
+            // only other typed, other is db -> check conversions
             switch (other.DataType)
             {
                 case DataType.TimeSpan:

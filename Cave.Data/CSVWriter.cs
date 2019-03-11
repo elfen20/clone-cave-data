@@ -137,7 +137,7 @@ namespace Cave.Data
                             string str = values[i].ToString();
                             result.Append(str);
                             break;
-                        }                        
+                        }
                         case DataType.Decimal:
                         {
                             if (!Properties.SaveDefaultValues && (values[i].Equals(0m)))
@@ -366,7 +366,8 @@ namespace Cave.Data
             {
                 return;
             }
-            //write header
+
+            // write header
             for (int i = 0; i < Layout.FieldCount; i++)
             {
                 if (i > 0)

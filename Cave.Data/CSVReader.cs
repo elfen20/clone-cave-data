@@ -240,7 +240,7 @@ namespace Cave.Data
                             ident.Dequeue();
                             if (identInARowCount > 1)
                             {
-                                //escaped char
+                                // escaped char
                                 currentValue.Add(buffer[i]);
                             }
                         }

@@ -528,7 +528,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Inserts rows into the table using a transaction. 
+        /// Inserts rows into the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         public void Insert(IEnumerable<Row> rows)
@@ -582,7 +582,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Replaces rows at the table using a transaction. 
+        /// Replaces rows at the table using a transaction.
         /// </summary>
         /// <param name="rows">The replacement rows.</param>
         public void Replace(IEnumerable<Row> rows)
@@ -632,7 +632,7 @@ namespace Cave.Data
 
         #endregion
 
-        #region ToString and eXtended Text        
+        #region ToString and eXtended Text
         /// <summary>Returns a <see cref="string" /> that represents this instance.</summary>
         /// <returns>A <see cref="string" /> that represents this instance.</returns>
         public override string ToString()

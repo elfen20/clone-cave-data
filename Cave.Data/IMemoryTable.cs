@@ -53,7 +53,7 @@ namespace Cave.Data
         long Insert(Row row, bool writeTransaction);
 
         /// <summary>
-        /// Inserts rows into the table using a transaction. 
+        /// Inserts rows into the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
@@ -67,7 +67,7 @@ namespace Cave.Data
         void Update(Row row, bool writeTransaction);
 
         /// <summary>
-        /// Updates rows at the table using a transaction. 
+        /// Updates rows at the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>

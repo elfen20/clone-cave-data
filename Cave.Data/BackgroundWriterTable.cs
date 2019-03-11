@@ -59,7 +59,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Inserts rows into the table using a transaction. 
+        /// Inserts rows into the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         public Task InsertAsync(IEnumerable<Row> rows)
@@ -219,7 +219,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Inserts rows into the table using a transaction. 
+        /// Inserts rows into the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         public Task InsertAsync(IEnumerable<T> rows)

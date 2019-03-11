@@ -214,7 +214,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Inserts rows into the table using a transaction. 
+        /// Inserts rows into the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         public void Insert(IEnumerable<Row> rows)
@@ -239,7 +239,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Updates rows at the table using a transaction. 
+        /// Updates rows at the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         public void Update(IEnumerable<Row> rows)
@@ -520,7 +520,7 @@ namespace Cave.Data
         /// </summary>
         public virtual TransactionLog TransactionLog
         {
-            //no need to lock anything here, transaction log is already thread safe
+            // no need to lock anything here, transaction log is already thread safe
             get => table.TransactionLog;
             set => table.TransactionLog = value;
         }
@@ -612,7 +612,7 @@ namespace Cave.Data
             }
         }
 
-        #region ToString and eXtended Text        
+        #region ToString and eXtended Text
         /// <summary>Returns a <see cref="string" /> that represents this instance.</summary>
         /// <returns>A <see cref="string" /> that represents this instance.</returns>
         public override string ToString()
@@ -723,7 +723,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Inserts rows into the table using a transaction. 
+        /// Inserts rows into the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         public void Insert(IEnumerable<T> rows)
@@ -1032,7 +1032,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Inserts rows into the table using a transaction. 
+        /// Inserts rows into the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         public void Insert(IEnumerable<Row> rows)
@@ -1068,7 +1068,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Updates rows at the table using a transaction. 
+        /// Updates rows at the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         public void Update(IEnumerable<Row> rows)
@@ -1366,7 +1366,7 @@ namespace Cave.Data
         /// </summary>
         public virtual TransactionLog TransactionLog
         {
-            //no need to lock anything here, transaction log is already thread safe
+            // no need to lock anything here, transaction log is already thread safe
             get => table.TransactionLog;
             set => table.TransactionLog = value;
         }
@@ -1496,7 +1496,7 @@ namespace Cave.Data
             }
         }
 
-        #region ToString and eXtended Text        
+        #region ToString and eXtended Text
         /// <summary>Returns a <see cref="string" /> that represents this instance.</summary>
         /// <returns>A <see cref="string" /> that represents this instance.</returns>
         public override string ToString()

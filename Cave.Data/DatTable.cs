@@ -44,7 +44,8 @@ namespace Cave.Data
             {
                 throw new InvalidDataException(string.Format("Unknown Table version!"));
             }
-            //read name and create layout
+
+            // read name and create layout
             string layoutName = reader.ReadString();
             List<FieldProperties> fields = new List<FieldProperties>();
             int fieldCount = reader.Read7BitEncodedInt32();
@@ -228,7 +229,8 @@ namespace Cave.Data
                             else
                             {
                                 string text = data.ToString();
-                                //check for invalid characters
+
+                                // check for invalid characters
                                 switch (fieldProperties.StringEncoding)
                                 {
                                     case StringEncoding.ASCII:
@@ -436,12 +438,12 @@ namespace Cave.Data
             byte[] data = GetData(Layout, row, Version);
             int minSize = data.Length + BitCoder32.GetByteCount7BitEncoded(data.Length + 10);
 
-            //reuse old entry ?
+            // reuse old entry ?
             if (entry.ID != 0)
             {
                 if (entry.BucketLength >= minSize)
                 {
-                    //write entry
+                    // write entry
                     m_FileStream.Position = entry.BucketPosition;
                     DataWriter writer = new DataWriter(m_FileStream);
                     BitCoder32.Write7BitEncoded(writer, entry.BucketLength);
@@ -458,21 +460,22 @@ namespace Cave.Data
 
                     return id;
                 }
-                //no reuse -> release old
+
+                // no reuse -> release old
                 m_Index.Free(entry);
             }
 
-            //find free entry
+            // find free entry
             entry = m_Index.GetFree(id, minSize);
             if (entry.ID == 0)
             {
-                //create new
+                // create new
                 entry = new DatEntry(id, m_CurrentLength, minSize);
                 m_CurrentLength += entry.BucketLength;
             }
             m_Index.Save(entry);
             {
-                //write entry
+                // write entry
                 m_FileStream.Position = entry.BucketPosition;
                 DataWriter writer = new DataWriter(m_FileStream);
                 BitCoder32.Write7BitEncoded(writer, entry.BucketLength);
@@ -933,7 +936,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Inserts rows into the table using a transaction. 
+        /// Inserts rows into the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         public void Insert(IEnumerable<T> rows)
