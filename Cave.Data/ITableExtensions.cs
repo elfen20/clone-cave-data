@@ -53,18 +53,18 @@ namespace Cave.Data
 
         /// <summary>Removes all rows from the table matching the given search.</summary>
         /// <param name="table">The table.</param>
-        /// <param name="field">The fieldname to match</param>
-        /// <param name="value">The value to match</param>
+        /// <param name="field">The fieldname to match.</param>
+        /// <param name="value">The value to match.</param>
         /// <returns>Returns the number of datasets deleted.</returns>
         public static int TryDelete(this ITable table, string field, object value)
         {
             return table.TryDelete(Search.FieldEquals(field, value));
         }
 
-        /// <summary>Checks a given search for any datasets matching</summary>
+        /// <summary>Checks a given search for any datasets matching.</summary>
         /// <param name="table">The table.</param>
-        /// <param name="field">The fields name</param>
-        /// <param name="value">The value</param>
+        /// <param name="field">The fields name.</param>
+        /// <param name="value">The value.</param>
         /// <returns>Returns true if a dataset exists, false otherwise.</returns>
         public static bool Exist(this ITable table, string field, object value)
         {
@@ -73,9 +73,9 @@ namespace Cave.Data
 
         /// <summary>Searches the table for a row with given field value combination.</summary>
         /// <param name="table">The table.</param>
-        /// <param name="field">The fieldname to match</param>
-        /// <param name="value">The value to match</param>
-        /// <returns>Returns the ID of the row found or -1</returns>
+        /// <param name="field">The fieldname to match.</param>
+        /// <param name="value">The value to match.</param>
+        /// <returns>Returns the ID of the row found or -1.</returns>
         public static long FindRow(this ITable table, string field, object value)
         {
             return table.FindRow(Search.FieldEquals(field, value), ResultOption.None);
@@ -83,9 +83,9 @@ namespace Cave.Data
 
         /// <summary>Searches the table for a single row with given field value combination.</summary>
         /// <param name="table">The table.</param>
-        /// <param name="field">The fieldname to match</param>
-        /// <param name="value">The value to match</param>
-        /// <returns>Returns the row found</returns>
+        /// <param name="field">The fieldname to match.</param>
+        /// <param name="value">The value to match.</param>
+        /// <returns>Returns the row found.</returns>
         public static Row GetRow(this ITable table, string field, object value)
         {
             return table.GetRow(Search.FieldEquals(field, value), ResultOption.None);
@@ -93,9 +93,9 @@ namespace Cave.Data
 
         /// <summary>Searches the table for rows with given field value combinations.</summary>
         /// <param name="table">The table.</param>
-        /// <param name="field">The fieldname to match</param>
-        /// <param name="value">The value to match</param>
-        /// <returns>Returns the IDs of the rows found</returns>
+        /// <param name="field">The fieldname to match.</param>
+        /// <param name="value">The value to match.</param>
+        /// <returns>Returns the IDs of the rows found.</returns>
         public static List<long> FindRows(this ITable table, string field, object value)
         {
             return table.FindRows(Search.FieldEquals(field, value), ResultOption.None);
@@ -103,15 +103,15 @@ namespace Cave.Data
 
         /// <summary>Searches the table for rows with given field value combinations.</summary>
         /// <param name="table">The table.</param>
-        /// <param name="field">The fieldname to match</param>
-        /// <param name="value">The value to match</param>
-        /// <returns>Returns the rows found</returns>
+        /// <param name="field">The fieldname to match.</param>
+        /// <param name="value">The value to match.</param>
+        /// <returns>Returns the rows found.</returns>
         public static List<Row> GetRows(this ITable table, string field, object value)
         {
             return table.GetRows(Search.FieldEquals(field, value), ResultOption.None);
         }
 
-        /// <summary>Caches the whole table into memory and provides a new ITable{T} instance</summary>
+        /// <summary>Caches the whole table into memory and provides a new ITable{T} instance.</summary>
         /// <param name="table">The table.</param>
         /// <returns>Returns a new memory table.</returns>
         public static MemoryTable ToMemory(this ITable table)
@@ -124,9 +124,9 @@ namespace Cave.Data
 
         /// <summary>Counts the rows with specified field value combination.</summary>
         /// <param name="table">The table.</param>
-        /// <param name="field">The fieldname to match</param>
-        /// <param name="value">The value to match</param>
-        /// <returns>Returns the number of rows found matching the criteria given</returns>
+        /// <param name="field">The fieldname to match.</param>
+        /// <param name="value">The value to match.</param>
+        /// <returns>Returns the number of rows found matching the criteria given.</returns>
         public static long Count(this ITable table, string field, object value)
         {
             return table.Count(Search.FieldEquals(field, value), ResultOption.None);
@@ -140,7 +140,8 @@ namespace Cave.Data
         /// <param name="table">The table.</param>
         /// <param name="row">The row.</param>
         /// <returns>Returns true if the dataset was inserted, false otherwise.</returns>
-        public static bool TryInsert<T>(this ITable<T> table, T row) where T : struct
+        public static bool TryInsert<T>(this ITable<T> table, T row)
+            where T : struct
         {
             //TODO, implement this without exceptions: needed at Table, SqlTable, MemoryTable
             try { table.Insert(row); return true; }
@@ -152,7 +153,8 @@ namespace Cave.Data
         /// <param name="table">The table.</param>
         /// <param name="row">The row.</param>
         /// <returns>Returns true if the dataset was inserted, false otherwise.</returns>
-        public static bool TryUpdate<T>(this ITable<T> table, T row) where T : struct
+        public static bool TryUpdate<T>(this ITable<T> table, T row)
+            where T : struct
         {
             //TODO, implement this without exceptions: needed at Table, SqlTable, MemoryTable
             try { table.Update(row); return true; }
@@ -163,8 +165,9 @@ namespace Cave.Data
         /// <typeparam name="T"></typeparam>
         /// <param name="table">The table.</param>
         /// <param name="id">The identifier.</param>
-        /// <returns>Returns the structure on success, an empty one otherwise</returns>
-        public static T TryGetStruct<T>(this ITable<T> table, long id) where T : struct
+        /// <returns>Returns the structure on success, an empty one otherwise.</returns>
+        public static T TryGetStruct<T>(this ITable<T> table, long id)
+            where T : struct
         {
             return table.GetStructs(new long[] { id }).FirstOrDefault();
         }
@@ -174,8 +177,9 @@ namespace Cave.Data
         /// <param name="table">The table.</param>
         /// <param name="name">The name.</param>
         /// <param name="value">The value.</param>
-        /// <returns>Returns the structure on success, an empty one otherwise</returns>
-        public static T TryGetStruct<T>(this ITable<T> table, string name, object value) where T : struct
+        /// <returns>Returns the structure on success, an empty one otherwise.</returns>
+        public static T TryGetStruct<T>(this ITable<T> table, string name, object value)
+            where T : struct
         {
             return table.GetStructs(name, value).FirstOrDefault();
         }
@@ -184,8 +188,9 @@ namespace Cave.Data
         /// <typeparam name="T"></typeparam>
         /// <param name="table">The table.</param>
         /// <param name="search">The search.</param>
-        /// <returns>Returns the structure on success, an empty one otherwise</returns>
-        public static T TryGetStruct<T>(this ITable<T> table, Search search) where T : struct
+        /// <returns>Returns the structure on success, an empty one otherwise.</returns>
+        public static T TryGetStruct<T>(this ITable<T> table, Search search)
+            where T : struct
         {
             return table.GetStructs(search).FirstOrDefault();
         }
@@ -195,8 +200,9 @@ namespace Cave.Data
         /// <param name="table">The table.</param>
         /// <param name="id">The row identifier.</param>
         /// <param name="row">The row.</param>
-        /// <returns>Returns true on success, false otherwise</returns>
-        public static bool TryGetStruct<T>(this ITable<T> table, long id, out T row) where T : struct
+        /// <returns>Returns true on success, false otherwise.</returns>
+        public static bool TryGetStruct<T>(this ITable<T> table, long id, out T row)
+            where T : struct
         {
             List<T> results = table.GetStructs(new long[] { id });
             if (results.Count > 0)
@@ -214,8 +220,9 @@ namespace Cave.Data
         /// <param name="field">Name of the field.</param>
         /// <param name="value">The value.</param>
         /// <param name="row">The row.</param>
-        /// <returns>Returns true on success, false otherwise</returns>
-        public static bool TryGetStruct<T>(this ITable<T> table, string field, object value, out T row) where T : struct
+        /// <returns>Returns true on success, false otherwise.</returns>
+        public static bool TryGetStruct<T>(this ITable<T> table, string field, object value, out T row)
+            where T : struct
         {
             List<T> results = table.GetStructs(field, value);
             if (results.Count > 0)
@@ -232,8 +239,9 @@ namespace Cave.Data
         /// <param name="table">The table.</param>
         /// <param name="search">The search.</param>
         /// <param name="row">The row.</param>
-        /// <returns>Returns true on success, false otherwise</returns>
-        public static bool TryGetStruct<T>(this ITable<T> table, Search search, out T row) where T : struct
+        /// <returns>Returns true on success, false otherwise.</returns>
+        public static bool TryGetStruct<T>(this ITable<T> table, Search search, out T row)
+            where T : struct
         {
             List<T> results = table.GetStructs(search);
             if (results.Count > 0)
@@ -248,10 +256,11 @@ namespace Cave.Data
         /// <summary>Searches the table for rows with given field value combinations.</summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="table">The table.</param>
-        /// <param name="field">The fieldname to match</param>
-        /// <param name="value">The value to match</param>
-        /// <returns>Returns the rows found</returns>
-        public static List<T> GetStructs<T>(this ITable<T> table, string field, object value) where T : struct
+        /// <param name="field">The fieldname to match.</param>
+        /// <param name="value">The value to match.</param>
+        /// <returns>Returns the rows found.</returns>
+        public static List<T> GetStructs<T>(this ITable<T> table, string field, object value)
+            where T : struct
         {
             return table.GetStructs(Search.FieldEquals(field, value), ResultOption.None);
         }
@@ -259,18 +268,20 @@ namespace Cave.Data
         /// <summary>Searches the table for a single row with given field value combination.</summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="table">The table.</param>
-        /// <param name="field">The fieldname to match</param>
-        /// <param name="value">The value to match</param>
-        /// <returns>Returns the row found</returns>
-        public static T GetStruct<T>(this ITable<T> table, string field, object value) where T : struct
+        /// <param name="field">The fieldname to match.</param>
+        /// <param name="value">The value to match.</param>
+        /// <returns>Returns the row found.</returns>
+        public static T GetStruct<T>(this ITable<T> table, string field, object value)
+            where T : struct
         {
             return table.GetStruct(Search.FieldEquals(field, value), ResultOption.None);
         }
 
         /// <summary>
-        /// Caches the whole table into memory and provides a new ITable{T} instance
+        /// Caches the whole table into memory and provides a new ITable{T} instance.
         /// </summary>
-        public static MemoryTable<T> ToTypedMemory<T>(this ITable<T> table) where T : struct
+        public static MemoryTable<T> ToTypedMemory<T>(this ITable<T> table)
+            where T : struct
         {
             MemoryTable<T> mem = new MemoryTable<T>();
             mem.LoadTable(table);
@@ -279,7 +290,8 @@ namespace Cave.Data
 
         /// <summary>Retrieves the whole table as array.</summary>
         /// <returns></returns>
-        public static T[] ToArray<T>(this ITable<T> table) where T : struct
+        public static T[] ToArray<T>(this ITable<T> table)
+            where T : struct
         {
             return table.GetStructs().ToArray();
         }

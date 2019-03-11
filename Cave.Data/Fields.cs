@@ -8,12 +8,12 @@ using System.Reflection;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides static functions for struct field reflections
+    /// Provides static functions for struct field reflections.
     /// </summary>
     public static class Fields
     {
         /// <summary>
-        /// Checks whether a field has the <see cref="FieldAttribute"/> and returns the name of the field
+        /// Checks whether a field has the <see cref="FieldAttribute"/> and returns the name of the field.
         /// </summary>
         /// <param name="fieldInfo"></param>
         /// <returns></returns>
@@ -29,21 +29,14 @@ namespace Cave.Data
                 FieldAttribute fieldAttribute = attribute as FieldAttribute;
                 if (fieldAttribute != null)
                 {
-                    if (!string.IsNullOrEmpty(fieldAttribute.Name))
-                    {
-                        return fieldAttribute.Name;
-                    }
-                    else
-                    {
-                        return fieldInfo.Name;
-                    }
+                    return !string.IsNullOrEmpty(fieldAttribute.Name) ? fieldAttribute.Name : fieldInfo.Name;
                 }
             }
             return null;
         }
 
         /// <summary>
-        /// Checks whether a field has the <see cref="FieldAttribute"/> and returns the length of the field
+        /// Checks whether a field has the <see cref="FieldAttribute"/> and returns the length of the field.
         /// </summary>
         /// <param name="fieldInfo"></param>
         /// <returns></returns>
@@ -66,7 +59,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Checks whether a field has the <see cref="FieldAttribute"/> and returns the flags of the field
+        /// Checks whether a field has the <see cref="FieldAttribute"/> and returns the flags of the field.
         /// </summary>
         /// <param name="fieldInfo"></param>
         /// <returns></returns>
@@ -93,7 +86,7 @@ namespace Cave.Data
         /// If the attribute is not present null is returned.
         /// </summary>
         /// <param name="fieldInfo"></param>
-        /// <returns>Returns the description if present or null otherwise</returns>
+        /// <returns>Returns the description if present or null otherwise.</returns>
         public static string GetDescription(MemberInfo fieldInfo)
         {
             if (fieldInfo == null)
@@ -114,9 +107,9 @@ namespace Cave.Data
 
         /// <summary>Gets the description of a specified enum or field.</summary>
         /// <param name="value">The enum or field value.</param>
-        /// <returns>Returns the description if present or null otherwise</returns>
-        /// <exception cref="ArgumentNullException">Value</exception>
-        /// <exception cref="ArgumentException">Enum value is not defined!</exception>
+        /// <returns>Returns the description if present or null otherwise.</returns>
+        /// <exception cref="ArgumentNullException">Value.</exception>
+        /// <exception cref="ArgumentException">Enum value is not defined!.</exception>
         public static string GetDescription(object value)
         {
             if (value == null)
@@ -147,11 +140,11 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Converts a (primitive) value to the desired type
+        /// Converts a (primitive) value to the desired type.
         /// </summary>
         /// <param name="value"></param>
         /// <param name="toType"></param>
-        /// <param name="cultureInfo">The culture to use during formatting</param>
+        /// <param name="cultureInfo">The culture to use during formatting.</param>
         /// <returns></returns>
         public static object ConvertPrimitive(Type toType, object value, IFormatProvider cultureInfo)
         {
@@ -166,11 +159,11 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Converts a value to the desired field value
+        /// Converts a value to the desired field value.
         /// </summary>
         /// <param name="fieldType"></param>
         /// <param name="value"></param>
-        /// <param name="cultureInfo">The culture to use during formatting</param>
+        /// <param name="cultureInfo">The culture to use during formatting.</param>
         /// <returns></returns>
         public static object ConvertValue(Type fieldType, object value, CultureInfo cultureInfo)
         {
@@ -280,11 +273,9 @@ namespace Cave.Data
                     {
                         return new TimeSpan((long)Math.Round(double.Parse(str.SubstringEnd(1)) * TimeSpan.TicksPerMillisecond));
                     }
-                    if (str.EndsWith("s"))
-                    {
-                        return new TimeSpan((long)Math.Round(double.Parse(str.SubstringEnd(1)) * TimeSpan.TicksPerSecond));
-                    }
-                    return new TimeSpan(long.Parse(str));
+                    return str.EndsWith("s")
+                        ? new TimeSpan((long)Math.Round(double.Parse(str.SubstringEnd(1)) * TimeSpan.TicksPerSecond))
+                        : (object)new TimeSpan(long.Parse(str));
                 }
                 catch (Exception ex)
                 {
@@ -317,12 +308,12 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Sets all fieldvalues of a struct/class object
+        /// Sets all fieldvalues of a struct/class object.
         /// </summary>
-        /// <param name="obj">structure object</param>
-        /// <param name="fields">fields to be set</param>
-        /// <param name="values">values to set</param>
-        /// <param name="cultureInfo">The culture to use during formatting</param>
+        /// <param name="obj">structure object.</param>
+        /// <param name="fields">fields to be set.</param>
+        /// <param name="values">values to set.</param>
+        /// <param name="cultureInfo">The culture to use during formatting.</param>
         public static void SetValues(ref object obj, IList<FieldInfo> fields, IList<object> values, CultureInfo cultureInfo)
         {
             if (obj == null)
@@ -354,7 +345,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains an array containing all values of the specified fields
+        /// Obtains an array containing all values of the specified fields.
         /// </summary>
         /// <param name="fields"></param>
         /// <param name="value"></param>

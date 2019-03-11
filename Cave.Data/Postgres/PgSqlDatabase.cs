@@ -7,7 +7,7 @@ using Cave.Data.Sql;
 namespace Cave.Data.Postgres
 {
     /// <summary>
-    /// Provides a postgre sql database implementation
+    /// Provides a postgre sql database implementation.
     /// </summary>
     public sealed class PgSqlDatabase : SqlDatabase
     {
@@ -30,10 +30,10 @@ namespace Cave.Data.Postgres
         }
 
         /// <summary>
-        /// Creates a new postgre sql database instance
+        /// Creates a new postgre sql database instance.
         /// </summary>
-        /// <param name="storage">the postgre sql storage engine</param>
-        /// <param name="name">the name of the database</param>
+        /// <param name="storage">the postgre sql storage engine.</param>
+        /// <param name="name">the name of the database.</param>
         public PgSqlDatabase(PgSqlStorage storage, string name)
             : base(storage, storage.GetObjectName(name))
         {
@@ -41,7 +41,7 @@ namespace Cave.Data.Postgres
         }
 
         /// <summary>
-        /// Obtains the available table names
+        /// Obtains the available table names.
         /// </summary>
         public override string[] TableNames
         {
@@ -58,9 +58,9 @@ namespace Cave.Data.Postgres
         }
 
         /// <summary>
-        /// Obtains whether the specified table exists or not
+        /// Obtains whether the specified table exists or not.
         /// </summary>
-        /// <param name="table">The name of the table</param>
+        /// <param name="table">The name of the table.</param>
         /// <returns></returns>
         public override bool HasTable(string table)
         {
@@ -69,10 +69,10 @@ namespace Cave.Data.Postgres
         }
 
         /// <summary>
-        /// Opens the table with the specified name
+        /// Opens the table with the specified name.
         /// </summary>
-        /// <param name="table">Name of the table</param>
-        /// <returns>Returns an <see cref="ITable"/> instance for the specified table</returns>
+        /// <param name="table">Name of the table.</param>
+        /// <returns>Returns an <see cref="ITable"/> instance for the specified table.</returns>
         public override ITable GetTable(string table)
         {
             if (!HasTable(table))
@@ -84,7 +84,7 @@ namespace Cave.Data.Postgres
         }
 
         /// <summary>
-        /// Opens the table with the specified name
+        /// Opens the table with the specified name.
         /// </summary>
         protected override ITable<T> OpenTable<T>(RowLayout layout)
         {
@@ -92,11 +92,11 @@ namespace Cave.Data.Postgres
         }
 
         /// <summary>
-        /// Adds a new table with the specified name
+        /// Adds a new table with the specified name.
         /// </summary>
-        /// <typeparam name="T">The row struct to use for the table</typeparam>
-        /// <param name="flags">The flags for table creation</param>
-        /// <param name="table">Name of the table to create (optional, use this to overwrite the default table name)</param>
+        /// <typeparam name="T">The row struct to use for the table.</typeparam>
+        /// <param name="flags">The flags for table creation.</param>
+        /// <param name="table">Name of the table to create (optional, use this to overwrite the default table name).</param>
         /// <returns></returns>
         public override ITable<T> CreateTable<T>(TableFlags flags, string table)
         {
@@ -106,11 +106,11 @@ namespace Cave.Data.Postgres
         }
 
         /// <summary>
-        /// Adds a new table with the specified name
+        /// Adds a new table with the specified name.
         /// </summary>
-        /// <param name="layout">Layout of the table</param>
-        /// <param name="flags">The flags for table creation</param>
-        /// <returns>Returns an <see cref="ITable"/> instance for the specified table</returns>
+        /// <param name="layout">Layout of the table.</param>
+        /// <param name="flags">The flags for table creation.</param>
+        /// <returns>Returns an <see cref="ITable"/> instance for the specified table.</returns>
         public override ITable CreateTable(RowLayout layout, TableFlags flags)
         {
             if (layout == null)

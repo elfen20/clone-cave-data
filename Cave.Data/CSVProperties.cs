@@ -6,13 +6,13 @@ using Cave.IO;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides properties for CSV files
+    /// Provides properties for CSV files.
     /// </summary>
     public struct CSVProperties : IEquatable<CSVProperties>
     {
         /// <summary>
         /// Obtains <see cref="CSVProperties"/> with default settings:
-        /// Encoding=UTF8, Compression=None, Separator=';', StringMarker='"'
+        /// Encoding=UTF8, Compression=None, Separator=';', StringMarker='"'.
         /// </summary>
         public static CSVProperties Default
         {
@@ -35,7 +35,7 @@ namespace Cave.Data
 
         /// <summary>
         /// Obtains <see cref="CSVProperties"/> with default settings for Microsoft Excel:
-        /// Encoding=Current System Default, Compression=None, Separator='Tab', StringMarker='"'
+        /// Encoding=Current System Default, Compression=None, Separator='Tab', StringMarker='"'.
         /// </summary>
         public static CSVProperties Excel
         {
@@ -68,12 +68,7 @@ namespace Cave.Data
                 return ReferenceEquals(null, properties2);
             }
 
-            if (ReferenceEquals(null, properties2))
-            {
-                return false;
-            }
-
-            return properties1.Equals(properties2);
+            return ReferenceEquals(null, properties2) ? false : properties1.Equals(properties2);
         }
 
         /// <summary>Implements the operator !=.</summary>
@@ -87,31 +82,26 @@ namespace Cave.Data
                 return !ReferenceEquals(null, properties2);
             }
 
-            if (ReferenceEquals(null, properties2))
-            {
-                return true;
-            }
-
-            return !properties1.Equals(properties2);
+            return ReferenceEquals(null, properties2) ? true : !properties1.Equals(properties2);
         }
 
         /// <summary>
-        /// Gets / sets the culture used to en/decode values
+        /// Gets / sets the culture used to en/decode values.
         /// </summary>
         public CultureInfo Culture;
 
         /// <summary>
-        /// Gets / sets the <see cref="CompressionType"/>
+        /// Gets / sets the <see cref="CompressionType"/>.
         /// </summary>
         public CompressionType Compression;
 
         /// <summary>
-        /// Gets / sets the <see cref="Encoding"/>
+        /// Gets / sets the <see cref="Encoding"/>.
         /// </summary>
         public StringEncoding Encoding;
 
         /// <summary>
-        /// Gets / sets the <see cref="NewLineMode"/>
+        /// Gets / sets the <see cref="NewLineMode"/>.
         /// </summary>
         public NewLineMode NewLineMode;
 
@@ -126,32 +116,32 @@ namespace Cave.Data
         public char? StringMarker;
 
         /// <summary>
-        /// Gets / sets the format of date time fields
+        /// Gets / sets the format of date time fields.
         /// </summary>
         public string DateTimeFormat;
 
         /// <summary>
-        /// Allow differnent FieldCount and sorting at CSVReader
+        /// Allow differnent FieldCount and sorting at CSVReader.
         /// </summary>
         public bool AllowFieldMatching;
 
         /// <summary>The save default values (null, 0, ...)</summary>
         public bool SaveDefaultValues;
 
-        /// <summary>CSV does not contain a header</summary>
+        /// <summary>CSV does not contain a header.</summary>
         public bool NoHeader;
 
-        /// <summary>The string used to indicate a null value</summary>
+        /// <summary>The string used to indicate a null value.</summary>
         public string NullValue;
 
-        /// <summary>The false value to indicate a bool.false value (see <see cref="bool.FalseString"/>)</summary>
+        /// <summary>The false value to indicate a bool.false value (see <see cref="bool.FalseString"/>).</summary>
         public string FalseValue;
 
-        /// <summary>The false value to indicate a bool.true value (see <see cref="bool.FalseString"/>)</summary>
+        /// <summary>The false value to indicate a bool.true value (see <see cref="bool.FalseString"/>).</summary>
         public string TrueValue;
 
         /// <summary>
-        /// Obtains whether the properties are all set or not
+        /// Obtains whether the properties are all set or not.
         /// </summary>
         public bool Valid => Enum.IsDefined(typeof(CompressionType), Compression) &&
                     Enum.IsDefined(typeof(StringEncoding), Encoding) &&
@@ -166,12 +156,7 @@ namespace Cave.Data
         /// <returns><c>true</c> if the specified <see cref="object" /> is equal to this instance; otherwise, <c>false</c>.</returns>
         public override bool Equals(object obj)
         {
-            if (!(obj is CSVProperties))
-            {
-                return false;
-            }
-
-            return base.Equals((CSVProperties)obj);
+            return !(obj is CSVProperties) ? false : base.Equals((CSVProperties)obj);
         }
 
         /// <summary>Determines whether the specified <see cref="CSVProperties" />, are equal to this instance.</summary>
@@ -179,12 +164,9 @@ namespace Cave.Data
         /// <returns><c>true</c> if the specified <see cref="CSVProperties" /> are equal to this instance; otherwise, <c>false</c>.</returns>
         public bool Equals(CSVProperties other)
         {
-            if (ReferenceEquals(null, other))
-            {
-                return false;
-            }
-
-            return other.AllowFieldMatching == AllowFieldMatching
+            return ReferenceEquals(null, other)
+                ? false
+                : other.AllowFieldMatching == AllowFieldMatching
                 && other.Compression == Compression
                 && other.Culture == Culture
                 && other.DateTimeFormat == DateTimeFormat

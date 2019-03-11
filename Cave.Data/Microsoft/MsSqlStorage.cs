@@ -14,17 +14,15 @@ namespace Cave.Data.Microsoft
     public sealed class MsSqlStorage : SqlStorage
     {
 #if DEBUG
-        static bool s_RequireSSL = true;
-
-        /// <summary>Enforce SSL encryption for database connections</summary>
-        public static bool RequireSSL { get { return s_RequireSSL; } }
+        /// <summary>Enforce SSL encryption for database connections.</summary>
+        public static bool RequireSSL { get; private set; } = true;
 
         /// <summary>Disables the SSL encryption for the database connections.</summary>
-        /// <remarks>This cannot be used in release mode!</remarks>
+        /// <remarks>This cannot be used in release mode!.</remarks>
         public static void DisableSSL()
         {
             Trace.TraceError("MsSqlStorage", "SSL deactivated. This will not work in release mode!");
-            s_RequireSSL = false;
+            RequireSSL = false;
         }
 #else
         /// <summary>Enforce SSL encryption for database connections</summary>
@@ -32,7 +30,7 @@ namespace Cave.Data.Microsoft
 #endif
 
         /// <summary>
-        /// Escapes a field name for direct use in a query
+        /// Escapes a field name for direct use in a query.
         /// </summary>
         /// <param name="field"></param>
         /// <returns></returns>
@@ -42,7 +40,7 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Obtains FieldProperties for the Database based on requested FieldProperties
+        /// Obtains FieldProperties for the Database based on requested FieldProperties.
         /// </summary>
         /// <param name="field"></param>
         /// <returns></returns>
@@ -64,8 +62,8 @@ namespace Cave.Data.Microsoft
         /// Obtains the database value for the specified local value.
         /// MsSql does not support Int8 so we patch Int8 to Int16.
         /// </summary>
-        /// <param name="field">The <see cref="FieldProperties"/> of the affected field</param>
-        /// <param name="localValue">The local value to be encoded for the database</param>
+        /// <param name="field">The <see cref="FieldProperties"/> of the affected field.</param>
+        /// <param name="localValue">The local value to be encoded for the database.</param>
         /// <returns></returns>
         public override object GetDatabaseValue(FieldProperties field, object localValue)
         {
@@ -104,9 +102,9 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Obtains a reusable connection or creates a new one
+        /// Obtains a reusable connection or creates a new one.
         /// </summary>
-        /// <param name="database">The database to connect to</param>
+        /// <param name="database">The database to connect to.</param>
         /// <returns></returns>
         protected override string GetConnectionString(string database)
         {
@@ -146,8 +144,8 @@ namespace Cave.Data.Microsoft
             return result.ToString();
         }
 
-        /// <summary>Creates a new MsSql storage instance</summary>
-        /// <param name="connectionString">the connection details</param>
+        /// <summary>Creates a new MsSql storage instance.</summary>
+        /// <param name="connectionString">the connection details.</param>
         /// <param name="options">The options.</param>
         public MsSqlStorage(ConnectionString connectionString, DbConnectionOptions options)
             : base(connectionString, options)
@@ -156,12 +154,12 @@ namespace Cave.Data.Microsoft
 
         #region execute function
         /// <summary>
-        /// Executes a database dependent sql statement silently
+        /// Executes a database dependent sql statement silently.
         /// </summary>
-        /// <param name="database">The affected database (dependent on the storage engine this may be null)</param>
-        /// <param name="table">The affected table (dependent on the storage engine this may be null)</param>
-        /// <param name="cmd">the database dependent sql statement</param>
-        /// <param name="parameters">the parameters for the sql statement</param>
+        /// <param name="database">The affected database (dependent on the storage engine this may be null).</param>
+        /// <param name="table">The affected table (dependent on the storage engine this may be null).</param>
+        /// <param name="cmd">the database dependent sql statement.</param>
+        /// <param name="parameters">the parameters for the sql statement.</param>
         public override int Execute(string database, string table, string cmd, params DatabaseParameter[] parameters)
         {
             if (Closed)
@@ -203,7 +201,7 @@ namespace Cave.Data.Microsoft
         #endregion
 
         /// <summary>
-        /// Obtains a full qualified table name
+        /// Obtains a full qualified table name.
         /// </summary>
         /// <param name="database"></param>
         /// <param name="table"></param>
@@ -214,7 +212,7 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Obtains all available database names
+        /// Obtains all available database names.
         /// </summary>
         public override string[] DatabaseNames
         {
@@ -243,9 +241,9 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Checks whether the database with the specified name exists at the database or not
+        /// Checks whether the database with the specified name exists at the database or not.
         /// </summary>
-        /// <param name="database">The name of the database</param>
+        /// <param name="database">The name of the database.</param>
         /// <returns></returns>
         public override bool HasDatabase(string database)
         {
@@ -264,9 +262,9 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Obtains the database with the specified name
+        /// Obtains the database with the specified name.
         /// </summary>
-        /// <param name="database">The name of the database</param>
+        /// <param name="database">The name of the database.</param>
         /// <returns></returns>
         public override IDatabase GetDatabase(string database)
         {
@@ -279,9 +277,9 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Adds a new database with the specified name
+        /// Adds a new database with the specified name.
         /// </summary>
-        /// <param name="database">The name of the database</param>
+        /// <param name="database">The name of the database.</param>
         /// <returns></returns>
         public override IDatabase CreateDatabase(string database)
         {
@@ -294,9 +292,9 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Removes the specified database
+        /// Removes the specified database.
         /// </summary>
-        /// <param name="database">The name of the database</param>
+        /// <param name="database">The name of the database.</param>
         public override void DeleteDatabase(string database)
         {
             if (database.HasInvalidChars(ASCII.Strings.SafeName))
@@ -312,10 +310,10 @@ namespace Cave.Data.Microsoft
         protected override bool DBConnectionCanChangeDataBase => true;
 
         /// <summary>
-        /// Initializes the needed interop assembly and type
+        /// Initializes the needed interop assembly and type.
         /// </summary>
-        /// <param name="dbAdapterAssembly">Assembly containing all needed types</param>
-        /// <param name="dbConnectionType">IDbConnection type used for the database</param>
+        /// <param name="dbAdapterAssembly">Assembly containing all needed types.</param>
+        /// <param name="dbConnectionType">IDbConnection type used for the database.</param>
         protected override void InitializeInterOp(out Assembly dbAdapterAssembly, out Type dbConnectionType)
         {
             Trace.TraceInformation(string.Format("Searching for MS SQL interop libraries..."));
@@ -326,33 +324,33 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// true
+        /// true.
         /// </summary>
         public override bool SupportsNamedParameters => true;
 
         /// <summary>
-        /// Obtains wether the connection supports select * groupby
+        /// Obtains wether the connection supports select * groupby.
         /// </summary>
         public override bool SupportsAllFieldsGroupBy => true;
 
         /// <summary>
-        /// Obtains the parameter prefix char (@)
+        /// Obtains the parameter prefix char (@).
         /// </summary>
         public override string ParameterPrefix => "@";
 
         #region precision members
         /// <summary>
-        /// Obtains the maximum <see cref="DateTime"/> value precision of this storage engine
+        /// Obtains the maximum <see cref="DateTime"/> value precision of this storage engine.
         /// </summary>
         public override TimeSpan DateTimePrecision => TimeSpan.FromMilliseconds(4);
 
         /// <summary>
-        /// Obtains the maximum <see cref="TimeSpan"/> value precision of this storage engine
+        /// Obtains the maximum <see cref="TimeSpan"/> value precision of this storage engine.
         /// </summary>
         public override TimeSpan TimeSpanPrecision => TimeSpan.FromMilliseconds(1) - new TimeSpan(1);
 
         /// <summary>
-        /// Obtains the maximum <see cref="decimal"/> value precision of this storage engine
+        /// Obtains the maximum <see cref="decimal"/> value precision of this storage engine.
         /// </summary>
         public override decimal GetDecimalPrecision(float count)
         {

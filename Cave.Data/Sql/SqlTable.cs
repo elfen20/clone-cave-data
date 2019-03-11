@@ -10,14 +10,14 @@ using Cave.Collections.Generic;
 namespace Cave.Data.Sql
 {
     /// <summary>
-    /// Provides a table implementation for generic sql92 databases
+    /// Provides a table implementation for generic sql92 databases.
     /// </summary>
     public abstract class SqlTable : Table
     {
         /// <summary>
-        /// Obtains the command to retrieve the last inserted row
+        /// Obtains the command to retrieve the last inserted row.
         /// </summary>
-        /// <param name="row">The row to be inserted</param>
+        /// <param name="row">The row to be inserted.</param>
         /// <returns></returns>
         protected virtual string GetLastInsertedIDCommand(Row row)
         {
@@ -60,7 +60,7 @@ namespace Cave.Data.Sql
         #region public properties
 
         /// <summary>
-        /// Obtains the full qualified table name
+        /// Obtains the full qualified table name.
         /// </summary>
         public readonly string FQTN;
 
@@ -69,7 +69,7 @@ namespace Cave.Data.Sql
         #region protected properties
 
         /// <summary>
-        /// The used <see cref="SqlStorage"/> backend
+        /// The used <see cref="SqlStorage"/> backend.
         /// </summary>
         protected SqlStorage SqlStorage { get; private set; }
 
@@ -94,20 +94,20 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Creates a new SqlTable instance (retrieves layout from database)
+        /// Creates a new SqlTable instance (retrieves layout from database).
         /// </summary>
-        /// <param name="database">The database this table belongs to</param>
-        /// <param name="name">The name of the table</param>
+        /// <param name="database">The database this table belongs to.</param>
+        /// <param name="name">The name of the table.</param>
         protected SqlTable(IDatabase database, string name)
             : this(database, GetLayout(database, name))
         {
         }
 
         /// <summary>
-        /// Creates a new SqlTable instance (checks layout against database)
+        /// Creates a new SqlTable instance (checks layout against database).
         /// </summary>
-        /// <param name="database">The database this table belongs to</param>
-        /// <param name="layout">The layout of the table</param>
+        /// <param name="database">The database this table belongs to.</param>
+        /// <param name="layout">The layout of the table.</param>
         protected SqlTable(IDatabase database, RowLayout layout)
             : base(database, layout)
         {
@@ -128,10 +128,10 @@ namespace Cave.Data.Sql
         #region ITable interface implementation
 
         /// <summary>
-        /// Sets the specified value to a field
+        /// Sets the specified value to a field.
         /// </summary>
-        /// <param name="field">The name of the field</param>
-        /// <param name="value">The value</param>
+        /// <param name="field">The name of the field.</param>
+        /// <param name="value">The value.</param>
         public override void SetValue(string field, object value)
         {
             string command = "UPDATE " + FQTN + " SET " + SqlStorage.EscapeFieldName(Layout.GetProperties(field));
@@ -155,17 +155,17 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Obtains a row from the table
+        /// Obtains a row from the table.
         /// </summary>
-        /// <param name="id">The ID of the row to be fetched</param>
-        /// <returns>Returns the row</returns>
+        /// <param name="id">The ID of the row to be fetched.</param>
+        /// <returns>Returns the row.</returns>
         public override Row GetRow(long id)
         {
             return SqlStorage.QueryRow(Layout, Database.Name, Name, "SELECT * FROM " + FQTN + " WHERE " + SqlStorage.EscapeFieldName(Layout.IDField) + "=" + id.ToString());
         }
 
         /// <summary>
-        /// Obtains an array with all rows
+        /// Obtains an array with all rows.
         /// </summary>
         /// <returns></returns>
         public override List<Row> GetRows()
@@ -174,10 +174,10 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Obtains the rows with the given ids
+        /// Obtains the rows with the given ids.
         /// </summary>
-        /// <param name="ids">IDs of the rows to fetch from the table</param>
-        /// <returns>Returns the rows</returns>
+        /// <param name="ids">IDs of the rows to fetch from the table.</param>
+        /// <returns>Returns the rows.</returns>
         public override List<Row> GetRows(IEnumerable<long> ids)
         {
             if (ids == null)
@@ -201,18 +201,13 @@ namespace Cave.Data.Sql
                     command.AppendLine($"OR({idFieldName}={id})");
                 }
             }
-            if (first)
-            {
-                return new List<Row>();
-            }
-
-            return SqlStorage.Query(Layout, Database.Name, Name, command.ToString());
+            return first ? new List<Row>() : SqlStorage.Query(Layout, Database.Name, Name, command.ToString());
         }
 
-        /// <summary>Obtains all different field values of a given field</summary>
+        /// <summary>Obtains all different field values of a given field.</summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="field"></param>
-        /// <param name="includeNull">allow null value to be added to the results</param>
+        /// <param name="includeNull">allow null value to be added to the results.</param>
         /// <param name="ids"></param>
         /// <returns></returns>
         public override IItemSet<T> GetValues<T>(string field, bool includeNull = false, IEnumerable<long> ids = null)
@@ -274,10 +269,10 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Checks a given ID for existance
+        /// Checks a given ID for existance.
         /// </summary>
-        /// <param name="id">The dataset ID to look for</param>
-        /// <returns>Returns whether the dataset exists or not</returns>
+        /// <param name="id">The dataset ID to look for.</param>
+        /// <returns>Returns whether the dataset exists or not.</returns>
         public override bool Exist(long id)
         {
             object value = SqlStorage.QueryValue(Database.Name, Name, "SELECT COUNT(*) FROM " + FQTN + " WHERE " + SqlStorage.EscapeFieldName(Layout.IDField) + "=" + id.ToString());
@@ -288,7 +283,7 @@ namespace Cave.Data.Sql
         /// <summary>Creates the insert command.</summary>
         /// <param name="commandBuilder">The command builder.</param>
         /// <param name="row">The row.</param>
-        /// <returns>Returns a value &gt; 0 (valid ID) or &lt;= 0 for autoincrement ids</returns>
+        /// <returns>Returns a value &gt; 0 (valid ID) or &lt;= 0 for autoincrement ids.</returns>
         public virtual long CreateInsert(SqlCommandBuilder commandBuilder, Row row)
         {
             commandBuilder.Append("INSERT INTO ");
@@ -451,8 +446,8 @@ namespace Cave.Data.Sql
         /// <summary>
         /// Inserts a row to the table. If an ID <![CDATA[<]]> 0 is given an automatically generated ID will be used to add the dataset.
         /// </summary>
-        /// <param name="row">The row to insert</param>
-        /// <returns>Returns the ID of the inserted dataset</returns>
+        /// <param name="row">The row to insert.</param>
+        /// <returns>Returns the ID of the inserted dataset.</returns>
         public override long Insert(Row row)
         {
             SqlCommandBuilder commandBuilder = new SqlCommandBuilder(Database);
@@ -476,7 +471,7 @@ namespace Cave.Data.Sql
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
         /// </summary>
-        /// <param name="row">The row to replace (valid ID needed)</param>
+        /// <param name="row">The row to replace (valid ID needed).</param>
         public override void Replace(Row row)
         {
             long id = Layout.GetID(row);
@@ -495,9 +490,9 @@ namespace Cave.Data.Sql
 
         #region sql92 update
         /// <summary>
-        /// Updates a row to the table. The row must exist already!
+        /// Updates a row to the table. The row must exist already!.
         /// </summary>
-        /// <param name="row">The row to update</param>
+        /// <param name="row">The row to update.</param>
         public override void Update(Row row)
         {
             long id = Layout.GetID(row);
@@ -517,7 +512,7 @@ namespace Cave.Data.Sql
         /// <summary>
         /// Removes a row from the table.
         /// </summary>
-        /// <param name="id">The dataset ID to remove</param>
+        /// <param name="id">The dataset ID to remove.</param>
         public override void Delete(long id)
         {
             StringBuilder commandBuilder = new StringBuilder();
@@ -532,7 +527,7 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>Removes all rows from the table matching the specified search.</summary>
-        /// <param name="search">The Search used to identify rows for removal</param>
+        /// <param name="search">The Search used to identify rows for removal.</param>
         /// <returns>Returns the number of dataset deleted.</returns>
         public override int TryDelete(Search search)
         {
@@ -560,10 +555,10 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Counts the results of a given search
+        /// Counts the results of a given search.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
         /// <returns></returns>
         public override long Count(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
@@ -578,15 +573,13 @@ namespace Cave.Data.Sql
             }
 
             SqlSearch s = search.ToSql(Layout, SqlStorage);
-            if (resultOption != ResultOption.None)
-            {
-                return SqlCountIDs(s, resultOption);
-            }
-            return Convert.ToInt64(SqlStorage.QueryValue(Database.Name, Name, "SELECT COUNT(*) FROM " + FQTN + " WHERE " + s.ToString(), s.Parameters.ToArray()));
+            return resultOption != ResultOption.None
+                ? SqlCountIDs(s, resultOption)
+                : Convert.ToInt64(SqlStorage.QueryValue(Database.Name, Name, "SELECT COUNT(*) FROM " + FQTN + " WHERE " + s.ToString(), s.Parameters.ToArray()));
         }
 
         /// <summary>
-        /// Checks a given search for any datasets matching
+        /// Checks a given search for any datasets matching.
         /// </summary>
         /// <param name="search"></param>
         /// <returns></returns>
@@ -603,7 +596,7 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Obtains the RowCount
+        /// Obtains the RowCount.
         /// </summary>
         public override long RowCount
         {
@@ -618,7 +611,7 @@ namespace Cave.Data.Sql
 
         #region sql92 protected find functions
         /// <summary>
-        /// Searches for grouped datasets and returns the id of the first occurence (sql handles this differently)
+        /// Searches for grouped datasets and returns the id of the first occurence (sql handles this differently).
         /// </summary>
         /// <param name="search"></param>
         /// <param name="option"></param>
@@ -671,7 +664,7 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Searches for grouped datasets and returns the id of the first occurence (sql handles this differently)
+        /// Searches for grouped datasets and returns the id of the first occurence (sql handles this differently).
         /// </summary>
         /// <param name="search"></param>
         /// <param name="option"></param>
@@ -710,9 +703,9 @@ namespace Cave.Data.Sql
         /// <summary>
         /// Searches the table for rows with given field value combinations.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="option">Options for the search and the result set</param>
-        /// <returns>Returns the ID of the row found or -1</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="option">Options for the search and the result set.</param>
+        /// <returns>Returns the ID of the row found or -1.</returns>
         protected internal virtual List<long> SqlFindIDs(SqlSearch search, ResultOption option)
         {
             if (option.Contains(ResultOptionMode.Group))
@@ -811,7 +804,7 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Searches for grouped datasets and returns the id of the first occurence (sql handles this differently)
+        /// Searches for grouped datasets and returns the id of the first occurence (sql handles this differently).
         /// </summary>
         /// <param name="search"></param>
         /// <param name="option"></param>
@@ -868,9 +861,9 @@ namespace Cave.Data.Sql
         /// <summary>
         /// Searches the table for rows with given field value combinations.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="option">Options for the search and the result set</param>
-        /// <returns>Returns the ID of the row found or -1</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="option">Options for the search and the result set.</param>
+        /// <returns>Returns the ID of the row found or -1.</returns>
         protected internal virtual long SqlCountIDs(SqlSearch search, ResultOption option)
         {
             if (option.Contains(ResultOptionMode.Group))
@@ -900,9 +893,9 @@ namespace Cave.Data.Sql
         /// <summary>
         /// Searches the table for rows with given field value combinations.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="option">Options for the search and the result set</param>
-        /// <returns>Returns the ID of the row found or -1</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="option">Options for the search and the result set.</param>
+        /// <returns>Returns the ID of the row found or -1.</returns>
         protected internal virtual List<Row> SqlGetRows(SqlSearch search, ResultOption option)
         {
             if (option.Contains(ResultOptionMode.Group))
@@ -966,9 +959,9 @@ namespace Cave.Data.Sql
         /// <summary>
         /// Searches the table for rows with given field value combinations.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the ID of the row found or -1</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the ID of the row found or -1.</returns>
         public override List<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             if (search == null)
@@ -989,9 +982,9 @@ namespace Cave.Data.Sql
         /// <summary>
         /// Searches the table for rows with given field value combinations.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the rows found</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the rows found.</returns>
         public override List<Row> GetRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             if (search == null)
@@ -1014,7 +1007,7 @@ namespace Cave.Data.Sql
         #region free / used id lookup
 
         /// <summary>
-        /// Obtains the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!)
+        /// Obtains the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!).
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -1022,16 +1015,11 @@ namespace Cave.Data.Sql
         {
             object obj = SqlStorage.QueryValue(Database.Name, Name, "SELECT MIN(" + SqlStorage.EscapeFieldName(Layout.IDField) + ") FROM " + FQTN +
                 " WHERE " + SqlStorage.EscapeFieldName(Layout.IDField) + " > " + id);
-            if (obj == null)
-            {
-                return -1;
-            }
-
-            return Convert.ToInt64(obj);
+            return obj == null ? -1 : Convert.ToInt64(obj);
         }
 
         /// <summary>
-        /// Obtains the next free ID at the table
+        /// Obtains the next free ID at the table.
         /// </summary>
         /// <returns></returns>
         public override long GetNextFreeID()
@@ -1126,11 +1114,11 @@ namespace Cave.Data.Sql
             }
         }
 
-        /// <summary>Commits a whole TransactionLog to the table</summary>
-        /// <param name="transactionLog">The transaction log to read</param>
+        /// <summary>Commits a whole TransactionLog to the table.</summary>
+        /// <param name="transactionLog">The transaction log to read.</param>
         /// <param name="flags">The flags to use.</param>
-        /// <param name="count">Number of transactions to combine at one write</param>
-        /// <returns>Returns the number of transactions done or -1 if unknown</returns>
+        /// <param name="count">Number of transactions to combine at one write.</param>
+        /// <returns>Returns the number of transactions done or -1 if unknown.</returns>
         public override int Commit(TransactionLog transactionLog, TransactionFlags flags = TransactionFlags.Default, int count = -1)
         {
             Transaction[] transactions = transactionLog.Dequeue(count);
@@ -1169,7 +1157,7 @@ namespace Cave.Data.Sql
         public string AutoIncrementValue { get; set; } = "NULL";
 
         /// <summary>
-        /// "Database.Table"
+        /// "Database.Table".
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -1179,14 +1167,15 @@ namespace Cave.Data.Sql
     }
 
     /// <summary>
-    /// Provides a table implementation for generic sql92 databases
+    /// Provides a table implementation for generic sql92 databases.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public abstract class SqlTable<T> : SqlTable, ITable<T> where T : struct
+    public abstract class SqlTable<T> : SqlTable, ITable<T>
+        where T : struct
     {
-        /// <summary>Creates a new SqlTable instance</summary>
-        /// <param name="database">The database this table belongs to</param>
-        /// <param name="layout">The layout of the table</param>
+        /// <summary>Creates a new SqlTable instance.</summary>
+        /// <param name="database">The database this table belongs to.</param>
+        /// <param name="layout">The layout of the table.</param>
         protected SqlTable(IDatabase database, RowLayout layout)
             : base(database, CheckTypedLayout(typeof(T), database, layout))
         {
@@ -1232,9 +1221,9 @@ namespace Cave.Data.Sql
         /// <summary>
         /// Searches the table for rows with given field value combinations.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="options">Options for the search and the result set</param>
-        /// <returns>Returns the ID of the row found or -1</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="options">Options for the search and the result set.</param>
+        /// <returns>Returns the ID of the row found or -1.</returns>
         protected internal virtual List<T> SqlGetStructs(SqlSearch search, ResultOption options)
         {
             if (options.Contains(ResultOptionMode.Group))
@@ -1302,9 +1291,9 @@ namespace Cave.Data.Sql
         /// <summary>
         /// Obtains the row struct with the given index.
         /// This allows a memorytable to be used as virtual list for listviews, ...
-        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!
+        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
         /// </summary>
-        /// <param name="index">The rows index (0..RowCount-1)</param>
+        /// <param name="index">The rows index (0..RowCount-1).</param>
         /// <returns></returns>
         /// <exception cref="IndexOutOfRangeException"></exception>
         public T GetStructAt(int index)
@@ -1313,10 +1302,10 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Obtains the rows with the given ids
+        /// Obtains the rows with the given ids.
         /// </summary>
-        /// <param name="ids">IDs of the rows to fetch from the table</param>
-        /// <returns>Returns the rows</returns>
+        /// <param name="ids">IDs of the rows to fetch from the table.</param>
+        /// <returns>Returns the rows.</returns>
         public List<T> GetStructs(IEnumerable<long> ids)
         {
             if (ids == null)
@@ -1340,12 +1329,7 @@ namespace Cave.Data.Sql
                     command.AppendLine($"OR({idFieldName}={id})");
                 }
             }
-            if (first)
-            {
-                return new List<T>();
-            }
-
-            return SqlStorage.Query<T>(Database.Name, Name, command.ToString());
+            return first ? new List<T>() : SqlStorage.Query<T>(Database.Name, Name, command.ToString());
         }
 
         /// <summary>
@@ -1365,9 +1349,9 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Updates rows at the table. The rows must exist already!
+        /// Updates rows at the table. The rows must exist already!.
         /// </summary>
-        /// <param name="rows">The rows to update</param>
+        /// <param name="rows">The rows to update.</param>
         public void Update(IEnumerable<T> rows)
         {
             if (rows == null)
@@ -1383,7 +1367,7 @@ namespace Cave.Data.Sql
         /// <summary>
         /// Replaces rows at the table. This inserts (if the row does not exist) or updates (if it exists) each row.
         /// </summary>
-        /// <param name="rows">The rows to replace (valid ID needed)</param>
+        /// <param name="rows">The rows to replace (valid ID needed).</param>
         public void Replace(IEnumerable<T> rows)
         {
             if (rows == null)
@@ -1399,7 +1383,7 @@ namespace Cave.Data.Sql
         /// <summary>Tries to get the (unique) row with the given fieldvalue.</summary>
         /// <param name="search">The search.</param>
         /// <param name="row">The row.</param>
-        /// <returns>Returns true on success, false otherwise</returns>
+        /// <returns>Returns true on success, false otherwise.</returns>
         public bool TryGetStruct(Search search, out T row)
         {
             long id = FindRow(search);
@@ -1415,10 +1399,10 @@ namespace Cave.Data.Sql
 
         #region virtual
         /// <summary>
-        /// Obtains a row from the table
+        /// Obtains a row from the table.
         /// </summary>
-        /// <param name="id">The ID of the row to be fetched</param>
-        /// <returns>Returns the row</returns>
+        /// <param name="id">The ID of the row to be fetched.</param>
+        /// <returns>Returns the row.</returns>
         public virtual T GetStruct(long id)
         {
             return SqlStorage.QueryRow<T>(Database.Name, Name, "SELECT * FROM " + FQTN + " WHERE " + SqlStorage.EscapeFieldName(Layout.IDField) + "=" + id.ToString());
@@ -1427,9 +1411,9 @@ namespace Cave.Data.Sql
         /// <summary>
         /// Searches the table for a single row with given search.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the row found</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the row found.</returns>
         public virtual T GetStruct(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             if (search == null)
@@ -1461,9 +1445,9 @@ namespace Cave.Data.Sql
         /// <summary>
         /// Searches the table for rows with given field value combinations.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the rows found</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the rows found.</returns>
         public virtual List<T> GetStructs(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             if (search == null)
@@ -1484,17 +1468,17 @@ namespace Cave.Data.Sql
         /// <summary>
         /// Inserts a row to the table. If an ID <![CDATA[<=]]> 0 is given an automatically generated ID will be used to add the dataset.
         /// </summary>
-        /// <param name="row">The row to insert</param>
-        /// <returns>Returns the ID of the inserted dataset</returns>
+        /// <param name="row">The row to insert.</param>
+        /// <returns>Returns the ID of the inserted dataset.</returns>
         public virtual long Insert(T row)
         {
             return Insert(Row.Create(Layout, row));
         }
 
         /// <summary>
-        /// Updates a row to the table. The row must exist already!
+        /// Updates a row to the table. The row must exist already!.
         /// </summary>
-        /// <param name="row">The row to update</param>
+        /// <param name="row">The row to update.</param>
         public virtual void Update(T row)
         {
             Update(Row.Create(Layout, row));
@@ -1503,7 +1487,7 @@ namespace Cave.Data.Sql
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
         /// </summary>
-        /// <param name="row">The row to replace (valid ID needed)</param>
+        /// <param name="row">The row to replace (valid ID needed).</param>
         public virtual void Replace(T row)
         {
             Replace(Row.Create(Layout, row));
@@ -1511,7 +1495,7 @@ namespace Cave.Data.Sql
 
         /// <summary>
         /// Checks whether a row is present unchanged at the database and removes it.
-        /// (Use Delete(ID) to delete a DataSet without any checks)
+        /// (Use Delete(ID) to delete a DataSet without any checks).
         /// </summary>
         /// <param name="row"></param>
         public virtual void Delete(T row)
@@ -1527,7 +1511,7 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Provides access to the row with the specified ID
+        /// Provides access to the row with the specified ID.
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -1547,7 +1531,7 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Copies all rows to a given array
+        /// Copies all rows to a given array.
         /// </summary>
         /// <param name="rowArray"></param>
         /// <param name="startIndex"></param>

@@ -7,12 +7,12 @@ using Cave.IO;
 namespace Cave.Data.Microsoft
 {
     /// <summary>
-    /// Provides a MsSql database implementation
+    /// Provides a MsSql database implementation.
     /// </summary>
     public sealed class MsSqlDatabase : SqlDatabase
     {
-        /// <summary>Returns true assuming that no one else accesses the system memory</summary>
-        /// <value><c>true</c></value>
+        /// <summary>Returns true assuming that no one else accesses the system memory.</summary>
+        /// <value><c>true</c>.</value>
         public override bool IsSecure
         {
             get
@@ -26,17 +26,17 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Creates a new MsSql database instance
+        /// Creates a new MsSql database instance.
         /// </summary>
-        /// <param name="storage">the MsSql storage engine</param>
-        /// <param name="name">the name of the database</param>
+        /// <param name="storage">the MsSql storage engine.</param>
+        /// <param name="name">the name of the database.</param>
         public MsSqlDatabase(MsSqlStorage storage, string name)
             : base(storage, name)
         {
         }
 
         /// <summary>
-        /// Obtains the available table names
+        /// Obtains the available table names.
         /// </summary>
         public override string[] TableNames
         {
@@ -54,9 +54,9 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Obtains whether the specified table exists or not
+        /// Obtains whether the specified table exists or not.
         /// </summary>
-        /// <param name="table">The name of the table</param>
+        /// <param name="table">The name of the table.</param>
         /// <returns></returns>
         public override bool HasTable(string table)
         {
@@ -75,21 +75,21 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Opens and retrieves the existing table with the given layout
+        /// Opens and retrieves the existing table with the given layout.
         /// </summary>
-        /// <typeparam name="T">Row structure type</typeparam>
-        /// <param name="layout">Layout and name of the table</param>
-        /// <returns>Returns a table instance</returns>
+        /// <typeparam name="T">Row structure type.</typeparam>
+        /// <param name="layout">Layout and name of the table.</param>
+        /// <returns>Returns a table instance.</returns>
         protected override ITable<T> OpenTable<T>(RowLayout layout)
         {
             return new MsSqlTable<T>(this, layout);
         }
 
         /// <summary>
-        /// Opens the table with the specified name
+        /// Opens the table with the specified name.
         /// </summary>
-        /// <param name="table">TableName of the table</param>
-        /// <returns>Returns an <see cref="ITable"/> instance for the specified table</returns>
+        /// <param name="table">TableName of the table.</param>
+        /// <returns>Returns an <see cref="ITable"/> instance for the specified table.</returns>
         public override ITable GetTable(string table)
         {
             if (!HasTable(table))
@@ -101,11 +101,11 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Adds a new table with the specified type
+        /// Adds a new table with the specified type.
         /// </summary>
-        /// <typeparam name="T">The row struct to use for the table</typeparam>
-        /// <param name="flags">The table creation flags</param>
-        /// <param name="table">Name of the table to create (optional, use this to overwrite the default table name)</param>
+        /// <typeparam name="T">The row struct to use for the table.</typeparam>
+        /// <param name="flags">The table creation flags.</param>
+        /// <param name="table">Name of the table to create (optional, use this to overwrite the default table name).</param>
         /// <returns></returns>
         public override ITable<T> CreateTable<T>(TableFlags flags, string table)
         {
@@ -115,11 +115,11 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Adds a new table with the specified name
+        /// Adds a new table with the specified name.
         /// </summary>
-        /// <param name="layout">Layout of the table</param>
-        /// <param name="flags">The table creation flags</param>
-        /// <returns>Returns an <see cref="ITable"/> instance for the specified table</returns>
+        /// <param name="layout">Layout of the table.</param>
+        /// <param name="flags">The table creation flags.</param>
+        /// <returns>Returns an <see cref="ITable"/> instance for the specified table.</returns>
         public override ITable CreateTable(RowLayout layout, TableFlags flags)
         {
             if (layout == null)

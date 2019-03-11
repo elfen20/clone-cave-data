@@ -9,7 +9,7 @@ using System.Linq;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides a table field index implementation
+    /// Provides a table field index implementation.
     /// </summary>
     public sealed class FieldIndex : IFieldIndex
     {
@@ -29,12 +29,7 @@ namespace Cave.Data
 
             public override bool Equals(object obj)
             {
-                if (obj is BoxedValue)
-                {
-                    return Equals((BoxedValue)obj);
-                }
-
-                return Equals(obj, val);
+                return obj is BoxedValue ? Equals((BoxedValue)obj) : Equals(obj, val);
             }
 
             public int CompareTo(BoxedValue other)
@@ -54,12 +49,7 @@ namespace Cave.Data
 
             public int CompareTo(object obj)
             {
-                if (obj is BoxedValue)
-                {
-                    return CompareTo((BoxedValue)obj);
-                }
-
-                return Comparer.Default.Compare(val, obj);
+                return obj is BoxedValue ? CompareTo((BoxedValue)obj) : Comparer.Default.Compare(val, obj);
             }
         }
 
@@ -70,7 +60,7 @@ namespace Cave.Data
         SortedDictionary<BoxedValue, Set<long>> m_Index;
 #else
         /// <summary>
-        /// resolves value to IDs
+        /// resolves value to IDs.
         /// </summary>
         FakeSortedDictionary<object, Set<long>> m_Index;
 
@@ -92,7 +82,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Adds an ID, object combination to the index
+        /// Adds an ID, object combination to the index.
         /// </summary>
         /// <param name="id"></param>
         /// <param name="value"></param>
@@ -118,7 +108,7 @@ namespace Cave.Data
             Count++;
         }
 
-        /// <summary>Replaces the object for the specified identifier</summary>
+        /// <summary>Replaces the object for the specified identifier.</summary>
         /// <param name="id">The identifier.</param>
         /// <param name="oldObj">The old object.</param>
         /// <param name="newObj">The new object.</param>
@@ -135,7 +125,7 @@ namespace Cave.Data
             Add(id, newObj);
         }
 
-        /// <summary>Removes an ID from the index</summary>
+        /// <summary>Removes an ID from the index.</summary>
         /// <param name="id">The identifier.</param>
         /// <param name="value">The value.</param>
         /// <exception cref="ArgumentException">
@@ -180,7 +170,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Clears the index
+        /// Clears the index.
         /// </summary>
         internal void Clear()
         {
@@ -188,7 +178,7 @@ namespace Cave.Data
             Count = 0;
         }
 
-        /// <summary>Obtains all IDs with the specified hashcode</summary>
+        /// <summary>Obtains all IDs with the specified hashcode.</summary>
         /// <param name="value">The value.</param>
         /// <returns></returns>
         public IItemSet<long> Find(object value)
@@ -198,11 +188,7 @@ namespace Cave.Data
 #else
             object obj = value == null ? Null : value;
 #endif
-            if (m_Index.ContainsKey(obj))
-            {
-                return new ReadOnlySet<long>(m_Index[obj]);
-            }
-            return new Set<long>();
+            return m_Index.ContainsKey(obj) ? new ReadOnlySet<long>(m_Index[obj]) : (IItemSet<long>)new Set<long>();
         }
 
         /// <summary>Gets the sorted identifiers.</summary>

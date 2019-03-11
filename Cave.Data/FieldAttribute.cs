@@ -4,18 +4,18 @@ namespace Cave.Data
 {
     /// <summary>
     /// Provides a field name <see cref="Attribute"/> for renaming fields at database rows
-    /// (Using different name at struct and database)
+    /// (Using different name at struct and database).
     /// </summary>
     [AttributeUsage(AttributeTargets.Field, Inherited = false)]
     public sealed class FieldAttribute : Attribute
     {
         /// <summary>
-        /// Gets/sets the "real" field name (at the database)
+        /// Gets/sets the "real" field name (at the database).
         /// </summary>
         public string Name { get; set; }
 
         /// <summary>
-        /// Gets/sets the maximum field length (at the database)
+        /// Gets/sets the maximum field length (at the database).
         /// </summary>
         public uint Length { get; set; }
 
@@ -24,7 +24,7 @@ namespace Cave.Data
         public DataType DataType { get; set; }
 
         /// <summary>
-        /// Gets/sets the flags
+        /// Gets/sets the flags.
         /// </summary>
         public FieldFlags Flags { get; set; }
 
@@ -33,12 +33,12 @@ namespace Cave.Data
         public string DisplayFormat { get; set; }
 
         /// <summary>
-        /// Gets/sets additional field names (at the database) that will be matched
+        /// Gets/sets additional field names (at the database) that will be matched.
         /// </summary>
         public string AlternativeNames { get; set; }
 
         /// <summary>
-        /// Creates a new <see cref="FieldAttribute"/>
+        /// Creates a new <see cref="FieldAttribute"/>.
         /// </summary>
         public FieldAttribute()
         {

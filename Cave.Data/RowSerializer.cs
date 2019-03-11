@@ -5,12 +5,12 @@ using Cave.IO;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides Row based serialization
+    /// Provides Row based serialization.
     /// </summary>
     public static class RowSerializer
     {
         /// <summary>
-        /// Settings used during de/serialization
+        /// Settings used during de/serialization.
         /// </summary>
         public enum Flags
         {
@@ -85,7 +85,8 @@ namespace Cave.Data
         /// <typeparam name="T"></typeparam>
         /// <param name="writer">The writer.</param>
         /// <param name="items">The items.</param>
-        public static void Serialize<T>(this DataWriter writer, params T[] items) where T : struct
+        public static void Serialize<T>(this DataWriter writer, params T[] items)
+            where T : struct
         {
             Serialize(writer, 0, items);
         }
@@ -98,9 +99,10 @@ namespace Cave.Data
         /// <exception cref="ArgumentNullException">
         /// Items
         /// or
-        /// Writer
+        /// Writer.
         /// </exception>
-        public static void Serialize<T>(this DataWriter writer, Flags flags, params T[] items) where T : struct
+        public static void Serialize<T>(this DataWriter writer, Flags flags, params T[] items)
+            where T : struct
         {
             if (items == null)
             {
@@ -132,7 +134,7 @@ namespace Cave.Data
         /// <exception cref="ArgumentNullException">
         /// Table
         /// or
-        /// Writer
+        /// Writer.
         /// </exception>
         public static void Serialize(this DataWriter writer, Flags flags, ITable table)
         {
@@ -168,7 +170,7 @@ namespace Cave.Data
         /// or
         /// Layout
         /// or
-        /// Writer
+        /// Writer.
         /// </exception>
         public static void Serialize(this DataWriter writer, Flags flags, RowLayout layout, params Row[] rows)
         {
@@ -246,8 +248,9 @@ namespace Cave.Data
         /// <typeparam name="T"></typeparam>
         /// <param name="reader">The reader.</param>
         /// <returns></returns>
-        /// <exception cref="ArgumentNullException">Reader</exception>
-        public static T[] DeserializeItems<T>(this DataReader reader) where T : struct
+        /// <exception cref="ArgumentNullException">Reader.</exception>
+        public static T[] DeserializeItems<T>(this DataReader reader)
+            where T : struct
         {
             if (reader == null)
             {
@@ -274,7 +277,8 @@ namespace Cave.Data
         /// <typeparam name="T"></typeparam>
         /// <param name="reader">The reader.</param>
         /// <returns></returns>
-        public static ITable<T> DeserializeTable<T>(this DataReader reader) where T : struct
+        public static ITable<T> DeserializeTable<T>(this DataReader reader)
+            where T : struct
         {
             if (reader == null)
             {
@@ -301,7 +305,8 @@ namespace Cave.Data
         /// <typeparam name="T"></typeparam>
         /// <param name="reader">The reader.</param>
         /// <returns></returns>
-        public static T DeserializeStruct<T>(this DataReader reader) where T : struct
+        public static T DeserializeStruct<T>(this DataReader reader)
+            where T : struct
         {
             RowLayout layout = RowLayout.CreateTyped(typeof(T));
             Row row = DeserializeRow(reader, layout);
@@ -346,8 +351,8 @@ namespace Cave.Data
         /// <remarks>This can only deserialize rows written with layout. (Requires use of <see cref="Flags.WithLayout"/> when serializing.)</remarks>
         /// <param name="reader">The reader to read from.</param>
         /// <returns></returns>
-        /// <exception cref="ArgumentNullException">Reader</exception>
-        /// <exception cref="NotSupportedException">For DeserializeForeignX() functions the layout has to be written by the sender! The current decoded data does not contain a layout!</exception>
+        /// <exception cref="ArgumentNullException">Reader.</exception>
+        /// <exception cref="NotSupportedException">For DeserializeForeignX() functions the layout has to be written by the sender! The current decoded data does not contain a layout!.</exception>
         /// <exception cref="InvalidDataException"></exception>
         public static Row DeserializeForeignRow(this DataReader reader)
         {

@@ -3,7 +3,7 @@ using System;
 namespace Cave.Data
 {
     /// <summary>
-    /// Table creation / loading flags
+    /// Table creation / loading flags.
     /// </summary>
     [Flags]
     public enum TableFlags

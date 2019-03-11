@@ -5,7 +5,7 @@ using System.Text;
 namespace Cave.Data.Sql
 {
     /// <summary>
-    /// Provides a sql command builder
+    /// Provides a sql command builder.
     /// </summary>
     public sealed class SqlCommandBuilder
     {
@@ -14,7 +14,7 @@ namespace Cave.Data.Sql
         StringBuilder text = new StringBuilder();
         List<DatabaseParameter> parameters = new List<DatabaseParameter>();
 
-        /// <summary>Creates a new sql command builder instance</summary>
+        /// <summary>Creates a new sql command builder instance.</summary>
         /// <param name="database">The database.</param>
         public SqlCommandBuilder(IDatabase database)
         {
@@ -23,7 +23,7 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Appends a command text
+        /// Appends a command text.
         /// </summary>
         /// <param name="text"></param>
         public void Append(string text)
@@ -32,7 +32,7 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Appends a command text
+        /// Appends a command text.
         /// </summary>
         /// <param name="text"></param>
         public void AppendLine(string text)
@@ -40,7 +40,7 @@ namespace Cave.Data.Sql
             this.text.AppendLine(text);
         }
 
-        /// <summary>Appends a parameter to the command text and parameter list</summary>
+        /// <summary>Appends a parameter to the command text and parameter list.</summary>
         /// <param name="para">The parameter.</param>
         public void AddParameter(DatabaseParameter para)
         {
@@ -48,10 +48,10 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Appends a parameter to the command text and parameter list
+        /// Appends a parameter to the command text and parameter list.
         /// </summary>
-        /// <param name="value">The value of the parameter</param>
-        /// <returns>Returns the name of the created parameter</returns>
+        /// <param name="value">The value of the parameter.</param>
+        /// <returns>Returns the name of the created parameter.</returns>
         public void CreateAndAddParameter(object value)
         {
             string name = (parameters.Count + 1).ToString();
@@ -64,17 +64,17 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Obtains the full command text
+        /// Obtains the full command text.
         /// </summary>
         public string Text => text.ToString();
 
         /// <summary>
-        /// Obtains all parameters present
+        /// Obtains all parameters present.
         /// </summary>
         public DatabaseParameter[] Parameters => parameters.ToArray();
 
         /// <summary>
-        /// Obtains the length of the command text
+        /// Obtains the length of the command text.
         /// </summary>
         public int Length => text.Length;
 

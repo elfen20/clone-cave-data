@@ -1,7 +1,7 @@
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides a generic table connector interface
+    /// Provides a generic table connector interface.
     /// </summary>
     public interface ITableConnector
     {
@@ -18,7 +18,7 @@ namespace Cave.Data
         TableConnectorMode Mode { get; }
 
         /// <summary>Connects to the specified database using the specified <see cref="TableConnectorMode"/>.</summary>
-        /// <param name="mode">The <see cref="TableConnectorMode"/></param>
+        /// <param name="mode">The <see cref="TableConnectorMode"/>.</param>
         /// <param name="database">The database.</param>
         void Connect(TableConnectorMode mode, IDatabase database);
 

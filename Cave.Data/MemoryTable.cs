@@ -10,7 +10,7 @@ using Cave.Compression.Tar;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides a table stored completely in memory
+    /// Provides a table stored completely in memory.
     /// </summary>
     [DebuggerDisplay("{Name}")]
     public class MemoryTable : Table, IMemoryTable
@@ -244,12 +244,7 @@ namespace Cave.Data
                 }
 
                 limit = Math.Min(limit, sorted.Count - offset);
-                if (limit <= 0)
-                {
-                    return new List<long>();
-                }
-
-                return sorted.GetRange(offset, limit);
+                return limit <= 0 ? new List<long>() : sorted.GetRange(offset, limit);
             }
             return sorted;
         }
@@ -260,43 +255,41 @@ namespace Cave.Data
         /// <summary>Gets a value indicating whether this instance is readonly.</summary>
         bool isReadonly;
 
-        /// <summary>provides the next free id</summary>
-        long m_NextFreeID = 1;
+        /// <summary>provides the next free id.</summary>
+        long nextFreeID = 1;
 
-        /// <summary>The rows (id, row) dictionary</summary>
-        FakeSortedDictionary<long, Row> m_Items;
+        /// <summary>The rows (id, row) dictionary.</summary>
+        FakeSortedDictionary<long, Row> items;
 
-        /// <summary>The indices for fast lookups</summary>
-        FieldIndex[] m_Indices;
+        /// <summary>The indices for fast lookups.</summary>
+        FieldIndex[] indices;
 
-        /// <summary>The transaction log</summary>
-        TransactionLog m_TransactionLog;
+        /// <summary>The memory table options.</summary>
+        MemoryTableOptions memoryTableOptions;
 
-        /// <summary>The memory table options</summary>
-        MemoryTableOptions m_MemoryTableOptions;
         #endregion
 
         #region constructors
 
         /// <summary>
         /// Creates an empty unbound memory table (within a new memory storage).
-        /// This is used by temporary tables and query results
+        /// This is used by temporary tables and query results.
         /// </summary>
         public MemoryTable(RowLayout layout)
             : this(MemoryDatabase.Default, layout)
         {
         }
 
-        /// <summary>Creates a new empty MemoryTable for the specified database with the specified name</summary>
-        /// <param name="database">The database the</param>
-        /// <param name="layout">The layout of the table</param>
+        /// <summary>Creates a new empty MemoryTable for the specified database with the specified name.</summary>
+        /// <param name="database">The database the.</param>
+        /// <param name="layout">The layout of the table.</param>
         /// <param name="options">The options.</param>
         public MemoryTable(IDatabase database, RowLayout layout, MemoryTableOptions options = 0)
             : base(database, layout)
         {
-            m_Items = new FakeSortedDictionary<long, Row>();
-            m_MemoryTableOptions = options;
-            m_Indices = CreateIndex(Layout, m_MemoryTableOptions);
+            items = new FakeSortedDictionary<long, Row>();
+            memoryTableOptions = options;
+            indices = CreateIndex(Layout, memoryTableOptions);
         }
 
         #endregion
@@ -305,7 +298,7 @@ namespace Cave.Data
 
         /// <summary>Gets a value indicating whether this instance is readonly.</summary>
         /// <value><c>true</c> if this instance is readonly; otherwise, <c>false</c>.</value>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         /// <remarks>
         /// If the table is not readonly this can be set to readonly. Once set to readonly a reset is not possible.
         /// But you can recreate a writeable table by using a new <see cref="MemoryTable" /> and the <see cref="LoadTable(ITable, Search, ProgressCallback, object)" /> function.
@@ -326,13 +319,13 @@ namespace Cave.Data
         #endregion
 
         #region Load Table
-        /// <summary>Replaces all data present with the data at the given table</summary>
-        /// <param name="table">The table to load</param>
+        /// <summary>Replaces all data present with the data at the given table.</summary>
+        /// <param name="table">The table to load.</param>
         /// <param name="search">The search.</param>
         /// <param name="callback">The callback.</param>
         /// <param name="userItem">The user item.</param>
-        /// <exception cref="ArgumentNullException">Table</exception>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <exception cref="ArgumentNullException">Table.</exception>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void LoadTable(ITable table, Search search = null, ProgressCallback callback = null, object userItem = null)
         {
             Trace.TraceInformation("Loading table {0}", table);
@@ -385,10 +378,10 @@ namespace Cave.Data
 
         #region SetRows
 
-        /// <summary>Replaces the whole data at the table with the specified one without writing transactions</summary>
+        /// <summary>Replaces the whole data at the table with the specified one without writing transactions.</summary>
         /// <param name="rows"></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
-        /// <exception cref="ArgumentNullException">rows</exception>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
+        /// <exception cref="ArgumentNullException">rows.</exception>
         public void SetRows(IEnumerable<Row> rows)
         {
             if (isReadonly)
@@ -414,49 +407,49 @@ namespace Cave.Data
 
         /// <summary>
         /// This function does a lookup on the ids of the table and returns the row with the n-th ID where n is the given index.
-        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!
+        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
         /// <param name="index">The index of the row to be fetched</param>
         /// </summary>
-        /// <returns>Returns the row</returns>
+        /// <returns>Returns the row.</returns>
         public override Row GetRowAt(int index)
         {
-            long id = m_Items.Keys.ElementAt(index);
+            long id = items.Keys.ElementAt(index);
             if (Database.Storage.LogVerboseMessages)
             {
                 Trace.TraceInformation("IndexOf {0} is ID {1} at {2}", index, id, this);
             }
 
-            return m_Items[id];
+            return items[id];
         }
 
         /// <summary>
-        /// Obtains a row from the table
+        /// Obtains a row from the table.
         /// </summary>
-        /// <param name="id">The ID of the row to be fetched</param>
-        /// <returns>Returns the row</returns>
+        /// <param name="id">The ID of the row to be fetched.</param>
+        /// <returns>Returns the row.</returns>
         public override Row GetRow(long id)
         {
-            return m_Items[id];
+            return items[id];
         }
 
         /// <summary>
-        /// Obtains an array containing all rows of the memory table
+        /// Obtains an array containing all rows of the memory table.
         /// </summary>
         /// <returns></returns>
         public override List<Row> GetRows()
         {
-            return m_Items.Values.AsList();
+            return items.Values.AsList();
         }
 
-        /// <summary>Obtains the rows with the given ids</summary>
-        /// <param name="ids">IDs of the rows to fetch from the table</param>
-        /// <returns>Returns the rows</returns>
+        /// <summary>Obtains the rows with the given ids.</summary>
+        /// <param name="ids">IDs of the rows to fetch from the table.</param>
+        /// <returns>Returns the rows.</returns>
         public override List<Row> GetRows(IEnumerable<long> ids)
         {
             List<Row> rows = new List<Row>();
             foreach (long id in ids.AsSet())
             {
-                rows.Add(m_Items[id]);
+                rows.Add(items[id]);
             }
             return rows;
         }
@@ -466,13 +459,13 @@ namespace Cave.Data
         #region Exist
 
         /// <summary>
-        /// Checks a given ID for existance
+        /// Checks a given ID for existance.
         /// </summary>
-        /// <param name="id">The dataset ID to look for</param>
-        /// <returns>Returns whether the dataset exists or not</returns>
+        /// <param name="id">The dataset ID to look for.</param>
+        /// <returns>Returns whether the dataset exists or not.</returns>
         public override bool Exist(long id)
         {
-            return m_Items.ContainsKey(id);
+            return items.ContainsKey(id);
         }
 
         #endregion
@@ -482,19 +475,19 @@ namespace Cave.Data
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
         /// </summary>
-        /// <param name="row">The row to replace (valid ID needed)</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="row">The row to replace (valid ID needed).</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public override void Replace(Row row)
         {
-            Replace(row, m_TransactionLog != null);
+            Replace(row, TransactionLog != null);
         }
 
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
         /// </summary>
-        /// <param name="row">The row to replace (valid ID needed)</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="row">The row to replace (valid ID needed).</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Replace(Row row, bool writeTransaction)
         {
             long id = Layout.GetID(row);
@@ -513,16 +506,16 @@ namespace Cave.Data
             }
             if (writeTransaction)
             {
-                m_TransactionLog?.AddReplaced(id, row.SetID(Layout.IDFieldIndex, id));
+                TransactionLog?.AddReplaced(id, row.SetID(Layout.IDFieldIndex, id));
             }
         }
 
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
         /// </summary>
-        /// <param name="rows">The rows to replace (valid ID needed)</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="rows">The rows to replace (valid ID needed).</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Replace(IEnumerable<Row> rows, bool writeTransaction)
         {
             foreach (Row row in rows)
@@ -539,20 +532,20 @@ namespace Cave.Data
         /// Inserts a row to the table. If an ID &lt; 0 is given an automatically generated ID will be used to add the dataset.
         /// </summary>
         /// <param name="row">The row to insert. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.</param>
-        /// <returns>Returns the ID of the inserted dataset</returns>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <returns>Returns the ID of the inserted dataset.</returns>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public override long Insert(Row row)
         {
-            return Insert(row, m_TransactionLog != null);
+            return Insert(row, TransactionLog != null);
         }
 
         /// <summary>
         /// Inserts a row to the table. If an ID &lt; 0 is given an automatically generated ID will be used to add the dataset.
         /// </summary>
         /// <param name="row">The row to insert. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/></param>
-        /// <returns>Returns the ID of the inserted dataset</returns>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
+        /// <returns>Returns the ID of the inserted dataset.</returns>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public long Insert(Row row, bool writeTransaction)
         {
             if (isReadonly)
@@ -568,27 +561,27 @@ namespace Cave.Data
 
             if (id <= 0)
             {
-                id = m_NextFreeID++;
+                id = nextFreeID++;
                 row = row.SetID(Layout.IDFieldIndex, id);
-                m_Items.Add(id, row);
+                items.Add(id, row);
             }
             else
             {
-                m_Items.Add(id, row);
-                if (m_NextFreeID <= id)
+                items.Add(id, row);
+                if (nextFreeID <= id)
                 {
-                    m_NextFreeID = id + 1;
+                    nextFreeID = id + 1;
                 }
             }
             if (writeTransaction)
             {
-                m_TransactionLog?.AddInserted(id, row);
+                TransactionLog?.AddInserted(id, row);
             }
-            if (m_Indices != null)
+            if (indices != null)
             {
                 for (int i = 0; i < FieldCount; i++)
                 {
-                    FieldIndex index = m_Indices[i];
+                    FieldIndex index = indices[i];
                     if (index == null)
                     {
                         continue;
@@ -611,8 +604,8 @@ namespace Cave.Data
         /// Inserts rows into the table using a transaction. 
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Insert(IEnumerable<Row> rows, bool writeTransaction)
         {
             if (rows == null)
@@ -631,21 +624,21 @@ namespace Cave.Data
         #region Update
 
         /// <summary>
-        /// Updates a row to the table. The row must exist already!
+        /// Updates a row to the table. The row must exist already!.
         /// </summary>
-        /// <param name="row">The row to update</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="row">The row to update.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public override void Update(Row row)
         {
-            Update(row, m_TransactionLog != null);
+            Update(row, TransactionLog != null);
         }
 
         /// <summary>
-        /// Updates a row to the table. The row must exist already!
+        /// Updates a row to the table. The row must exist already!.
         /// </summary>
-        /// <param name="row">The row to update</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="row">The row to update.</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Update(Row row, bool writeTransaction)
         {
             if (isReadonly)
@@ -664,21 +657,21 @@ namespace Cave.Data
                 throw new ArgumentException("Row ID is out of range", nameof(row));
             }
 
-            if (!m_Items.TryGetValue(id, out Row oldRow))
+            if (!items.TryGetValue(id, out Row oldRow))
             {
                 throw new KeyNotFoundException("ID not present!");
             }
 
-            m_Items[id] = row;
+            items[id] = row;
             if (writeTransaction)
             {
-                m_TransactionLog?.AddUpdated(id, row);
+                TransactionLog?.AddUpdated(id, row);
             }
-            if (m_Indices != null)
+            if (indices != null)
             {
                 for (int i = 0; i < FieldCount; i++)
                 {
-                    FieldIndex index = m_Indices[i];
+                    FieldIndex index = indices[i];
                     if (index == null)
                     {
                         continue;
@@ -697,11 +690,11 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Updates rows at the table. The rows must exist already!
+        /// Updates rows at the table. The rows must exist already!.
         /// </summary>
-        /// <param name="rows">The rows to update</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="rows">The rows to update.</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Update(IEnumerable<Row> rows, bool writeTransaction)
         {
             if (rows == null)
@@ -722,19 +715,19 @@ namespace Cave.Data
         /// <summary>
         /// Removes a row from the table.
         /// </summary>
-        /// <param name="id">The dataset ID to remove</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="id">The dataset ID to remove.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public override void Delete(long id)
         {
-            Delete(id, m_TransactionLog != null);
+            Delete(id, TransactionLog != null);
         }
 
         /// <summary>
         /// Removes a row from the table.
         /// </summary>
-        /// <param name="id">The dataset ID to remove</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="id">The dataset ID to remove.</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Delete(long id, bool writeTransaction = true)
         {
             if (isReadonly)
@@ -748,21 +741,21 @@ namespace Cave.Data
             }
 
             Row row = null;
-            if (m_Indices != null)
+            if (indices != null)
             {
                 row = GetRow(id);
             }
 
-            if (!m_Items.Remove(id))
+            if (!items.Remove(id))
             {
                 throw new ArgumentException(string.Format("ID {0} not found at table {1}!", id, Name));
             }
 
-            if (m_Indices != null)
+            if (indices != null)
             {
                 for (int i = 0; i < FieldCount; i++)
                 {
-                    FieldIndex index = m_Indices[i];
+                    FieldIndex index = indices[i];
                     if (index == null)
                     {
                         continue;
@@ -779,15 +772,15 @@ namespace Cave.Data
             }
             if (writeTransaction)
             {
-                m_TransactionLog?.AddDeleted(id);
+                TransactionLog?.AddDeleted(id);
             }
             IncreaseSequenceNumber();
         }
 
         /// <summary>Removes a row from the table.</summary>
         /// <param name="ids">The ids.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Delete(IEnumerable<long> ids, bool writeTransaction = true)
         {
             foreach (long id in ids)
@@ -797,15 +790,15 @@ namespace Cave.Data
         }
 
         /// <summary>Removes all rows from the table matching the specified search.</summary>
-        /// <param name="search">The Search used to identify rows for removal</param>
+        /// <param name="search">The Search used to identify rows for removal.</param>
         /// <returns>Returns the number of dataset deleted.</returns>
         public override int TryDelete(Search search)
         {
-            return TryDelete(search, m_TransactionLog != null);
+            return TryDelete(search, TransactionLog != null);
         }
 
         /// <summary>Removes all rows from the table matching the specified search.</summary>
-        /// <param name="search">The Search used to identify rows for removal</param>
+        /// <param name="search">The Search used to identify rows for removal.</param>
         /// <param name="writeTransaction">if set to <c>true</c> [write transaction].</param>
         /// <returns>Returns the number of dataset deleted.</returns>
         public int TryDelete(Search search, bool writeTransaction)
@@ -815,7 +808,7 @@ namespace Cave.Data
                 search = Search.None;
             }
 
-            IEnumerable<long> ids = search.Scan(null, Layout, m_Indices, m_Items);
+            IEnumerable<long> ids = search.Scan(null, Layout, indices, items);
             int count = 0;
             foreach (long id in ids)
             {
@@ -832,7 +825,7 @@ namespace Cave.Data
         /// <summary>
         /// Clears all rows of the table (this operation will not write anything to the transaction log).
         /// </summary>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public override void Clear()
         {
             Clear(true);
@@ -842,7 +835,7 @@ namespace Cave.Data
         /// Clears all rows of the table (this operation will not write anything to the transaction log).
         /// </summary>
         /// <param name="resetIDs">if set to <c>true</c> [the next insert will get id 1].</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Clear(bool resetIDs)
         {
             if (isReadonly)
@@ -852,7 +845,7 @@ namespace Cave.Data
 
             if (resetIDs)
             {
-                m_NextFreeID = 1;
+                nextFreeID = 1;
             }
 
             if (Database.Storage.LogVerboseMessages)
@@ -860,8 +853,8 @@ namespace Cave.Data
                 Trace.TraceInformation("Clear {0}", this);
             }
 
-            m_Items = new FakeSortedDictionary<long, Row>();
-            m_Indices = CreateIndex(Layout, m_MemoryTableOptions);
+            items = new FakeSortedDictionary<long, Row>();
+            indices = CreateIndex(Layout, memoryTableOptions);
             IncreaseSequenceNumber();
         }
 
@@ -872,12 +865,12 @@ namespace Cave.Data
         /// <summary>
         /// Searches the table for rows with given field value combinations.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the ID of the row found or -1</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the ID of the row found or -1.</returns>
         public override List<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
-            return FindRows(Layout, m_Indices, m_Items, search, resultOption);
+            return FindRows(Layout, indices, items, search, resultOption);
         }
 
         #endregion
@@ -885,37 +878,33 @@ namespace Cave.Data
         #region Properties
 
         /// <summary>
-        /// Obtains the RowCount
+        /// Obtains the RowCount.
         /// </summary>
-        public override long RowCount => m_Items.Count;
+        public override long RowCount => items.Count;
 
         /// <summary>
-        /// Obtains all IDs
+        /// Obtains all IDs.
         /// </summary>
-        public override List<long> IDs => m_Items.Keys.ToList();
+        public override List<long> IDs => items.Keys.ToList();
 
         /// <summary>
         /// Gets/sets the transaction log used to store all changes. The user has to create it, dequeue the items and
-        /// dispose it after usage!
+        /// dispose it after usage!.
         /// </summary>
-        public TransactionLog TransactionLog
-        {
-            get => m_TransactionLog;
-            set => m_TransactionLog = value;
-        }
+        public TransactionLog TransactionLog { get; set; }
 
         #endregion
 
         #region Used / Free IDs
 
         /// <summary>
-        /// Obtains the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!)
+        /// Obtains the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!).
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         public override long GetNextUsedID(long id)
         {
-            foreach (long index in m_Items.Keys)
+            foreach (long index in items.Keys)
             {
                 if (index > id)
                 {
@@ -926,19 +915,19 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the next free ID at the table
+        /// Obtains the next free ID at the table.
         /// </summary>
         /// <returns></returns>
         public override long GetNextFreeID()
         {
-            return m_NextFreeID;
+            return nextFreeID;
         }
 
         /// <summary>
-        /// Tries to set the next free id used at inserts
+        /// Tries to set the next free id used at inserts.
         /// </summary>
         /// <param name="id"></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void SetNextFreeID(long id)
         {
             if (isReadonly)
@@ -946,12 +935,12 @@ namespace Cave.Data
                 throw new ReadOnlyException(string.Format("Table {0} is readonly!", this));
             }
 
-            if (id < m_NextFreeID)
+            if (id < nextFreeID)
             {
                 throw new InvalidOperationException(string.Format("Cannot set NextFreeID to a value in range of existant IDs!"));
             }
 
-            m_NextFreeID = id;
+            nextFreeID = id;
         }
 
         #endregion
@@ -971,30 +960,29 @@ namespace Cave.Data
     }
 
     /// <summary>
-    /// Provides a table stored completly in memory
+    /// Provides a table stored completly in memory.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     [DebuggerDisplay("{Name}")]
-    public class MemoryTable<T> : Table<T>, IMemoryTable<T> where T : struct
+    public class MemoryTable<T> : Table<T>, IMemoryTable<T>
+        where T : struct
     {
         #region private variables
+
         /// <summary>Gets a value indicating whether this instance is readonly.</summary>
         bool isReadonly;
 
-        /// <summary>provides the next free id</summary>
-        long m_NextFreeID = 1;
+        /// <summary>provides the next free id.</summary>
+        long nextFreeID = 1;
 
-        /// <summary>The rows (id, row) dictionary</summary>
-        FakeSortedDictionary<long, Row> m_Items = new FakeSortedDictionary<long, Row>();
+        /// <summary>The rows (id, row) dictionary.</summary>
+        FakeSortedDictionary<long, Row> items = new FakeSortedDictionary<long, Row>();
 
-        /// <summary>The indices for fast lookups</summary>
-        FieldIndex[] m_Indices;
+        /// <summary>The indices for fast lookups.</summary>
+        FieldIndex[] indices;
 
-        /// <summary>The transaction log</summary>
-        TransactionLog m_TransactionLog;
-
-        /// <summary>The memory table options</summary>
-        MemoryTableOptions m_MemoryTableOptions;
+        /// <summary>The memory table options.</summary>
+        MemoryTableOptions memoryTableOptions;
 
         #endregion
 
@@ -1002,23 +990,23 @@ namespace Cave.Data
 
         /// <summary>
         /// Creates an empty unbound memory table (within a new memory storage).
-        /// This is used by temporary tables and query results
+        /// This is used by temporary tables and query results.
         /// </summary>
         public MemoryTable()
             : this(MemoryDatabase.Default, RowLayout.CreateTyped(typeof(T)))
         {
         }
 
-        /// <summary>Creates a new empty MemoryTable for the specified database with the specified name</summary>
-        /// <param name="database">The database the</param>
-        /// <param name="layout">The layout of the table</param>
+        /// <summary>Creates a new empty MemoryTable for the specified database with the specified name.</summary>
+        /// <param name="database">The database the.</param>
+        /// <param name="layout">The layout of the table.</param>
         /// <param name="options">The options.</param>
         public MemoryTable(IDatabase database, RowLayout layout, MemoryTableOptions options = 0)
             : base(database, layout)
         {
-            m_Items = new FakeSortedDictionary<long, Row>();
-            m_MemoryTableOptions = options;
-            m_Indices = CreateIndex(Layout, m_MemoryTableOptions);
+            items = new FakeSortedDictionary<long, Row>();
+            memoryTableOptions = options;
+            indices = CreateIndex(Layout, memoryTableOptions);
         }
 
         #endregion
@@ -1027,7 +1015,7 @@ namespace Cave.Data
 
         /// <summary>Gets a value indicating whether this instance is readonly.</summary>
         /// <value><c>true</c> if this instance is readonly; otherwise, <c>false</c>.</value>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         /// <remarks>
         /// If the table is not readonly this can be set to readonly. Once set to readonly a reset is not possible.
         /// But you can recreate a writeable table by using a new <see cref="MemoryTable" /> and the <see cref="LoadTable(ITable, Search, ProgressCallback, object)" /> function.
@@ -1048,13 +1036,13 @@ namespace Cave.Data
         #endregion
 
         #region Load Table
-        /// <summary>Replaces all data present with the data at the given table</summary>
-        /// <param name="table">The table to load</param>
+        /// <summary>Replaces all data present with the data at the given table.</summary>
+        /// <param name="table">The table to load.</param>
         /// <param name="search">The search.</param>
         /// <param name="callback">The callback.</param>
         /// <param name="userItem">The user item.</param>
-        /// <exception cref="ArgumentNullException">Table</exception>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <exception cref="ArgumentNullException">Table.</exception>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void LoadTable(ITable table, Search search = null, ProgressCallback callback = null, object userItem = null)
         {
             Trace.TraceInformation("Loading table {0}", table);
@@ -1109,10 +1097,10 @@ namespace Cave.Data
         #region SetRows
 
         /// <summary>
-        /// Replaces the whole data at the table with the specified one without writing transactions
+        /// Replaces the whole data at the table with the specified one without writing transactions.
         /// </summary>
         /// <param name="rows"></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void SetRows(IEnumerable<Row> rows)
         {
             if (rows == null)
@@ -1132,10 +1120,10 @@ namespace Cave.Data
         #region SetStructs
 
         /// <summary>
-        /// Replaces the whole data at the table with the specified one without writing transactions
+        /// Replaces the whole data at the table with the specified one without writing transactions.
         /// </summary>
         /// <param name="rows"></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void SetStructs(IEnumerable<T> rows)
         {
             if (rows == null)
@@ -1156,18 +1144,18 @@ namespace Cave.Data
 
         /// <summary>
         /// This function does a lookup on the ids of the table and returns the row with the n-th ID where n is the given index.
-        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!
+        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
         /// <param name="index">The index of the row to be fetched</param>
         /// </summary>
-        /// <returns>Returns the row</returns>
+        /// <returns>Returns the row.</returns>
         public override Row GetRowAt(int index)
         {
-            if (index > m_Items.Count)
+            if (index > items.Count)
             {
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
 
-            long id = m_Items.Keys.ElementAt(index);
+            long id = items.Keys.ElementAt(index);
             if (Database.Storage.LogVerboseMessages)
             {
                 Trace.TraceInformation("IndexOf {0} is ID {1} at {2}", index, id, this);
@@ -1177,13 +1165,13 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains a row from the table
+        /// Obtains a row from the table.
         /// </summary>
-        /// <param name="id">The ID of the row to be fetched</param>
-        /// <returns>Returns the row</returns>
+        /// <param name="id">The ID of the row to be fetched.</param>
+        /// <returns>Returns the row.</returns>
         public override Row GetRow(long id)
         {
-            if (!m_Items.TryGetValue(id, out Row result))
+            if (!items.TryGetValue(id, out Row result))
             {
                 throw new ArgumentException(string.Format("ID {0} not found at table {1}!", id, Name));
             }
@@ -1192,17 +1180,17 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains an array containing all rows of the memory table
+        /// Obtains an array containing all rows of the memory table.
         /// </summary>
         /// <returns></returns>
         public override List<Row> GetRows()
         {
-            return m_Items.Values.AsList();
+            return items.Values.AsList();
         }
 
-        /// <summary>Obtains the rows with the given ids</summary>
-        /// <param name="ids">IDs of the rows to fetch from the table</param>
-        /// <returns>Returns the rows</returns>
+        /// <summary>Obtains the rows with the given ids.</summary>
+        /// <param name="ids">IDs of the rows to fetch from the table.</param>
+        /// <returns>Returns the rows.</returns>
         public override List<Row> GetRows(IEnumerable<long> ids)
         {
             List<Row> rows = new List<Row>();
@@ -1218,13 +1206,13 @@ namespace Cave.Data
         #region GetStruct
 
         /// <summary>
-        /// Obtains a row from the table
+        /// Obtains a row from the table.
         /// </summary>
-        /// <param name="id">The ID of the row to be fetched</param>
-        /// <returns>Returns the row</returns>
+        /// <param name="id">The ID of the row to be fetched.</param>
+        /// <returns>Returns the row.</returns>
         public override T GetStruct(long id)
         {
-            if (!m_Items.TryGetValue(id, out Row result))
+            if (!items.TryGetValue(id, out Row result))
             {
                 throw new ArgumentException(string.Format("ID {0} not found at table {1}!", id, Name));
             }
@@ -1233,16 +1221,16 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the rows with the given ids
+        /// Obtains the rows with the given ids.
         /// </summary>
-        /// <param name="ids">IDs of the rows to fetch from the table</param>
-        /// <returns>Returns the rows</returns>
+        /// <param name="ids">IDs of the rows to fetch from the table.</param>
+        /// <returns>Returns the rows.</returns>
         public override List<T> GetStructs(IEnumerable<long> ids)
         {
             List<T> result = new List<T>();
             foreach (long id in ids.AsSet())
             {
-                if (m_Items.TryGetValue(id, out Row row))
+                if (items.TryGetValue(id, out Row row))
                 {
                     result.Add(row.GetStruct<T>(Layout));
                 }
@@ -1252,42 +1240,40 @@ namespace Cave.Data
 
         /// <summary>
         /// This function does a lookup on the ids of the table and returns the row with the n-th ID where n is the given index.
-        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!
+        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
         /// <param name="index">The index of the row to be fetched</param>
         /// </summary>
-        /// <returns>Returns the row</returns>
+        /// <returns>Returns the row.</returns>
         public override T GetStructAt(int index)
         {
-            long id = m_Items.Keys.ElementAt(index);
-            return m_Items[id].GetStruct<T>(Layout);
+            long id = items.Keys.ElementAt(index);
+            return items[id].GetStruct<T>(Layout);
         }
 
         /// <summary>
         /// Searches the table for rows with given field value combinations.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the rows found</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the rows found.</returns>
         public override List<T> GetStructs(Search search = null, ResultOption resultOption = null)
         {
-            if ((search == null || search == Search.None) && (resultOption == null || resultOption == ResultOption.None))
-            {
-                return ToStructs<T>(Layout, m_Items.Count, m_Items.Values);
-            }
-            return base.GetStructs(search, resultOption);
+            return (search == null || search == Search.None) && (resultOption == null || resultOption == ResultOption.None)
+                ? ToStructs<T>(Layout, items.Count, items.Values)
+                : base.GetStructs(search, resultOption);
         }
         #endregion
 
         #region Exist
 
         /// <summary>
-        /// Checks a given ID for existance
+        /// Checks a given ID for existance.
         /// </summary>
-        /// <param name="id">The dataset ID to look for</param>
-        /// <returns>Returns whether the dataset exists or not</returns>
+        /// <param name="id">The dataset ID to look for.</param>
+        /// <returns>Returns whether the dataset exists or not.</returns>
         public override bool Exist(long id)
         {
-            return m_Items.ContainsKey(id);
+            return items.ContainsKey(id);
         }
 
         #endregion
@@ -1297,9 +1283,9 @@ namespace Cave.Data
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
         /// </summary>
-        /// <param name="row">The row to replace (valid ID needed)</param>
+        /// <param name="row">The row to replace (valid ID needed).</param>
         /// <param name="writeTransaction"></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Replace(T row, bool writeTransaction)
         {
             Replace(Row.Create(Layout, row), writeTransaction);
@@ -1310,7 +1296,7 @@ namespace Cave.Data
         /// </summary>
         /// <param name="rows">The rows.</param>
         /// <param name="writeTransaction">if set to <c>true</c> [write transaction].</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Replace(IEnumerable<T> rows, bool writeTransaction)
         {
             foreach (T row in rows)
@@ -1322,19 +1308,19 @@ namespace Cave.Data
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
         /// </summary>
-        /// <param name="row">The row to replace (valid ID needed)</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="row">The row to replace (valid ID needed).</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public override void Replace(Row row)
         {
-            Replace(row, m_TransactionLog != null);
+            Replace(row, TransactionLog != null);
         }
 
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
         /// </summary>
-        /// <param name="row">The row to replace (valid ID needed)</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="row">The row to replace (valid ID needed).</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Replace(Row row, bool writeTransaction)
         {
             long id = Layout.GetID(row);
@@ -1343,7 +1329,7 @@ namespace Cave.Data
                 throw new ArgumentOutOfRangeException(nameof(row), "Invalid ID!");
             }
 
-            if (m_Items.ContainsKey(id))
+            if (items.ContainsKey(id))
             {
                 Update(row);
             }
@@ -1353,16 +1339,16 @@ namespace Cave.Data
             }
             if (writeTransaction)
             {
-                m_TransactionLog?.AddReplaced(id, row.SetID(Layout.IDFieldIndex, id));
+                TransactionLog?.AddReplaced(id, row.SetID(Layout.IDFieldIndex, id));
             }
         }
 
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
         /// </summary>
-        /// <param name="rows">The rows to replace (valid ID needed)</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="rows">The rows to replace (valid ID needed).</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Replace(IEnumerable<Row> rows, bool writeTransaction)
         {
             foreach (Row row in rows)
@@ -1379,9 +1365,9 @@ namespace Cave.Data
         /// Inserts a row into the table. If an ID &lt; 0 is specified an automatically generated ID will be used to add the dataset.
         /// </summary>
         /// <param name="row">The row to insert. If an ID &lt;= 0 is specified an automatically generated ID will be used to add the dataset.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="T:Cave.Data.TransactionLog" /></param>
-        /// <returns>Returns the ID of the inserted dataset</returns>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="T:Cave.Data.TransactionLog" />.</param>
+        /// <returns>Returns the ID of the inserted dataset.</returns>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public long Insert(T row, bool writeTransaction)
         {
             return Insert(Row.Create(Layout, row), writeTransaction);
@@ -1391,8 +1377,8 @@ namespace Cave.Data
         /// Inserts rows into the table. If an ID &lt; 0 is specified an automatically generated ID will be used to add the dataset.
         /// </summary>
         /// <param name="rows">The rows.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="T:Cave.Data.TransactionLog" /></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="T:Cave.Data.TransactionLog" />.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Insert(IEnumerable<T> rows, bool writeTransaction)
         {
             foreach (T row in rows)
@@ -1405,20 +1391,20 @@ namespace Cave.Data
         /// Inserts a row to the table. If an ID &lt; 0 is given an automatically generated ID will be used to add the dataset.
         /// </summary>
         /// <param name="row">The row to insert. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.</param>
-        /// <returns>Returns the ID of the inserted dataset</returns>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <returns>Returns the ID of the inserted dataset.</returns>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public override long Insert(Row row)
         {
-            return Insert(row, m_TransactionLog != null);
+            return Insert(row, TransactionLog != null);
         }
 
         /// <summary>
         /// Inserts a row to the table. If an ID &lt; 0 is given an automatically generated ID will be used to add the dataset.
         /// </summary>
         /// <param name="row">The row to insert. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/></param>
-        /// <returns>Returns the ID of the inserted dataset</returns>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
+        /// <returns>Returns the ID of the inserted dataset.</returns>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public long Insert(Row row, bool writeTransaction)
         {
             if (isReadonly)
@@ -1434,27 +1420,27 @@ namespace Cave.Data
 
             if (id <= 0)
             {
-                id = m_NextFreeID++;
+                id = nextFreeID++;
                 row = row.SetID(Layout.IDFieldIndex, id);
-                m_Items.Add(id, row);
+                items.Add(id, row);
             }
             else
             {
-                m_Items.Add(id, row);
-                if (m_NextFreeID <= id)
+                items.Add(id, row);
+                if (nextFreeID <= id)
                 {
-                    m_NextFreeID = id + 1;
+                    nextFreeID = id + 1;
                 }
             }
             if (writeTransaction)
             {
-                m_TransactionLog?.AddInserted(id, row);
+                TransactionLog?.AddInserted(id, row);
             }
-            if (m_Indices != null)
+            if (indices != null)
             {
                 for (int i = 0; i < FieldCount; i++)
                 {
-                    FieldIndex index = m_Indices[i];
+                    FieldIndex index = indices[i];
                     if (index == null)
                     {
                         continue;
@@ -1477,8 +1463,8 @@ namespace Cave.Data
         /// Inserts rows into the table using a transaction. 
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Insert(IEnumerable<Row> rows, bool writeTransaction)
         {
             if (rows == null)
@@ -1496,19 +1482,19 @@ namespace Cave.Data
 
         #region Update
 
-        /// <summary>Updates a row at the table. The row must exist already!</summary>
-        /// <param name="row">The row to update</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="T:Cave.Data.TransactionLog" /></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <summary>Updates a row at the table. The row must exist already!.</summary>
+        /// <param name="row">The row to update.</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="T:Cave.Data.TransactionLog" />.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Update(T row, bool writeTransaction)
         {
             Update(Row.Create(Layout, row), writeTransaction);
         }
 
-        /// <summary>Updates rows at the table. The row must exist already!</summary>
+        /// <summary>Updates rows at the table. The row must exist already!.</summary>
         /// <param name="rows">The rows.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="T:Cave.Data.TransactionLog" /></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="T:Cave.Data.TransactionLog" />.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Update(IEnumerable<T> rows, bool writeTransaction)
         {
             foreach (T row in rows)
@@ -1518,21 +1504,21 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Updates a row to the table. The row must exist already!
+        /// Updates a row to the table. The row must exist already!.
         /// </summary>
-        /// <param name="row">The row to update</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="row">The row to update.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public override void Update(Row row)
         {
-            Update(row, m_TransactionLog != null);
+            Update(row, TransactionLog != null);
         }
 
         /// <summary>
-        /// Updates a row to the table. The row must exist already!
+        /// Updates a row to the table. The row must exist already!.
         /// </summary>
-        /// <param name="row">The row to update</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="row">The row to update.</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Update(Row row, bool writeTransaction)
         {
             if (isReadonly)
@@ -1551,21 +1537,21 @@ namespace Cave.Data
                 throw new ArgumentException("Row ID is out of range", nameof(row));
             }
 
-            if (!m_Items.TryGetValue(id, out Row oldRow))
+            if (!items.TryGetValue(id, out Row oldRow))
             {
                 throw new KeyNotFoundException("ID not present!");
             }
 
-            m_Items[id] = row;
+            items[id] = row;
             if (writeTransaction)
             {
-                m_TransactionLog?.AddUpdated(id, row);
+                TransactionLog?.AddUpdated(id, row);
             }
-            if (m_Indices != null)
+            if (indices != null)
             {
                 for (int i = 0; i < FieldCount; i++)
                 {
-                    FieldIndex index = m_Indices[i];
+                    FieldIndex index = indices[i];
                     if (index == null)
                     {
                         continue;
@@ -1584,11 +1570,11 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Updates rows at the table. The rows must exist already!
+        /// Updates rows at the table. The rows must exist already!.
         /// </summary>
-        /// <param name="rows">The rows to update</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="rows">The rows to update.</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Update(IEnumerable<Row> rows, bool writeTransaction)
         {
             if (rows == null)
@@ -1609,19 +1595,19 @@ namespace Cave.Data
         /// <summary>
         /// Removes a row from the table.
         /// </summary>
-        /// <param name="id">The dataset ID to remove</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="id">The dataset ID to remove.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public override void Delete(long id)
         {
-            Delete(id, m_TransactionLog != null);
+            Delete(id, TransactionLog != null);
         }
 
         /// <summary>
         /// Removes a row from the table.
         /// </summary>
-        /// <param name="id">The dataset ID to remove</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="id">The dataset ID to remove.</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Delete(long id, bool writeTransaction = true)
         {
             if (isReadonly)
@@ -1635,21 +1621,21 @@ namespace Cave.Data
             }
 
             Row row = null;
-            if (m_Indices != null)
+            if (indices != null)
             {
                 row = GetRow(id);
             }
 
-            if (!m_Items.Remove(id))
+            if (!items.Remove(id))
             {
                 throw new ArgumentException(string.Format("ID {0} not found at table {1}!", id, Name));
             }
 
-            if (m_Indices != null)
+            if (indices != null)
             {
                 for (int i = 0; i < FieldCount; i++)
                 {
-                    FieldIndex index = m_Indices[i];
+                    FieldIndex index = indices[i];
                     if (index == null)
                     {
                         continue;
@@ -1666,15 +1652,15 @@ namespace Cave.Data
             }
             if (writeTransaction)
             {
-                m_TransactionLog?.AddDeleted(id);
+                TransactionLog?.AddDeleted(id);
             }
             IncreaseSequenceNumber();
         }
 
         /// <summary>Removes a row from the table.</summary>
         /// <param name="ids">The ids.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Delete(IEnumerable<long> ids, bool writeTransaction = true)
         {
             foreach (long id in ids)
@@ -1686,19 +1672,19 @@ namespace Cave.Data
         /// <summary>
         /// Removes all rows from the table matching the given search.
         /// </summary>
-        /// <param name="search">The Search used to identify rows for removal</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="search">The Search used to identify rows for removal.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public override int TryDelete(Search search)
         {
-            return TryDelete(search, m_TransactionLog != null);
+            return TryDelete(search, TransactionLog != null);
         }
 
         /// <summary>
         /// Removes all rows from the table matching the given search.
         /// </summary>
-        /// <param name="search">The Search used to identify rows for removal</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <param name="search">The Search used to identify rows for removal.</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public int TryDelete(Search search, bool writeTransaction)
         {
             if (search == null)
@@ -1706,7 +1692,7 @@ namespace Cave.Data
                 search = Search.None;
             }
 
-            IEnumerable<long> ids = search.Scan(null, Layout, m_Indices, m_Items);
+            IEnumerable<long> ids = search.Scan(null, Layout, indices, items);
             int count = 0;
             foreach (long id in ids)
             {
@@ -1723,7 +1709,7 @@ namespace Cave.Data
         /// <summary>
         /// Clears all rows of the table (this operation will not write anything to the transaction log).
         /// </summary>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public override void Clear()
         {
             Clear(true);
@@ -1733,7 +1719,7 @@ namespace Cave.Data
         /// Clears all rows of the table (this operation will not write anything to the transaction log).
         /// </summary>
         /// <param name="resetIDs">if set to <c>true</c> [the next insert will get id 1].</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void Clear(bool resetIDs)
         {
             if (isReadonly)
@@ -1748,11 +1734,11 @@ namespace Cave.Data
 
             if (resetIDs)
             {
-                m_NextFreeID = 1;
+                nextFreeID = 1;
             }
 
-            m_Items = new FakeSortedDictionary<long, Row>();
-            m_Indices = CreateIndex(Layout, m_MemoryTableOptions);
+            items = new FakeSortedDictionary<long, Row>();
+            indices = CreateIndex(Layout, memoryTableOptions);
             IncreaseSequenceNumber();
         }
 
@@ -1763,12 +1749,12 @@ namespace Cave.Data
         /// <summary>
         /// Searches the table for rows with given field value combinations.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the ID of the row found or -1</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the ID of the row found or -1.</returns>
         public override List<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
-            return MemoryTable.FindRows(Layout, m_Indices, m_Items, search, resultOption);
+            return MemoryTable.FindRows(Layout, indices, items, search, resultOption);
         }
 
         #endregion
@@ -1776,37 +1762,33 @@ namespace Cave.Data
         #region Properties
 
         /// <summary>
-        /// Obtains the RowCount
+        /// Obtains the RowCount.
         /// </summary>
-        public override long RowCount => m_Items.Count;
+        public override long RowCount => items.Count;
 
         /// <summary>
-        /// Obtains all IDs
+        /// Obtains all IDs.
         /// </summary>
-        public override List<long> IDs => m_Items.Keys.ToList();
+        public override List<long> IDs => items.Keys.ToList();
 
         /// <summary>
         /// Gets/sets the transaction log used to store all changes. The user has to create it, dequeue the items and
-        /// dispose it after usage!
+        /// dispose it after usage!.
         /// </summary>
-        public TransactionLog TransactionLog
-        {
-            get => m_TransactionLog;
-            set => m_TransactionLog = value;
-        }
+        public TransactionLog TransactionLog { get; set; }
 
         #endregion
 
         #region Used / Free IDs
 
         /// <summary>
-        /// Obtains the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!)
+        /// Obtains the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!).
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         public override long GetNextUsedID(long id)
         {
-            foreach (long index in m_Items.Keys)
+            foreach (long index in items.Keys)
             {
                 if (index > id)
                 {
@@ -1817,19 +1799,19 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the next free ID at the table
+        /// Obtains the next free ID at the table.
         /// </summary>
         /// <returns></returns>
         public override long GetNextFreeID()
         {
-            return m_NextFreeID;
+            return nextFreeID;
         }
 
         /// <summary>
-        /// Tries to set the next free id used at inserts
+        /// Tries to set the next free id used at inserts.
         /// </summary>
         /// <param name="id"></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!</exception>
+        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         public void SetNextFreeID(long id)
         {
             if (isReadonly)
@@ -1837,12 +1819,12 @@ namespace Cave.Data
                 throw new ReadOnlyException(string.Format("Table {0} is readonly!", this));
             }
 
-            if (id < m_NextFreeID)
+            if (id < nextFreeID)
             {
                 throw new InvalidOperationException(string.Format("Cannot set NextFreeID to a value in range of existant IDs!"));
             }
 
-            m_NextFreeID = id;
+            nextFreeID = id;
         }
 
         #endregion

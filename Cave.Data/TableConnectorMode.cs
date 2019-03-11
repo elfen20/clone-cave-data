@@ -1,7 +1,7 @@
 namespace Cave.Data
 {
     /// <summary>
-    /// Types for table connections
+    /// Types for table connections.
     /// </summary>
     public enum TableConnectorMode
     {

@@ -8,13 +8,13 @@ using Cave.Collections.Generic;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides a transaction log for database rows changes / deletions
+    /// Provides a transaction log for database rows changes / deletions.
     /// </summary>
     [DebuggerDisplay("{Count} Transactions")]
     public class TransactionLog
     {
         /// <summary>
-        /// Provides the syncronization root
+        /// Provides the syncronization root.
         /// </summary>
         readonly Dictionary<long, LinkedListNode<Transaction>> m_Updated = new Dictionary<long, LinkedListNode<Transaction>>();
         readonly Dictionary<long, LinkedListNode<Transaction>> m_Deleted = new Dictionary<long, LinkedListNode<Transaction>>();
@@ -23,7 +23,7 @@ namespace Cave.Data
         readonly LinkedList<Transaction> m_List = new LinkedList<Transaction>();
 
         /// <summary>
-        /// Clears the whole log
+        /// Clears the whole log.
         /// </summary>
         public void Clear()
         {
@@ -39,7 +39,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!)
+        /// Obtains the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!).
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -149,9 +149,9 @@ namespace Cave.Data
 
 
         /// <summary>
-        /// Adds a Transaction to the log
+        /// Adds a Transaction to the log.
         /// </summary>
-        /// <param name="transaction">The Transaction to add</param>
+        /// <param name="transaction">The Transaction to add.</param>
         public void Add(Transaction transaction)
         {
             lock (this)
@@ -162,9 +162,9 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Adds a Transaction to the log
+        /// Adds a Transaction to the log.
         /// </summary>
-        /// <param name="transactions">The Transactions to add</param>
+        /// <param name="transactions">The Transactions to add.</param>
         public void AddRange(Transaction[] transactions)
         {
             if (transactions == null)
@@ -183,19 +183,14 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Peeks at the oldest entry
+        /// Peeks at the oldest entry.
         /// </summary>
         /// <returns></returns>
         public Transaction Peek()
         {
             lock (this)
             {
-                if (m_List.Count == 0)
-                {
-                    return null;
-                }
-
-                return m_List.First.Value;
+                return m_List.Count == 0 ? null : m_List.First.Value;
             }
         }
 
@@ -217,7 +212,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Dequeues the oldest entry
+        /// Dequeues the oldest entry.
         /// </summary>
         /// <returns></returns>
         public Transaction Dequeue()
@@ -239,10 +234,10 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>Re enqueues transactions at the beginning of the queue</summary>
+        /// <summary>Re enqueues transactions at the beginning of the queue.</summary>
         /// <param name="replaceInserts">if set to <c>true</c> [replace inserts with replace statements].</param>
-        /// <param name="transactions">Transactions to reenqueue</param>
-        /// <exception cref="ArgumentNullException">Transactions</exception>
+        /// <param name="transactions">Transactions to reenqueue.</param>
+        /// <exception cref="ArgumentNullException">Transactions.</exception>
         public void Requeue(bool replaceInserts, params Transaction[] transactions)
         {
             if (transactions == null)
@@ -287,7 +282,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Dequeues the oldest entries (use Count &lt;= 0 to do a fast dequeue of all items)
+        /// Dequeues the oldest entries (use Count &lt;= 0 to do a fast dequeue of all items).
         /// </summary>
         /// <returns></returns>
         public Transaction[] Dequeue(int count)
@@ -334,7 +329,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the number of entries
+        /// Obtains the number of entries.
         /// </summary>
         public int Count
         {
@@ -392,41 +387,41 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a TransactionLog without accumulation
+        /// Creates a TransactionLog without accumulation.
         /// </summary>
         public TransactionLog(RowLayout layout)
         {
             Layout = layout;
         }
 
-        /// <summary>Adds a row update to the log</summary>
+        /// <summary>Adds a row update to the log.</summary>
         /// <param name="id">The identifier.</param>
-        /// <param name="row">The updated row</param>
+        /// <param name="row">The updated row.</param>
         public void AddUpdated(long id, Row row)
         {
             Add(Transaction.Updated(id, row));
         }
 
-        /// <summary>Adds a row insertion to the log</summary>
+        /// <summary>Adds a row insertion to the log.</summary>
         /// <param name="id">The identifier.</param>
-        /// <param name="row">The inserted row</param>
+        /// <param name="row">The inserted row.</param>
         public void AddInserted(long id, Row row)
         {
             Add(Transaction.Inserted(id, row));
         }
 
-        /// <summary>Adds a row replacement to the log</summary>
+        /// <summary>Adds a row replacement to the log.</summary>
         /// <param name="id">The identifier.</param>
-        /// <param name="row">The replacement row</param>
+        /// <param name="row">The replacement row.</param>
         public void AddReplaced(long id, Row row)
         {
             Add(Transaction.Replaced(id, row));
         }
 
         /// <summary>
-        /// Adds a row deletion to the log
+        /// Adds a row deletion to the log.
         /// </summary>
-        /// <param name="id">The ID of the deleted dataset</param>
+        /// <param name="id">The ID of the deleted dataset.</param>
         public void AddDeleted(long id)
         {
             Add(Transaction.Deleted(id));
@@ -442,26 +437,27 @@ namespace Cave.Data
     }
 
     /// <summary>
-    /// Provides a transaction log for database rows changes / deletions
+    /// Provides a transaction log for database rows changes / deletions.
     /// </summary>
-    public sealed class TransactionLog<T> : TransactionLog where T : struct
+    public sealed class TransactionLog<T> : TransactionLog
+        where T : struct
     {
         /// <summary>Initializes a new instance of the <see cref="TransactionLog{T}"/> class.</summary>
         public TransactionLog() : base(RowLayout.CreateTyped(typeof(T))) { }
 
         /// <summary>
-        /// Adds a row deletion to the log
+        /// Adds a row deletion to the log.
         /// </summary>
-        /// <param name="row">The deleted dataset</param>
+        /// <param name="row">The deleted dataset.</param>
         public void AddDeleted(T row)
         {
             AddDeleted(Layout.GetID(row));
         }
 
         /// <summary>
-        /// Adds a row update to the log
+        /// Adds a row update to the log.
         /// </summary>
-        /// <param name="item">The updated dataset</param>
+        /// <param name="item">The updated dataset.</param>
         public void AddUpdated(T item)
         {
             Row row = Row.Create(Layout, item);
@@ -470,9 +466,9 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Adds a row insertion to the log
+        /// Adds a row insertion to the log.
         /// </summary>
-        /// <param name="item">The inserted dataset</param>
+        /// <param name="item">The inserted dataset.</param>
         public void AddInserted(T item)
         {
             Row row = Row.Create(Layout, item);
@@ -481,9 +477,9 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Adds a row replacement to the log
+        /// Adds a row replacement to the log.
         /// </summary>
-        /// <param name="item">The replacement dataset</param>
+        /// <param name="item">The replacement dataset.</param>
         public void AddReplaced(T item)
         {
             Row row = Row.Create(Layout, item);

@@ -8,7 +8,7 @@ using Cave.IO;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides an index for <see cref="DatStorage"/>
+    /// Provides an index for <see cref="DatStorage"/>.
     /// </summary>
     sealed class DatIndex : IEnumerable<DatEntry>, IDisposable
     {
@@ -58,7 +58,7 @@ namespace Cave.Data
 
         #region constructor
         /// <summary>
-        /// Creates a new empty <see cref="DatIndex"/>
+        /// Creates a new empty <see cref="DatIndex"/>.
         /// </summary>
         public DatIndex(string fileName)
         {
@@ -97,19 +97,19 @@ namespace Cave.Data
         #region public implementation
 
         /// <summary>
-        /// Obtains the next free (unused) ID
+        /// Obtains the next free (unused) ID.
         /// </summary>
-        /// <returns>Returns an unused ID</returns>
+        /// <returns>Returns an unused ID.</returns>
         public long GetNextFreeID()
         {
             return Math.Max(1, LastUsedID + 1);
         }
 
         /// <summary>
-        /// Obtains the next used ID
+        /// Obtains the next used ID.
         /// </summary>
-        /// <param name="id">The (previous) ID to start search at</param>
-        /// <returns>Returns an ID or -1</returns>
+        /// <param name="id">The (previous) ID to start search at.</param>
+        /// <returns>Returns an ID or -1.</returns>
         public long GetNextUsedID(long id)
         {
             long best = long.MaxValue;
@@ -120,12 +120,7 @@ namespace Cave.Data
                     best = e.ID;
                 }
             }
-            if (best == long.MaxValue)
-            {
-                return -1;
-            }
-
-            return best;
+            return best == long.MaxValue ? -1 : best;
         }
 
         void SaveAtCurrentPosition(DatEntry entry)
@@ -134,9 +129,9 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Adds a new <see cref="DatEntry"/>
+        /// Adds a new <see cref="DatEntry"/>.
         /// </summary>
-        /// <param name="entry">The <see cref="DatEntry"/> to add to the index</param>
+        /// <param name="entry">The <see cref="DatEntry"/> to add to the index.</param>
         public void Save(DatEntry entry)
         {
             if (entry.ID <= 0)
@@ -170,19 +165,19 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the number of IDs (entries) currently present at the index
+        /// Obtains the number of IDs (entries) currently present at the index.
         /// </summary>
         public long Count { get; private set; }
 
         /// <summary>
-        /// Obtains the number of free (entries) currently present at the index
+        /// Obtains the number of free (entries) currently present at the index.
         /// </summary>
         public long FreeItemCount { get; private set; }
 
         /// <summary>
-        /// Releases a <see cref="DatEntry"/> (removes an entry from the index)
+        /// Releases a <see cref="DatEntry"/> (removes an entry from the index).
         /// </summary>
-        /// <param name="source">The source <see cref="DatEntry"/> to remove</param>
+        /// <param name="source">The source <see cref="DatEntry"/> to remove.</param>
         public void Free(DatEntry source)
         {
             DatEntry entry = new DatEntry(0, source.BucketPosition, source.BucketLength);
@@ -203,11 +198,11 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains a free entry from the index for reuse
+        /// Obtains a free entry from the index for reuse.
         /// </summary>
-        /// <param name="id">The ID of the dataset to be written</param>
-        /// <param name="count">The length the entry should have</param>
-        /// <returns>Returns a free <see cref="DatEntry"/> or null</returns>
+        /// <param name="id">The ID of the dataset to be written.</param>
+        /// <param name="count">The length the entry should have.</param>
+        /// <returns>Returns a free <see cref="DatEntry"/> or null.</returns>
         public DatEntry GetFree(long id, int count)
         {
             if (FreeItemCount > 0)
@@ -232,10 +227,10 @@ namespace Cave.Data
             return default(DatEntry);
         }
 
-        /// <summary>Checks whether the specified ID has an <see cref="DatEntry" /> at the index</summary>
-        /// <param name="id">The ID to lookup</param>
+        /// <summary>Checks whether the specified ID has an <see cref="DatEntry" /> at the index.</summary>
+        /// <param name="id">The ID to lookup.</param>
         /// <param name="entry">The entry.</param>
-        /// <returns>Returns true if the ID has an entry at the index</returns>
+        /// <returns>Returns true if the ID has an entry at the index.</returns>
         public bool TryGet(long id, out DatEntry entry)
         {
             foreach (DatEntry e in this)
@@ -254,7 +249,7 @@ namespace Cave.Data
         #endregion
 
         /// <summary>
-        /// DatIndex[IDs:0,Free:0]
+        /// DatIndex[IDs:0,Free:0].
         /// </summary>
         /// <returns></returns>
         public override string ToString()

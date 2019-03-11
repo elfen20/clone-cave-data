@@ -5,16 +5,14 @@ using System.IO;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides an abstract base class for file storage containing multiple databases
+    /// Provides an abstract base class for file storage containing multiple databases.
     /// </summary>
     public abstract class FileStorage : Storage, IDisposable
     {
-        string m_Folder;
-
         /// <summary>
-        /// Obtains the base path used for the file storage
+        /// Obtains the base path used for the file storage.
         /// </summary>
-        public string Folder => m_Folder;
+        public string Folder { get; private set; }
 
         #region constructors
 
@@ -23,9 +21,9 @@ namespace Cave.Data
         /// <para>
         /// Following formats are supported:<br />
         /// file://server/relativepath<br />
-        /// file:absolutepath<br /></para>
+        /// file:absolutepath.<br /></para>
         /// </summary>
-        /// <param name="connectionString">ConnectionString of the storage</param>
+        /// <param name="connectionString">ConnectionString of the storage.</param>
         /// <param name="options">The options.</param>
         /// <exception cref="NotSupportedException"></exception>
         /// <exception cref="DirectoryNotFoundException"></exception>
@@ -45,12 +43,12 @@ namespace Cave.Data
             {
                 connectionString.Location = $"./{connectionString.Location}";
             }
-            m_Folder = Path.GetFullPath(Path.GetDirectoryName(connectionString.Location));
-            if (!Directory.Exists(m_Folder.ToString()))
+            Folder = Path.GetFullPath(Path.GetDirectoryName(connectionString.Location));
+            if (!Directory.Exists(Folder.ToString()))
             {
                 try
                 {
-                    Directory.CreateDirectory(m_Folder.ToString());
+                    Directory.CreateDirectory(Folder.ToString());
                 }
                 catch (Exception ex)
                 {
@@ -64,19 +62,19 @@ namespace Cave.Data
         #region IStorage Member
 
         /// <summary>
-        /// closes the connection to the storage engine
+        /// closes the connection to the storage engine.
         /// </summary>
         /// <exception cref="ObjectDisposedException"></exception>
         public override void Close()
         {
-            m_Folder = null;
+            Folder = null;
             base.Close();
         }
 
         /// <summary>
-        /// Checks whether the database with the specified name exists at the database or not
+        /// Checks whether the database with the specified name exists at the database or not.
         /// </summary>
-        /// <param name="database">The name of the database</param>
+        /// <param name="database">The name of the database.</param>
         /// <returns></returns>
         public override bool HasDatabase(string database)
         {
@@ -85,11 +83,11 @@ namespace Cave.Data
                 throw new ObjectDisposedException(ToString());
             }
 
-            return (Directory.Exists(Path.Combine(m_Folder, database)));
+            return (Directory.Exists(Path.Combine(Folder, database)));
         }
 
         /// <summary>
-        /// Obtains all available database names
+        /// Obtains all available database names.
         /// </summary>
         /// <exception cref="ObjectDisposedException"></exception>
         public override string[] DatabaseNames
@@ -102,7 +100,7 @@ namespace Cave.Data
                 }
 
                 List<string> result = new List<string>();
-                foreach (string directory in Directory.GetDirectories(m_Folder.ToString(), "*", SearchOption.TopDirectoryOnly))
+                foreach (string directory in Directory.GetDirectories(Folder.ToString(), "*", SearchOption.TopDirectoryOnly))
                 {
                     result.Add(Path.GetFileName(directory));
                 }
@@ -111,9 +109,9 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Adds a new database with the specified name
+        /// Adds a new database with the specified name.
         /// </summary>
-        /// <param name="database">The name of the database</param>
+        /// <param name="database">The name of the database.</param>
         /// <returns></returns>
         /// <exception cref="ObjectDisposedException"></exception>
         public override IDatabase CreateDatabase(string database)
@@ -125,7 +123,7 @@ namespace Cave.Data
 
             try
             {
-                Directory.CreateDirectory((m_Folder + database).ToString());
+                Directory.CreateDirectory((Folder + database).ToString());
                 return GetDatabase(database);
             }
             catch (Exception ex)
@@ -135,7 +133,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Removes the specified database
+        /// Removes the specified database.
         /// </summary>
         /// <param name="database"></param>
         /// <exception cref="ObjectDisposedException"></exception>
@@ -146,23 +144,23 @@ namespace Cave.Data
                 throw new ObjectDisposedException(ToString());
             }
 
-            Directory.Delete(Path.Combine(m_Folder, database), true);
+            Directory.Delete(Path.Combine(Folder, database), true);
         }
 
         #endregion
 
         /// <summary>
-        /// Obtains "FileStorage[Path]"
+        /// Obtains "FileStorage[Path]".
         /// </summary>
         /// <returns></returns>
         public override string ToString()
         {
-            return "FileStorage[" + m_Folder.ToString() + "]";
+            return "FileStorage[" + Folder.ToString() + "]";
         }
 
         #region IDisposable Member
         /// <summary>
-        /// Frees all used resources
+        /// Frees all used resources.
         /// </summary>
         /// <param name="disposing"></param>
         protected virtual void Dispose(bool disposing)
@@ -171,7 +169,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Frees all used resources
+        /// Frees all used resources.
         /// </summary>
         public void Dispose()
         {

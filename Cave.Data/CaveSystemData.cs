@@ -4,7 +4,7 @@ using System.Reflection;
 namespace Cave
 {
     /// <summary>
-    /// Provides public access the Cave System Data Assembly instance
+    /// Provides public access the Cave System Data Assembly instance.
     /// </summary>
     public static class CaveSystemData
     {
@@ -15,17 +15,17 @@ namespace Cave
         public static Type Type => typeof(CaveSystemData);
 
         /// <summary>
-        /// Obtains the assembly
+        /// Obtains the assembly.
         /// </summary>
         public static Assembly Assembly => Type.Assembly;
 
         /// <summary>
-        /// Obtains the <see cref="AssemblyVersionInfo"/> for the <see cref="Assembly"/>
+        /// Obtains the <see cref="AssemblyVersionInfo"/> for the <see cref="Assembly"/>.
         /// </summary>
         public static AssemblyVersionInfo VersionInfo => AssemblyVersionInfo.FromAssembly(Assembly);
 
         /// <summary>
-        /// Number of rows per chunk on big data operations
+        /// Number of rows per chunk on big data operations.
         /// </summary>
         public static int TransactionRowCount
         {
@@ -34,7 +34,7 @@ namespace Cave
         }
 
         /// <summary>
-        /// Provides the date time format for big int date time values
+        /// Provides the date time format for big int date time values.
         /// </summary>
         public const string BigIntDateTimeFormat = "yyyyMMddHHmmssfff";
 

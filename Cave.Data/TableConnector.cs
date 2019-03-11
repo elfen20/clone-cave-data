@@ -19,9 +19,10 @@ namespace Cave.Data
         /// <param name="table">The table.</param>
         /// <param name="name">Name of the table.</param>
         /// <param name="flags">The flags.</param>
-        /// <exception cref="ArgumentNullException">Database</exception>
+        /// <exception cref="ArgumentNullException">Database.</exception>
         /// <exception cref="NotSupportedException"></exception>
-        protected void ConnectTable<T>(ref ITable<T> table, string name = null, TableFlags flags = TableFlags.AllowCreate) where T : struct
+        protected void ConnectTable<T>(ref ITable<T> table, string name = null, TableFlags flags = TableFlags.AllowCreate)
+            where T : struct
         {
             if (Database == null)
             {
@@ -131,7 +132,7 @@ namespace Cave.Data
         }
 
         /// <summary>Connects to the specified database using the given <see cref="TableConnectorMode" />.</summary>
-        /// <param name="mode">The <see cref="TableConnectorMode" /></param>
+        /// <param name="mode">The <see cref="TableConnectorMode" />.</param>
         /// <param name="database">The database.</param>
         public void Connect(TableConnectorMode mode, IDatabase database)
         {
