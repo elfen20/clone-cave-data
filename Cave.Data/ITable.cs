@@ -92,7 +92,7 @@ namespace Cave.Data
         long Insert(Row row);
 
         /// <summary>
-        /// Inserts rows into the table using a transaction. 
+        /// Inserts rows into the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         void Insert(IEnumerable<Row> rows);
@@ -105,7 +105,7 @@ namespace Cave.Data
         void Update(Row row);
 
         /// <summary>
-        /// Updates rows at the table using a transaction. 
+        /// Updates rows at the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         void Update(IEnumerable<Row> rows);
@@ -117,7 +117,7 @@ namespace Cave.Data
         void Delete(long id);
 
         /// <summary>
-        /// Removes rows from the table using a transaction. 
+        /// Removes rows from the table using a transaction.
         /// </summary>
         /// <param name="ids">The dataset IDs to remove.</param>
         void Delete(IEnumerable<long> ids);
@@ -247,7 +247,7 @@ namespace Cave.Data
         long Insert(T row);
 
         /// <summary>
-        /// Inserts rows into the table using a transaction. 
+        /// Inserts rows into the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         void Insert(IEnumerable<T> rows);
@@ -300,7 +300,7 @@ namespace Cave.Data
         List<T> GetStructs(IEnumerable<long> ids);
 
         /// <summary>
-        /// Obtains the row struct with the given index. 
+        /// Obtains the row struct with the given index.
         /// This allows a memorytable to be used as virtual list for listviews, ...
         /// Note that indices will change on each update, insert, delete and sorting is not garanteed!.
         /// </summary>

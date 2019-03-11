@@ -222,7 +222,8 @@ namespace Cave.Data
             {
                 return Enum.Parse(fieldType, value.ToString(), true);
             }
-            //convert to string
+
+            // convert to string
             string str;
             {
                 if (value is string)
@@ -231,7 +232,7 @@ namespace Cave.Data
                 }
                 else
                 {
-                    //try to find public ToString(IFormatProvider) method in class
+                    // try to find public ToString(IFormatProvider) method in class
                     MethodInfo l_Method = value.GetType().GetMethod("ToString", BindingFlags.Public | BindingFlags.Instance, null, new Type[] { typeof(IFormatProvider) }, null);
                     if (l_Method != null)
                     {
@@ -282,9 +283,10 @@ namespace Cave.Data
                     throw new InvalidDataException(string.Format("Value '{0}' is not a valid TimeSpan!", str), ex);
                 }
             }
-            //parse from string
+
+            // parse from string
             {
-                //try to find public static Parse(string, IFormatProvider) method in class
+                // try to find public static Parse(string, IFormatProvider) method in class
                 List<Exception> errors = new List<Exception>();
                 MethodInfo method = fieldType.GetMethod("Parse", BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string), typeof(IFormatProvider) }, null);
                 if (method != null)

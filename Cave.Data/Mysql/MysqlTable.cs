@@ -57,16 +57,17 @@ namespace Cave.Data.Mysql
             bool autoSetID = false;
             bool autoIncrementID = false;
 
-            //autoset id ?            
+            // autoset id ?
             long id = Layout.GetID(row);
             if (id <= 0)
             {
                 autoSetID = true;
-                //yes, autoinc ?
+
+                // yes, autoinc ?
                 autoIncrementID = ((Layout.IDField.Flags & FieldFlags.AutoIncrement) != 0);
             }
 
-            //prepare ID field
+            // prepare ID field
             if (autoSetID && !autoIncrementID)
             {
                 commandBuilder.Append(SqlStorage.EscapeFieldName(Layout.IDField));
@@ -235,16 +236,17 @@ namespace Cave.Data.Mysql
             bool autoSetID = false;
             bool autoIncrementID = false;
 
-            //autoset id ?
+            // autoset id ?
             long id = Layout.GetID(row);
             if (id <= 0)
             {
                 autoSetID = true;
-                //yes, autoinc ?
+
+                // yes, autoinc ?
                 autoIncrementID = ((Layout.IDField.Flags & FieldFlags.AutoIncrement) != 0);
             }
 
-            //prepare ID field
+            // prepare ID field
             if (autoSetID && !autoIncrementID)
             {
                 commandBuilder.Append(SqlStorage.EscapeFieldName(Layout.IDField));

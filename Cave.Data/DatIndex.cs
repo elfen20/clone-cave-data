@@ -53,7 +53,8 @@ namespace Cave.Data
         DataReader Reader;
         Stream Stream;
         long LastUsedID;
-        //long StartPosition;
+
+        // long StartPosition;
         #endregion
 
         #region constructor
@@ -144,7 +145,7 @@ namespace Cave.Data
                 LastUsedID = entry.ID;
             }
 
-            //find 
+            // find
             if (FreeItemCount > 0)
             {
                 foreach (DatEntry e in this)
@@ -158,7 +159,8 @@ namespace Cave.Data
                     }
                 }
             }
-            //append at end
+
+            // append at end
             Stream.Position = Stream.Length;
             SaveAtCurrentPosition(entry);
             Count++;

@@ -17,7 +17,7 @@ namespace Cave.Data
         /// <returns>Returns true if the dataset was inserted, false otherwise.</returns>
         public static bool TryInsert(this ITable table, Row row)
         {
-            //TODO, implement this without exceptions: needed at Table, SqlTable, MemoryTable
+            // TODO, implement this without exceptions: needed at Table, SqlTable, MemoryTable
             try { table.Insert(row); return true; }
             catch { return false; }
         }
@@ -28,7 +28,7 @@ namespace Cave.Data
         /// <returns>Returns true if the dataset was inserted, false otherwise.</returns>
         public static bool TryUpdate(this ITable table, Row row)
         {
-            //TODO, implement this without exceptions: needed at Table, SqlTable, MemoryTable
+            // TODO, implement this without exceptions: needed at Table, SqlTable, MemoryTable
             try { table.Update(row); return true; }
             catch { return false; }
         }
@@ -143,7 +143,7 @@ namespace Cave.Data
         public static bool TryInsert<T>(this ITable<T> table, T row)
             where T : struct
         {
-            //TODO, implement this without exceptions: needed at Table, SqlTable, MemoryTable
+            // TODO, implement this without exceptions: needed at Table, SqlTable, MemoryTable
             try { table.Insert(row); return true; }
             catch { return false; }
         }
@@ -156,7 +156,7 @@ namespace Cave.Data
         public static bool TryUpdate<T>(this ITable<T> table, T row)
             where T : struct
         {
-            //TODO, implement this without exceptions: needed at Table, SqlTable, MemoryTable
+            // TODO, implement this without exceptions: needed at Table, SqlTable, MemoryTable
             try { table.Update(row); return true; }
             catch { return false; }
         }

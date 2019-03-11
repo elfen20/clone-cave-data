@@ -137,17 +137,19 @@ namespace Cave.Data
 #else
             object obj = value == null ? Null : value;
 #endif
-            //remove ID from old hash
+
+            // remove ID from old hash
             if (!m_Index.TryGetValue(obj, out Set<long> ids))
             {
-                //TODO REMOVE ME
+                // TODO REMOVE ME
                 List<object> items = m_Index.Keys.Where(i => Equals(i, obj)).ToList();
                 foreach (object item in items)
                 {
                     Trace.TraceWarning("Key {0} hash {1} != Key {2} hash {3} - Compare Result {4}", obj, obj.GetHashCode(), item, item.GetHashCode(), Comparer.Default.Compare(obj, item));
                 }
                 File.WriteAllText("temp.txt", m_Index.Keys.JoinNewLine());
-                //END REMOVE ME
+
+                // END REMOVE ME
                 throw new ArgumentException(string.Format("Object {0} is not present at index (equals check {1})!", obj, items.Join(",")));
             }
             if (!ids.Contains(id))

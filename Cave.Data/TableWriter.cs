@@ -48,13 +48,13 @@ namespace Cave.Data
         public int CacheFlushTreshold { get; set; } = 1000;
 
         /// <summary>
-        /// Gets / sets the minimum cache flush wait time. This is the time in milliseconds the Writer will wait before starting any flush to the database. 
+        /// Gets / sets the minimum cache flush wait time. This is the time in milliseconds the Writer will wait before starting any flush to the database.
         /// Set this to TimeSpan.Zero to disable the minimum wait time (the background thread will no longer sleep whenever anythis can be written).
         /// </summary>
         public int CacheFlushMinWaitTime { get; set; } = 1000;
 
         /// <summary>
-        /// Gets / sets the maximum cache flush wait time. This is the time in milliseconds the Writer will wait before starting a forced flush to the database. 
+        /// Gets / sets the maximum cache flush wait time. This is the time in milliseconds the Writer will wait before starting a forced flush to the database.
         /// Set this to TimeSpan.Zero to disable the maximum wait time (the background thread will wait until a treshold violation occurs and the CacheFlushWaitTime is exceeded).
         /// </summary>
         public int CacheFlushMaxWaitTime { get; set; } = 60000;
@@ -139,7 +139,7 @@ namespace Cave.Data
 
             while (!m_Exit)
             {
-                //wait until at least one transaction is available
+                // wait until at least one transaction is available
                 while (!m_Exit && TransactionLog.Count == 0)
                 {
                     nextMaxWaitTimeExceeded = DateTime.UtcNow.AddMilliseconds(CacheFlushMaxWaitTime);
@@ -156,12 +156,14 @@ namespace Cave.Data
 
                 int count = TransactionLog.Count;
                 if (!m_Flushing)
-                {    //obey min wait time
+                {
+                    // obey min wait time
                     if (CacheFlushMinWaitTime > 0)
                     {
                         Thread.Sleep(CacheFlushMinWaitTime);
                     }
-                    //obey treshold
+
+                    // obey treshold
                     if (CacheFlushTreshold > 0)
                     {
                         if (count < CacheFlushTreshold && DateTime.UtcNow < nextMaxWaitTimeExceeded)
@@ -428,7 +430,7 @@ namespace Cave.Data
             return string.Format("TableWriter {0} Queue:{1} Written:{2}", Table, QueueCount, WrittenCount);
         }
 
-        #region IDisposable Support        
+        #region IDisposable Support
         /// <summary>Releases unmanaged and - optionally - managed resources.</summary>
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)

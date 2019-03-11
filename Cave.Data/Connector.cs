@@ -60,20 +60,20 @@ namespace Cave.Data
         /// <returns>Returns a new database connection.</returns>
         public static IDatabase ConnectDatabase(ISettings settings, string databaseName = null, DbConnectionOptions options = DbConnectionOptions.None)
         {
-            //use [Database]Connection if present
+            // use [Database]Connection if present
             string connectionString = settings.ReadSetting("Database", "Connection");
             if (connectionString != null)
             {
                 return ConnectDatabase(connectionString);
             }
 
-            //not present, read database name
+            // not present, read database name
             if (databaseName == null)
             {
                 databaseName = settings.ReadString("Database", "Database");
             }
 
-            //prepare database name if none specified            
+            // prepare database name if none specified
             if (databaseName == null)
             {
                 string serviceName = AssemblyVersionInfo.Program.Product;
@@ -83,7 +83,7 @@ namespace Cave.Data
                 databaseName = $"{service}_{machine}_{programID}";
             }
 
-            //read the [Database] section
+            // read the [Database] section
             string type = settings.ReadString("Database", "Type");
             string user = settings.ReadString("Database", "Username");
             string pass = settings.ReadString("Database", "Password");

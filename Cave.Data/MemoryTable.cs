@@ -157,11 +157,11 @@ namespace Cave.Data
             }
             else
             {
-                //simple ungrouped search
+                // simple ungrouped search
                 result = search.Scan(null, layout, indices, table);
             }
 
-            //group by ?
+            // group by ?
             if (grouping.Count > 0)
             {
                 Set<long> groupedIDs = new Set<long>();
@@ -184,10 +184,11 @@ namespace Cave.Data
             }
 
             List<long> sorted = null;
-            //Sort by presorted ids 
+
+            // Sort by presorted ids
             if (sortedIDs != null)
             {
-                //no sort if we return only presorted ids
+                // no sort if we return only presorted ids
                 if (skipSearch)
                 {
                     sorted = result.AsList();
@@ -205,7 +206,8 @@ namespace Cave.Data
                     }
                 }
             }
-            //Manual sort
+
+            // Manual sort
             else if (sorting.Count > 0)
             {
                 sorted = result.ToList();
@@ -220,7 +222,8 @@ namespace Cave.Data
                     sorted.Sort(sorter);
                 }
             }
-            //no sort
+
+            // no sort
             else
             {
                 sorted = result.AsList();
@@ -601,7 +604,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Inserts rows into the table using a transaction. 
+        /// Inserts rows into the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
@@ -1460,7 +1463,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Inserts rows into the table using a transaction. 
+        /// Inserts rows into the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>

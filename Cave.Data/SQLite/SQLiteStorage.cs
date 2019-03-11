@@ -193,7 +193,7 @@ namespace Cave.Data.SQLite
 
             if (field.DataType == DataType.Decimal)
             {
-                //unbox double and convert
+                // unbox double and convert
                 double d = (double)databaseValue;
                 if (d >= (double)decimal.MaxValue)
                 {

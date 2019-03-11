@@ -72,7 +72,7 @@ namespace Cave.Data.Mysql
 
                     if (!SupportsFullUTF8)
                     {
-                        //dirty hack: check mysql 3 byte utf-8
+                        // dirty hack: check mysql 3 byte utf-8
                         string value = (string)localValue;
                         foreach (char c in value)
                         {
@@ -126,19 +126,20 @@ namespace Cave.Data.Mysql
             DataType dataType;
             if (fieldType.Name == "MySqlDateTime")
             {
-                //fix mysql date time
+                // fix mysql date time
                 dataType = DataType.DateTime;
             }
             else
             {
-                //handle all default types
+                // handle all default types
                 dataType = RowLayout.DataTypeFromType(fieldType);
-                //handle mysql bool
+
+                // handle mysql bool
                 if (fieldSize == 1)
                 {
                     if ((dataType == DataType.User) || (dataType == DataType.UInt64))
                     {
-                        //fix mysql bool data type
+                        // fix mysql bool data type
                         dataType = DataType.Bool;
                     }
                 }
@@ -168,7 +169,8 @@ namespace Cave.Data.Mysql
                     "Pwd=" + ConnectionString.Password + ";" +
                     "Port=" + ConnectionString.GetPort(3306) + ";" +
                     "CharSet=" + (SupportsFullUTF8 ? "utf8mb4" : "utf8") + ";" +
-                    //"Protocol=socket;" +
+
+                    // "Protocol=socket;" +
                     "Allow Zero Datetime=true;" +
                     (requireSSL ? "SslMode=Required;" : "SslMode=Preferred;");
         }
@@ -187,8 +189,9 @@ namespace Cave.Data.Mysql
                 {
                     LogQuery(command);
                 }
-                //return value is not globally defined. some implementations use it correctly, some dont use it, some return positive or negative result enum values
-                //so we ignore this: int affectedRows = 
+
+                // return value is not globally defined. some implementations use it correctly, some dont use it, some return positive or negative result enum values
+                // so we ignore this: int affectedRows =
                 command.ExecuteNonQuery();
             }
             return connection;

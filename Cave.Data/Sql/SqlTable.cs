@@ -279,7 +279,7 @@ namespace Cave.Data.Sql
             return int.Parse(value.ToString()) > 0;
         }
 
-        #region sql92 commands        
+        #region sql92 commands
         /// <summary>Creates the insert command.</summary>
         /// <param name="commandBuilder">The command builder.</param>
         /// <param name="row">The row.</param>
@@ -294,16 +294,17 @@ namespace Cave.Data.Sql
             bool autoSetID = false;
             bool autoIncrementID = false;
 
-            //autoset id ?
+            // autoset id ?
             long id = Layout.GetID(row);
             if (id <= 0)
             {
                 autoSetID = true;
-                //yes, autoinc ?
+
+                // yes, autoinc ?
                 autoIncrementID = ((Layout.IDField.Flags & FieldFlags.AutoIncrement) != 0);
             }
 
-            //prepare ID field
+            // prepare ID field
             if (autoSetID && !autoIncrementID)
             {
                 commandBuilder.Append(SqlStorage.EscapeFieldName(Layout.IDField));
@@ -1333,7 +1334,7 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Inserts rows into the table using a transaction. 
+        /// Inserts rows into the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         public void Insert(IEnumerable<T> rows)
