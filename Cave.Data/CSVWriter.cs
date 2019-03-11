@@ -9,16 +9,16 @@ using Cave.IO;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides writing of csv files using a struct or class
+    /// Provides writing of csv files using a struct or class.
     /// </summary>
     public sealed class CSVWriter : IDisposable
     {
         /// <summary>
-        /// Creates a new csv file with the specified name and writes the whole table
+        /// Creates a new csv file with the specified name and writes the whole table.
         /// </summary>
-        /// <param name="table">Table to write to the csv file</param>
-        /// <param name="properties">Properties of the csv file</param>
-        /// <param name="fileName">File name of the csv file</param>
+        /// <param name="table">Table to write to the csv file.</param>
+        /// <param name="properties">Properties of the csv file.</param>
+        /// <param name="fileName">File name of the csv file.</param>
         public static void WriteTable(ITable table, CSVProperties properties, string fileName)
         {
             if (table == null)
@@ -39,12 +39,13 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a new csv file with the specified name and writes the whole table
+        /// Creates a new csv file with the specified name and writes the whole table.
         /// </summary>
-        /// <param name="table">Table to write to the csv file</param>
-        /// <param name="properties">Properties of the csv file</param>
-        /// <param name="fileName">File name of the csv file</param>
-        public static void WriteAllRows<T>(IEnumerable<T> table, CSVProperties properties, string fileName) where T : struct
+        /// <param name="table">Table to write to the csv file.</param>
+        /// <param name="properties">Properties of the csv file.</param>
+        /// <param name="fileName">File name of the csv file.</param>
+        public static void WriteAllRows<T>(IEnumerable<T> table, CSVProperties properties, string fileName)
+            where T : struct
         {
             CSVWriter writer = new CSVWriter(properties, fileName);
             try
@@ -59,12 +60,13 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a new csv file with the specified name and writes the whole table
+        /// Creates a new csv file with the specified name and writes the whole table.
         /// </summary>
-        /// <param name="table">Table to write to the csv file</param>
-        /// <param name="properties">Properties of the csv file</param>
-        /// <param name="fileName">File name of the csv file</param>
-        public static void WriteAlienTable<T>(IEnumerable<T> table, CSVProperties properties, string fileName) where T : struct
+        /// <param name="table">Table to write to the csv file.</param>
+        /// <param name="properties">Properties of the csv file.</param>
+        /// <param name="fileName">File name of the csv file.</param>
+        public static void WriteAlienTable<T>(IEnumerable<T> table, CSVProperties properties, string fileName)
+            where T : struct
         {
             CSVWriter writer = new CSVWriter(properties, fileName);
             try
@@ -135,7 +137,7 @@ namespace Cave.Data
                             string str = values[i].ToString();
                             result.Append(str);
                             break;
-                        }                        
+                        }
                         case DataType.Decimal:
                         {
                             if (!Properties.SaveDefaultValues && (values[i].Equals(0m)))
@@ -257,7 +259,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a new csv file writer with default properties
+        /// Creates a new csv file writer with default properties.
         /// </summary>
         /// <param name="fileName"></param>
         public CSVWriter(string fileName)
@@ -267,7 +269,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a new csv file writer with the specified properties
+        /// Creates a new csv file writer with the specified properties.
         /// </summary>
         /// <param name="properties"></param>
         /// <param name="fileName"></param>
@@ -277,7 +279,7 @@ namespace Cave.Data
             CloseBaseStream = true;
         }
 
-        /// <summary>Creates a new csv file writer with default properties</summary>
+        /// <summary>Creates a new csv file writer with default properties.</summary>
         /// <param name="stream">The stream.</param>
         /// <param name="closeBaseStream">if set to <c>true</c> [close base stream].</param>
         public CSVWriter(Stream stream, bool closeBaseStream = false)
@@ -285,11 +287,11 @@ namespace Cave.Data
         {
         }
 
-        /// <summary>Creates a new csv file writer with the specified properties</summary>
+        /// <summary>Creates a new csv file writer with the specified properties.</summary>
         /// <param name="properties">The properties.</param>
         /// <param name="stream">The stream.</param>
         /// <param name="closeBaseStream">if set to <c>true</c> [close base stream on close].</param>
-        /// <exception cref="ArgumentNullException">Stream</exception>
+        /// <exception cref="ArgumentNullException">Stream.</exception>
         /// <exception cref="ArgumentException"></exception>
         /// <exception cref="InvalidDataException"></exception>
         public CSVWriter(CSVProperties properties, Stream stream, bool closeBaseStream = false)
@@ -326,12 +328,12 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the <see cref="CSVProperties"/>
+        /// Obtains the <see cref="CSVProperties"/>.
         /// </summary>
         public readonly CSVProperties Properties;
 
         /// <summary>
-        /// Obtains the row layout
+        /// Obtains the row layout.
         /// </summary>
         public RowLayout Layout { get; private set; }
 
@@ -340,7 +342,7 @@ namespace Cave.Data
         public bool CloseBaseStream { get; set; }
 
         /// <summary>
-        /// Sets the layout for the writer
+        /// Sets the layout for the writer.
         /// </summary>
         /// <param name="type">Type of the row.</param>
         public void SetLayout(Type type)
@@ -349,7 +351,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Sets the layout for the writer
+        /// Sets the layout for the writer.
         /// </summary>
         /// <param name="layout"></param>
         public void SetLayout(RowLayout layout)
@@ -364,7 +366,8 @@ namespace Cave.Data
             {
                 return;
             }
-            //write header
+
+            // write header
             for (int i = 0; i < Layout.FieldCount; i++)
             {
                 if (i > 0)
@@ -388,10 +391,11 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Writes a row to the file
+        /// Writes a row to the file.
         /// </summary>
         /// <param name="row"></param>
-        public void Write<T>(T row) where T : struct
+        public void Write<T>(T row)
+            where T : struct
         {
             if (Layout == null)
             {
@@ -402,7 +406,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Writes a row to the file
+        /// Writes a row to the file.
         /// </summary>
         /// <param name="row"></param>
         public void WriteRow(Row row)
@@ -411,10 +415,11 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Writes a number of rows to the file
+        /// Writes a number of rows to the file.
         /// </summary>
         /// <param name="table"></param>
-        public void Write<T>(IEnumerable<T> table) where T : struct
+        public void Write<T>(IEnumerable<T> table)
+            where T : struct
         {
             if (table == null)
             {
@@ -428,7 +433,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Writes a number of rows to the file
+        /// Writes a number of rows to the file.
         /// </summary>
         /// <param name="table"></param>
         public void WriteRows(IEnumerable<Row> table)
@@ -445,7 +450,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Writes a full table of rows to the file
+        /// Writes a full table of rows to the file.
         /// </summary>
         /// <param name="table"></param>
         public void Write(ITable table)
@@ -462,7 +467,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Closes the writer and the stream
+        /// Closes the writer and the stream.
         /// </summary>
         public void Close()
         {

@@ -7,7 +7,7 @@ using Cave.Compression.Tar;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides a memory based storage engine for databases, tables and rows
+    /// Provides a memory based storage engine for databases, tables and rows.
     /// </summary>
     public sealed class MemoryStorage : Storage
     {
@@ -33,7 +33,7 @@ namespace Cave.Data
         #region IStorage Member
 
         /// <summary>
-        /// Saves the whole Storage to a tgz file
+        /// Saves the whole Storage to a tgz file.
         /// </summary>
         /// <param name="fileName"></param>
         public void Save(string fileName)
@@ -53,7 +53,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Loads a previously saved storage
+        /// Loads a previously saved storage.
         /// </summary>
         /// <param name="fileName"></param>
         public void Load(string fileName)
@@ -83,7 +83,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Checks whether the database with the specified name exists at the database or not
+        /// Checks whether the database with the specified name exists at the database or not.
         /// </summary>
         /// <param name="database"></param>
         /// <returns></returns>
@@ -93,7 +93,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains all available database names
+        /// Obtains all available database names.
         /// </summary>
         public override string[] DatabaseNames
         {
@@ -109,9 +109,9 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the database with the specified name
+        /// Obtains the database with the specified name.
         /// </summary>
-        /// <param name="database">The name of the database</param>
+        /// <param name="database">The name of the database.</param>
         /// <returns></returns>
         public override IDatabase GetDatabase(string database)
         {
@@ -129,9 +129,9 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Adds a new database with the specified name
+        /// Adds a new database with the specified name.
         /// </summary>
-        /// <param name="databaseName">The name of the database</param>
+        /// <param name="databaseName">The name of the database.</param>
         /// <returns></returns>
         public override IDatabase CreateDatabase(string databaseName)
         {
@@ -151,7 +151,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Removes the specified database
+        /// Removes the specified database.
         /// </summary>
         /// <param name="database"></param>
         public override void DeleteDatabase(string database)

@@ -1,24 +1,24 @@
 namespace Cave.Data.SQLite
 {
     /// <summary>
-    /// Provides access to a subversion entry
+    /// Provides access to a subversion entry.
     /// </summary>
     public class SubversionEntry
     {
         string[] m_Data;
 
         /// <summary>
-        /// Obtains the subversion entry version
+        /// Obtains the subversion entry version.
         /// </summary>
         public readonly int Version;
 
         /// <summary>
-        /// Obtains whether the entry is valid or not
+        /// Obtains whether the entry is valid or not.
         /// </summary>
         public readonly bool IsValid;
 
         /// <summary>
-        /// Creates a new <see cref="SubversionEntry"/> from the specified cdata
+        /// Creates a new <see cref="SubversionEntry"/> from the specified cdata.
         /// </summary>
         /// <param name="data"></param>
         /// <param name="version"></param>
@@ -30,7 +30,7 @@ namespace Cave.Data.SQLite
         }
 
         /// <summary>
-        /// Obtains the type of the <see cref="SubversionEntry"/>
+        /// Obtains the type of the <see cref="SubversionEntry"/>.
         /// </summary>
         public SubversionEntryType Type
         {
@@ -46,12 +46,12 @@ namespace Cave.Data.SQLite
         }
 
         /// <summary>
-        /// Obtains the name of the <see cref="SubversionEntry"/>
+        /// Obtains the name of the <see cref="SubversionEntry"/>.
         /// </summary>
         public string Name => m_Data[0];
 
         /// <summary>
-        /// Checks whether the entry was deleted or not
+        /// Checks whether the entry was deleted or not.
         /// </summary>
         public bool Deleted
         {
@@ -70,7 +70,7 @@ namespace Cave.Data.SQLite
         }
 
         /// <summary>
-        /// Provides a Name and Type string
+        /// Provides a Name and Type string.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -79,7 +79,7 @@ namespace Cave.Data.SQLite
         }
 
         /// <summary>
-        /// Provides a hascode for this instance
+        /// Provides a hascode for this instance.
         /// </summary>
         /// <returns></returns>
         public override int GetHashCode()

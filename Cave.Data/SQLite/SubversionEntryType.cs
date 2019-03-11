@@ -1,7 +1,7 @@
 namespace Cave.Data.SQLite
 {
     /// <summary>
-    /// Provides available subversion entry types
+    /// Provides available subversion entry types.
     /// </summary>
     public enum SubversionEntryType
     {

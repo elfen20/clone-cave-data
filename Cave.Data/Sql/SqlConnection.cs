@@ -10,20 +10,19 @@ namespace Cave.Data.Sql
     public sealed class SqlConnection : IDbConnection
     {
         IDbConnection m_Connection;
-        string m_DatabaseName;
 
         /// <summary>
-        /// Gets/sets the last use datetime (local)
+        /// Gets/sets the last use datetime (local).
         /// </summary>
         public DateTime LastUsed { get; set; }
 
-        /// <summary>Creates a new SqlConnection instance</summary>
+        /// <summary>Creates a new SqlConnection instance.</summary>
         /// <param name="databaseName">Name of the database.</param>
-        /// <param name="connection">The connection object</param>
+        /// <param name="connection">The connection object.</param>
         public SqlConnection(string databaseName, IDbConnection connection)
         {
             m_Connection = connection;
-            m_DatabaseName = databaseName;
+            Database = databaseName;
             LastUsed = DateTime.UtcNow;
         }
 
@@ -70,7 +69,7 @@ namespace Cave.Data.Sql
             }
 
             m_Connection.ChangeDatabase(databaseName);
-            m_DatabaseName = databaseName;
+            Database = databaseName;
             LastUsed = DateTime.UtcNow;
         }
 
@@ -90,7 +89,7 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Obtains the connection string used to open the connection. Setting this value is not supported!
+        /// Obtains the connection string used to open the connection. Setting this value is not supported!.
         /// </summary>
         public string ConnectionString
         {
@@ -107,7 +106,7 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Obtains the connection timeout in milliseconds
+        /// Obtains the connection timeout in milliseconds.
         /// </summary>
         public int ConnectionTimeout
         {
@@ -123,7 +122,7 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Creates a new IDbCommand for this connection
+        /// Creates a new IDbCommand for this connection.
         /// </summary>
         /// <returns></returns>
         public IDbCommand CreateCommand()
@@ -138,12 +137,12 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Obtains the name of the database this instance is connected to
+        /// Obtains the name of the database this instance is connected to.
         /// </summary>
-        public string Database => m_DatabaseName;
+        public string Database { get; private set; }
 
         /// <summary>
-        /// Opens the connection to the database
+        /// Opens the connection to the database.
         /// </summary>
         public void Open()
         {
@@ -157,18 +156,13 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Obtains the current <see cref="ConnectionState"/>
+        /// Obtains the current <see cref="ConnectionState"/>.
         /// </summary>
         public ConnectionState State
         {
             get
             {
-                if (m_Connection == null)
-                {
-                    return ConnectionState.Closed;
-                }
-
-                return m_Connection.State;
+                return m_Connection == null ? ConnectionState.Closed : m_Connection.State;
             }
         }
 
@@ -176,16 +170,13 @@ namespace Cave.Data.Sql
         /// <returns>A <see cref="string" /> that represents this instance.</returns>
         public override string ToString()
         {
-            if (m_Connection == null)
-            {
-                return "SqlConnection Disposed";
-            }
-
-            return string.Format("SqlConnection Database:'{0}' State:{1}", m_DatabaseName, State);
+            return m_Connection == null
+                ? "SqlConnection Disposed"
+                : string.Format("SqlConnection Database:'{0}' State:{1}", Database, State);
         }
 
         /// <summary>
-        /// Disposes the connection (use <see cref="Close"/> first!)
+        /// Disposes the connection (use <see cref="Close"/> first!).
         /// </summary>
         public void Dispose()
         {

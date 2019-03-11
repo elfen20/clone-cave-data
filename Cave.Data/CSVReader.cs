@@ -8,18 +8,19 @@ using Cave.IO;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides reading of csv files to a struct / class
+    /// Provides reading of csv files to a struct / class.
     /// </summary>
     public sealed class CSVReader : IDisposable
     {
         #region static ReadTable
-        /// <summary>Reads a whole table from the specified csv stream</summary>
+        /// <summary>Reads a whole table from the specified csv stream.</summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="table">Table to read the csv file into</param>
-        /// <param name="properties">Properties of the csv file</param>
+        /// <param name="table">Table to read the csv file into.</param>
+        /// <param name="properties">Properties of the csv file.</param>
         /// <param name="stream">The stream.</param>
-        /// <exception cref="ArgumentNullException">Table</exception>
-        public static void ReadTable<T>(ITable<T> table, CSVProperties properties, Stream stream) where T : struct
+        /// <exception cref="ArgumentNullException">Table.</exception>
+        public static void ReadTable<T>(ITable<T> table, CSVProperties properties, Stream stream)
+            where T : struct
         {
             if (table == null)
             {
@@ -32,13 +33,14 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>Reads a whole table from the specified csv file</summary>
+        /// <summary>Reads a whole table from the specified csv file.</summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="table">Table to read the csv file into</param>
-        /// <param name="properties">Properties of the csv file</param>
-        /// <param name="fileName">File name of the csv file</param>
-        /// <exception cref="ArgumentNullException">Table</exception>
-        public static void ReadTable<T>(ITable<T> table, CSVProperties properties, string fileName) where T : struct
+        /// <param name="table">Table to read the csv file into.</param>
+        /// <param name="properties">Properties of the csv file.</param>
+        /// <param name="fileName">File name of the csv file.</param>
+        /// <exception cref="ArgumentNullException">Table.</exception>
+        public static void ReadTable<T>(ITable<T> table, CSVProperties properties, string fileName)
+            where T : struct
         {
             if (table == null)
             {
@@ -51,30 +53,33 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>Reads a whole table from the specified csv stream</summary>
+        /// <summary>Reads a whole table from the specified csv stream.</summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="table">Table to read the csv file into</param>
+        /// <param name="table">Table to read the csv file into.</param>
         /// <param name="stream">The stream.</param>
-        public static void ReadTable<T>(ITable<T> table, Stream stream) where T : struct
+        public static void ReadTable<T>(ITable<T> table, Stream stream)
+            where T : struct
         {
             ReadTable(table, CSVProperties.Default, stream);
 
         }
-        /// <summary>Reads a whole table from the specified csv file</summary>
+        /// <summary>Reads a whole table from the specified csv file.</summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="table">Table to read the csv file into</param>
-        /// <param name="fileName">File name of the csv file</param>
-        public static void ReadTable<T>(ITable<T> table, string fileName) where T : struct
+        /// <param name="table">Table to read the csv file into.</param>
+        /// <param name="fileName">File name of the csv file.</param>
+        public static void ReadTable<T>(ITable<T> table, string fileName)
+            where T : struct
         {
             ReadTable(table, CSVProperties.Default, fileName);
         }
 
-        /// <summary>Reads a whole table from the specified csv lines</summary>
+        /// <summary>Reads a whole table from the specified csv lines.</summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="table">The table.</param>
         /// <param name="lines">The lines.</param>
         /// <exception cref="Exception"></exception>
-        public static void ReadTable<T>(ITable<T> table, string[] lines) where T : struct
+        public static void ReadTable<T>(ITable<T> table, string[] lines)
+            where T : struct
         {
             using (MemoryStream ms = new MemoryStream())
             {
@@ -93,12 +98,13 @@ namespace Cave.Data
         #endregion
 
         #region static ReadList
-        /// <summary>Reads a whole list from the specified csv stream</summary>
+        /// <summary>Reads a whole list from the specified csv stream.</summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="properties">Properties of the csv file</param>
+        /// <param name="properties">Properties of the csv file.</param>
         /// <param name="stream">The stream.</param>
         /// <returns></returns>
-        public static List<T> ReadList<T>(CSVProperties properties, Stream stream) where T : struct
+        public static List<T> ReadList<T>(CSVProperties properties, Stream stream)
+            where T : struct
         {
             RowLayout layout = RowLayout.CreateTyped(typeof(T));
             using (CSVReader reader = new CSVReader(layout, properties, stream))
@@ -107,10 +113,11 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>Reads a whole list from the specified csv file</summary>
-        /// <param name="properties">Properties of the csv file</param>
-        /// <param name="fileName">File name of the csv file</param>
-        public static List<T> ReadList<T>(CSVProperties properties, string fileName) where T : struct
+        /// <summary>Reads a whole list from the specified csv file.</summary>
+        /// <param name="properties">Properties of the csv file.</param>
+        /// <param name="fileName">File name of the csv file.</param>
+        public static List<T> ReadList<T>(CSVProperties properties, string fileName)
+            where T : struct
         {
             RowLayout layout = RowLayout.CreateTyped(typeof(T));
             using (CSVReader reader = new CSVReader(layout, properties, fileName))
@@ -119,30 +126,33 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>Reads a whole list from the specified csv stream</summary>
+        /// <summary>Reads a whole list from the specified csv stream.</summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="stream">The stream.</param>
         /// <returns></returns>
-        public static List<T> ReadList<T>(Stream stream) where T : struct
+        public static List<T> ReadList<T>(Stream stream)
+            where T : struct
         {
             return ReadList<T>(CSVProperties.Default, stream);
         }
 
-        /// <summary>Reads a whole list from the specified csv file</summary>
+        /// <summary>Reads a whole list from the specified csv file.</summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="fileName">File name of the csv file</param>
+        /// <param name="fileName">File name of the csv file.</param>
         /// <returns></returns>
-        public static List<T> ReadList<T>(string fileName) where T : struct
+        public static List<T> ReadList<T>(string fileName)
+            where T : struct
         {
             return ReadList<T>(CSVProperties.Default, fileName);
         }
 
-        /// <summary>Reads a whole list from the specified csv lines</summary>
+        /// <summary>Reads a whole list from the specified csv lines.</summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="lines">The lines.</param>
         /// <returns></returns>
         /// <exception cref="Exception"></exception>
-        public static List<T> ReadList<T>(string[] lines) where T : struct
+        public static List<T> ReadList<T>(string[] lines)
+            where T : struct
         {
             using (MemoryStream ms = new MemoryStream())
             {
@@ -230,7 +240,7 @@ namespace Cave.Data
                             ident.Dequeue();
                             if (identInARowCount > 1)
                             {
-                                //escaped char
+                                // escaped char
                                 currentValue.Add(buffer[i]);
                             }
                         }
@@ -291,10 +301,10 @@ namespace Cave.Data
         #endregion
 
         /// <summary>
-        /// Creates a new csv file reader with default properties
+        /// Creates a new csv file reader with default properties.
         /// </summary>
-        /// <param name="layout">Layout to use when reading from the csv file</param>
-        /// <param name="fileName">Filename to write to</param>
+        /// <param name="layout">Layout to use when reading from the csv file.</param>
+        /// <param name="fileName">Filename to write to.</param>
         public CSVReader(RowLayout layout, string fileName)
             : this(layout, CSVProperties.Default, File.OpenRead(fileName))
         {
@@ -302,21 +312,21 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a new csv file reader with default properties
+        /// Creates a new csv file reader with default properties.
         /// </summary>
-        /// <param name="layout">Layout to use when reading the csv data</param>
-        /// <param name="stream">Stream to read data from</param>
+        /// <param name="layout">Layout to use when reading the csv data.</param>
+        /// <param name="stream">Stream to read data from.</param>
         public CSVReader(RowLayout layout, Stream stream)
             : this(layout, CSVProperties.Default, stream)
         {
         }
 
         /// <summary>
-        /// Creates a new csv file reader with the specified properties
+        /// Creates a new csv file reader with the specified properties.
         /// </summary>
-        /// <param name="properties">Properties to apply to the reader</param>
-        /// <param name="layout">Layout to use when reading from the csv file</param>
-        /// <param name="fileName">Filename to write to</param>
+        /// <param name="properties">Properties to apply to the reader.</param>
+        /// <param name="layout">Layout to use when reading from the csv file.</param>
+        /// <param name="fileName">Filename to write to.</param>
         public CSVReader(RowLayout layout, CSVProperties properties, string fileName)
             : this(layout, properties, File.OpenRead(fileName))
         {
@@ -324,11 +334,11 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a new csv file reader with the specified properties
+        /// Creates a new csv file reader with the specified properties.
         /// </summary>
-        /// <param name="properties">Properties to apply to the reader</param>
-        /// <param name="layout">Layout to use when reading the csv data</param>
-        /// <param name="stream">Stream to read data from</param>
+        /// <param name="properties">Properties to apply to the reader.</param>
+        /// <param name="layout">Layout to use when reading the csv data.</param>
+        /// <param name="stream">Stream to read data from.</param>
         public CSVReader(RowLayout layout, CSVProperties properties, Stream stream)
         {
             Layout = layout;
@@ -428,22 +438,22 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the underlying base stream
+        /// Obtains the underlying base stream.
         /// </summary>
         public Stream BaseStream { get; private set; }
 
         /// <summary>
-        /// Obtains the <see cref="CSVProperties"/>
+        /// Obtains the <see cref="CSVProperties"/>.
         /// </summary>
         public readonly CSVProperties Properties;
 
         /// <summary>
-        /// Obtains the row layout
+        /// Obtains the row layout.
         /// </summary>
         public RowLayout Layout { get; private set; }
 
         /// <summary>
-        /// Reads a row from the file
+        /// Reads a row from the file.
         /// </summary>
         /// <param name="row"></param>
         /// <returns></returns>
@@ -459,11 +469,12 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Reads a row from the file
+        /// Reads a row from the file.
         /// </summary>
         /// <param name="row"></param>
         /// <returns></returns>
-        public bool ReadRow<T>(out T row) where T : struct
+        public bool ReadRow<T>(out T row)
+            where T : struct
         {
             if (m_Reader == null)
             {
@@ -481,10 +492,11 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Reads the whole file to the specified table
+        /// Reads the whole file to the specified table.
         /// </summary>
         /// <param name="table"></param>
-        public void ReadTable<T>(ITable<T> table) where T : struct
+        public void ReadTable<T>(ITable<T> table)
+            where T : struct
         {
             if (m_Reader == null)
             {
@@ -504,10 +516,11 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Reads the whole file to a new list
+        /// Reads the whole file to a new list.
         /// </summary>
         /// <returns></returns>
-        public List<T> ReadList<T>() where T : struct
+        public List<T> ReadList<T>()
+            where T : struct
         {
             if (m_Reader == null)
             {
@@ -527,7 +540,7 @@ namespace Cave.Data
         /// Skips a number of rows.
         /// </summary>
         /// <param name="rows"></param>
-        /// <returns>if all rows have been skipped</returns>
+        /// <returns>if all rows have been skipped.</returns>
         public bool SkipRows(long rows = 0)
         {
             if (m_Reader == null)
@@ -548,7 +561,7 @@ namespace Cave.Data
 
 
         /// <summary>
-        /// Closes the reader
+        /// Closes the reader.
         /// </summary>
         public void Close()
         {

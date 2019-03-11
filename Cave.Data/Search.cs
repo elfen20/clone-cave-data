@@ -13,7 +13,7 @@ using Cave.Data.Sql;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides database independent search functions
+    /// Provides database independent search functions.
     /// </summary>
     public sealed class Search
     {
@@ -38,7 +38,7 @@ namespace Cave.Data
             return result;
         }
 
-        /// <summary>Prepares a search using like to find a full match of all of the specified parts</summary>
+        /// <summary>Prepares a search using like to find a full match of all of the specified parts.</summary>
         /// <param name="fieldName">Name of the field.</param>
         /// <param name="parts">The parts.</param>
         /// <returns></returns>
@@ -52,7 +52,7 @@ namespace Cave.Data
             return result;
         }
 
-        /// <summary>Prepares a search using like to find a single match of one of the specified parts</summary>
+        /// <summary>Prepares a search using like to find a single match of one of the specified parts.</summary>
         /// <param name="fieldName">Name of the field.</param>
         /// <param name="parts">The parts.</param>
         /// <returns></returns>
@@ -87,7 +87,8 @@ namespace Cave.Data
         /// <param name="row">The row.</param>
         /// <param name="fields">The fields.</param>
         /// <returns></returns>
-        public static Search FullMatch<T>(ITable<T> table, T row, params string[] fields) where T : struct
+        public static Search FullMatch<T>(ITable<T> table, T row, params string[] fields)
+            where T : struct
         {
             return FullMatch(table, Row.Create(table.Layout, row), fields);
         }
@@ -114,8 +115,9 @@ namespace Cave.Data
         /// <param name="table">The table.</param>
         /// <param name="row">The row data to search for.</param>
         /// <param name="checkDefaultValues">if set to <c>true</c> [check default values].</param>
-        /// <returns>Returns a new search instance</returns>
-        public static Search FullMatch<T>(ITable table, T row, bool checkDefaultValues = false) where T : struct
+        /// <returns>Returns a new search instance.</returns>
+        public static Search FullMatch<T>(ITable table, T row, bool checkDefaultValues = false)
+            where T : struct
         {
             return FullMatch(table, Row.Create<T>(table.Layout, row), checkDefaultValues);
         }
@@ -124,7 +126,7 @@ namespace Cave.Data
         /// <param name="table">The table.</param>
         /// <param name="row">The row data to search for.</param>
         /// <param name="checkDefaultValues">if set to <c>true</c> [check default values].</param>
-        /// <returns>Returns a new search instance</returns>
+        /// <returns>Returns a new search instance.</returns>
         public static Search FullMatch(ITable table, Row row, bool checkDefaultValues = false)
         {
             return FullMatch(table, row.GetValues(), checkDefaultValues);
@@ -134,7 +136,7 @@ namespace Cave.Data
         /// <param name="table">The table.</param>
         /// <param name="fields">The row data to search for.</param>
         /// <param name="checkDefaultValues">if set to <c>true</c> [check default values].</param>
-        /// <returns>Returns a new search instance</returns>
+        /// <returns>Returns a new search instance.</returns>
         public static Search FullMatch(ITable table, object[] fields, bool checkDefaultValues = false)
         {
             Search search = None;
@@ -175,7 +177,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Inverts a search
+        /// Inverts a search.
         /// </summary>
         /// <param name="search"></param>
         /// <returns></returns>
@@ -186,11 +188,11 @@ namespace Cave.Data
                 throw new ArgumentNullException(nameof(search));
             }
 
-            switch (search.mode)
+            switch (search.Mode)
             {
                 case SearchMode.And:
                 case SearchMode.Or:
-                    return new Search(search.mode, !search.invert, search.searchA, search.searchB);
+                    return new Search(search.Mode, !search.invert, search.searchA, search.searchB);
                 case SearchMode.Equals:
                 case SearchMode.Like:
                 case SearchMode.Greater:
@@ -198,14 +200,14 @@ namespace Cave.Data
                 case SearchMode.GreaterOrEqual:
                 case SearchMode.SmallerOrEqual:
                 case SearchMode.In:
-                    return new Search(search.mode, !search.invert, search.fieldName, search.fieldValue);
+                    return new Search(search.Mode, !search.invert, search.fieldName, search.fieldValue);
                 default:
-                    throw new ArgumentException(string.Format("Invalid mode {0}!", search.mode));
+                    throw new ArgumentException(string.Format("Invalid mode {0}!", search.Mode));
             }
         }
 
         /// <summary>
-        /// Combines to searches with AND
+        /// Combines to searches with AND.
         /// </summary>
         /// <param name="A"></param>
         /// <param name="B"></param>
@@ -222,21 +224,16 @@ namespace Cave.Data
                 throw new ArgumentNullException("B");
             }
 
-            if (B.mode == SearchMode.None)
+            if (B.Mode == SearchMode.None)
             {
                 return A;
             }
 
-            if (A.mode == SearchMode.None)
-            {
-                return B;
-            }
-
-            return new Search(SearchMode.And, false, A, B);
+            return A.Mode == SearchMode.None ? B : new Search(SearchMode.And, false, A, B);
         }
 
         /// <summary>
-        /// Combines to searches with OR
+        /// Combines to searches with OR.
         /// </summary>
         /// <param name="A"></param>
         /// <param name="B"></param>
@@ -253,21 +250,16 @@ namespace Cave.Data
                 throw new ArgumentNullException("B");
             }
 
-            if (B.mode == SearchMode.None)
+            if (B.Mode == SearchMode.None)
             {
                 return A;
             }
 
-            if (A.mode == SearchMode.None)
-            {
-                return B;
-            }
-
-            return new Search(SearchMode.Or, false, A, B);
+            return A.Mode == SearchMode.None ? B : new Search(SearchMode.Or, false, A, B);
         }
 
         /// <summary>
-        /// Creates a field in value search
+        /// Creates a field in value search.
         /// </summary>
         /// <param name="name">The name.</param>
         /// <param name="values">The values.</param>
@@ -280,16 +272,11 @@ namespace Cave.Data
                 s.Include(val);
             }
 
-            if (s.Count == 0)
-            {
-                return None;
-            }
-
-            return new Search(SearchMode.In, false, name, s);
+            return s.Count == 0 ? None : new Search(SearchMode.In, false, name, s);
         }
 
         /// <summary>
-        /// Creates a field in value search
+        /// Creates a field in value search.
         /// </summary>
         /// <param name="name">The name.</param>
         /// <param name="values">The values.</param>
@@ -302,16 +289,11 @@ namespace Cave.Data
                 s.Include(val);
             }
 
-            if (s.Count == 0)
-            {
-                return None;
-            }
-
-            return new Search(SearchMode.In, false, name, s);
+            return s.Count == 0 ? None : new Search(SearchMode.In, false, name, s);
         }
 
         /// <summary>
-        /// Creates a field equals value search
+        /// Creates a field equals value search.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
@@ -322,7 +304,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a field not equals value search
+        /// Creates a field not equals value search.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
@@ -333,7 +315,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a field like value search
+        /// Creates a field like value search.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
@@ -344,7 +326,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a field not like value search
+        /// Creates a field not like value search.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
@@ -355,7 +337,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a field greater value search
+        /// Creates a field greater value search.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
@@ -366,7 +348,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a field greater or equal value search
+        /// Creates a field greater or equal value search.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
@@ -377,7 +359,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a field smaller value search
+        /// Creates a field smaller value search.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
@@ -388,7 +370,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a field smaller or equal value search
+        /// Creates a field smaller or equal value search.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
@@ -399,7 +381,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// No search
+        /// No search.
         /// </summary>
         public static Search None { get; } = new Search();
 
@@ -407,71 +389,66 @@ namespace Cave.Data
 
         /// <summary>Gets the mode.</summary>
         /// <value>The mode.</value>
-        public SearchMode Mode => mode;
+        public SearchMode Mode { get; private set; }
 
         /// <summary>
-        /// the field number (unknown == -1)
+        /// the field number (unknown == -1).
         /// </summary>
         int fieldNumber = -1;
 
         /// <summary>
-        /// The mode of this search
-        /// </summary>
-        SearchMode mode;
-
-        /// <summary>
-        /// Sub search A (only used with Mode = AND / OR)
+        /// Sub search A (only used with Mode = AND / OR).
         /// </summary>
         Search searchA;
 
         /// <summary>
-        /// Sub search B (only used with Mode = AND / OR)
+        /// Sub search B (only used with Mode = AND / OR).
         /// </summary>
         Search searchB;
 
         /// <summary>
-        /// The fieldname to search for
+        /// The fieldname to search for.
         /// </summary>
         string fieldName;
 
         /// <summary>
-        /// The value to search for
+        /// The value to search for.
         /// </summary>
         object fieldValue;
 
         /// <summary>
-        /// Invert the search
+        /// Invert the search.
         /// </summary>
         bool invert;
 
         /// <summary>
-        /// The RegEx for LIKE comparison
+        /// The RegEx for LIKE comparison.
         /// </summary>
         Regex expression;
 
         /// <summary>
-        /// FieldProperties for database value conversion
+        /// FieldProperties for database value conversion.
         /// </summary>
         FieldProperties fieldProperties;
 
-        /// <summary>The layout</summary>
+        /// <summary>The layout.</summary>
         RowLayout layout;
 
         /// <summary>
-        /// Creates no search
+        /// Creates no search.
         /// </summary>
         Search()
         {
-            mode = SearchMode.None;
+            Mode = SearchMode.None;
         }
 
         /// <summary>
-        /// Creates a AND / OR search
+        /// Creates a AND / OR search.
         /// </summary>
-        /// <param name="mode">AND / OR</param>
-        /// <param name="not">Invert the search</param>
-        /// <param name="A">First search to combine</param>
-        /// <param name="B">Second search to combine</param>
+        /// <param name="mode">AND / OR.</param>
+        /// <param name="not">Invert the search.</param>
+        /// <param name="A">First search to combine.</param>
+        /// <param name="B">Second search to combine.</param>
         Search(SearchMode mode, bool not, Search A, Search B)
         {
             switch (mode)
@@ -480,21 +457,21 @@ namespace Cave.Data
                 case SearchMode.Or:
                     break;
                 default:
-                    throw new ArgumentException(string.Format("Invalid mode {0}!", this.mode));
+                    throw new ArgumentException(string.Format("Invalid mode {0}!", this.Mode));
             }
             invert = not;
-            this.mode = mode;
+            this.Mode = mode;
             searchA = A;
             searchB = B;
         }
 
         /// <summary>
-        /// Creates a name EQUALS / LIKE value search
+        /// Creates a name EQUALS / LIKE value search.
         /// </summary>
-        /// <param name="mode">The mode of operation</param>
-        /// <param name="not">Invert the search</param>
-        /// <param name="name">Name of the field</param>
-        /// <param name="value">Value of the field</param>
+        /// <param name="mode">The mode of operation.</param>
+        /// <param name="not">Invert the search.</param>
+        /// <param name="name">Name of the field.</param>
+        /// <param name="value">Value of the field.</param>
         Search(SearchMode mode, bool not, string name, object value)
         {
             switch (mode)
@@ -514,12 +491,12 @@ namespace Cave.Data
                 case SearchMode.SmallerOrEqual:
                     break;
                 default:
-                    throw new ArgumentException(string.Format("Invalid mode {0}!", this.mode));
+                    throw new ArgumentException(string.Format("Invalid mode {0}!", this.Mode));
             }
             invert = not;
             fieldName = name;
             fieldValue = value;
-            this.mode = mode;
+            this.Mode = mode;
         }
 
         internal void LoadLayout(RowLayout layout)
@@ -533,7 +510,7 @@ namespace Cave.Data
 
                 throw new Exception("Different Layout already set!");
             }
-            switch (mode)
+            switch (Mode)
             {
                 case SearchMode.And:
                 case SearchMode.Or:
@@ -557,7 +534,7 @@ namespace Cave.Data
             if (fieldProperties == null)
             {
                 fieldProperties = layout.GetProperties(fieldNumber);
-                if (mode == SearchMode.In)
+                if (Mode == SearchMode.In)
                 {
                     Set<object> result = new Set<object>();
                     foreach (object value in (Set<object>)fieldValue)
@@ -566,9 +543,9 @@ namespace Cave.Data
                     }
                     fieldValue = result;
                 }
-                else if (mode == SearchMode.Like)
+                else if (Mode == SearchMode.Like)
                 {
-                    //Do nothing
+                    // Do nothing
                 }
                 else
                 {
@@ -599,13 +576,13 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains a string describing this instance
+        /// Obtains a string describing this instance.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
         {
             string operation;
-            switch (mode)
+            switch (Mode)
             {
                 case SearchMode.None: return "TRUE";
                 case SearchMode.And: return (invert ? "NOT " : "") + "(" + searchA.ToString() + " AND " + searchB.ToString() + ")";
@@ -617,18 +594,15 @@ namespace Cave.Data
                 case SearchMode.GreaterOrEqual: operation = (invert ? "<" : ">="); break;
                 case SearchMode.SmallerOrEqual: operation = (invert ? ">" : "<="); break;
                 case SearchMode.In: operation = (invert ? "NOT " : "") + "IN (" + ((IEnumerable)fieldValue).Join(",") + ")"; break;
-                default: return string.Format("Unknown mode {0}!", mode);
+                default: return string.Format("Unknown mode {0}!", Mode);
             }
-            if (fieldValue == null)
-            {
-                return StringExtensions.Format("[{0}] {1} <null>", fieldName, operation);
-            }
-
-            return StringExtensions.Format("[{0}] {1} '{2}'", fieldName, operation, StringExtensions.ToString(fieldValue));
+            return fieldValue == null
+                ? StringExtensions.Format("[{0}] {1} <null>", fieldName, operation)
+                : StringExtensions.Format("[{0}] {1} '{2}'", fieldName, operation, StringExtensions.ToString(fieldValue));
         }
 
         /// <summary>
-        /// Obtains the hashcode for this instance
+        /// Obtains the hashcode for this instance.
         /// </summary>
         /// <returns></returns>
         public override int GetHashCode()
@@ -645,13 +619,13 @@ namespace Cave.Data
 
             LoadLayout(layout);
 
-            switch (mode)
+            switch (Mode)
             {
                 case SearchMode.None: return "1=1";
 
                 case SearchMode.In:
                 {
-                    //escape the fieldname
+                    // escape the fieldname
                     string name = search.Storage.EscapeFieldName(fieldProperties);
                     StringBuilder result = new StringBuilder();
                     result.Append(name);
@@ -681,14 +655,16 @@ namespace Cave.Data
 
                 case SearchMode.Equals:
                 {
-                    //escape the fieldname
+                    // escape the fieldname
                     string name = search.Storage.EscapeFieldName(fieldProperties);
-                    //is value null -> yes return "name IS [NOT] NULL"
+
+                    // is value null -> yes return "name IS [NOT] NULL"
                     if (fieldValue == null)
                     {
                         return name + " IS " + (invert ? "NOT " : "") + "NULL";
                     }
-                    //no add parameter and return querytext
+
+                    // no add parameter and return querytext
                     string parameterName = (search.Parameters.Count + 1).ToString();
                     search.AddParameter(fieldProperties, parameterName, fieldValue);
                     return name + (invert ? "<>" : "=") + search.Storage.ParameterPrefix + parameterName;
@@ -696,14 +672,16 @@ namespace Cave.Data
 
                 case SearchMode.Like:
                 {
-                    //escape the fieldname
+                    // escape the fieldname
                     string name = search.Storage.EscapeFieldName(fieldProperties);
-                    //is value null -> yes return "name IS [NOT] NULL"
+
+                    // is value null -> yes return "name IS [NOT] NULL"
                     if (fieldValue == null)
                     {
                         return name + " IS " + (invert ? "NOT " : "") + "NULL";
                     }
-                    //no add parameter and return querytext
+
+                    // no add parameter and return querytext
                     string parameterName = (search.Parameters.Count + 1).ToString();
                     search.AddParameter(fieldProperties, parameterName, fieldValue);
                     return name + (invert ? " NOT" : "") + " LIKE " + search.Storage.ParameterPrefix + parameterName;
@@ -711,77 +689,73 @@ namespace Cave.Data
 
                 case SearchMode.Greater:
                 {
-                    //escape the fieldname
+                    // escape the fieldname
                     string name = search.Storage.EscapeFieldName(fieldProperties);
-                    //no add parameter and return querytext
+
+                    // no add parameter and return querytext
                     string parameterName = (search.Parameters.Count + 1).ToString();
                     search.AddParameter(fieldProperties, parameterName, fieldValue);
-                    if (invert)
-                    {
-                        return name + " <= " + search.Storage.ParameterPrefix + parameterName;
-                    }
-                    return name + " > " + search.Storage.ParameterPrefix + parameterName;
+                    return invert
+                        ? name + " <= " + search.Storage.ParameterPrefix + parameterName
+                        : name + " > " + search.Storage.ParameterPrefix + parameterName;
                 }
 
                 case SearchMode.GreaterOrEqual:
                 {
-                    //escape the fieldname
+                    // escape the fieldname
                     string name = search.Storage.EscapeFieldName(fieldProperties);
-                    //no add parameter and return querytext
+
+                    // no add parameter and return querytext
                     string parameterName = (search.Parameters.Count + 1).ToString();
                     search.AddParameter(fieldProperties, parameterName, fieldValue);
-                    if (invert)
-                    {
-                        return name + " < " + search.Storage.ParameterPrefix + parameterName;
-                    }
-                    return name + " >= " + search.Storage.ParameterPrefix + parameterName;
+                    return invert
+                        ? name + " < " + search.Storage.ParameterPrefix + parameterName
+                        : name + " >= " + search.Storage.ParameterPrefix + parameterName;
                 }
 
                 case SearchMode.Smaller:
                 {
-                    //escape the fieldname
+                    // escape the fieldname
                     string name = search.Storage.EscapeFieldName(fieldProperties);
-                    //no add parameter and return querytext
+
+                    // no add parameter and return querytext
                     string parameterName = (search.Parameters.Count + 1).ToString();
                     search.AddParameter(fieldProperties, parameterName, fieldValue);
-                    if (invert)
-                    {
-                        return name + " >= " + search.Storage.ParameterPrefix + parameterName;
-                    }
-                    return name + " < " + search.Storage.ParameterPrefix + parameterName;
+                    return invert
+                        ? name + " >= " + search.Storage.ParameterPrefix + parameterName
+                        : name + " < " + search.Storage.ParameterPrefix + parameterName;
                 }
 
                 case SearchMode.SmallerOrEqual:
                 {
-                    //escape the fieldname
+                    // escape the fieldname
                     string name = search.Storage.EscapeFieldName(fieldProperties);
-                    //no add parameter and return querytext
+
+                    // no add parameter and return querytext
                     string parameterName = (search.Parameters.Count + 1).ToString();
                     search.AddParameter(fieldProperties, parameterName, fieldValue);
-                    if (invert)
-                    {
-                        return name + " > " + search.Storage.ParameterPrefix + parameterName;
-                    }
-                    return name + " <= " + search.Storage.ParameterPrefix + parameterName;
+                    return invert
+                        ? name + " > " + search.Storage.ParameterPrefix + parameterName
+                        : name + " <= " + search.Storage.ParameterPrefix + parameterName;
                 }
 
                 case SearchMode.And: return (invert ? "NOT " : "") + "(" + searchA.ToSqlStringAndParameters(layout, search) + " AND " + searchB.ToSqlStringAndParameters(layout, search) + ")";
                 case SearchMode.Or: return (invert ? "NOT " : "") + "(" + searchA.ToSqlStringAndParameters(layout, search) + " OR " + searchB.ToSqlStringAndParameters(layout, search) + ")";
-                default: throw new NotImplementedException(string.Format("Mode {0} not implemented!", mode));
+                default: throw new NotImplementedException(string.Format("Mode {0} not implemented!", Mode));
             }
         }
 
-        //may be called on different sql database implementations
+        // may be called on different sql database implementations
         string ToSqlString(RowLayout layout, SqlSearch search)
         {
             LoadLayout(layout);
-            switch (mode)
+            switch (Mode)
             {
                 case SearchMode.None: return "1=1";
 
                 case SearchMode.In:
                 {
-                    //escape the fieldname
+                    // escape the fieldname
                     string name = search.Storage.EscapeFieldName(fieldProperties);
                     StringBuilder result = new StringBuilder();
                     if (invert)
@@ -798,7 +772,7 @@ namespace Cave.Data
                             result.Append(",");
                         }
 
-                        //prepare value string
+                        // prepare value string
                         string str1 = value.ToString();
                         string str2 = StringExtensions.GetValidChars(str1, ASCII.Strings.SafeName);
 #if DEBUG
@@ -816,15 +790,16 @@ namespace Cave.Data
 
                 case SearchMode.Equals:
                 {
-                    //escape the fieldname
+                    // escape the fieldname
                     string name = search.Storage.EscapeFieldName(fieldProperties);
-                    //is value null -> yes return "name IS [NOT] NULL"
+
+                    // is value null -> yes return "name IS [NOT] NULL"
                     if (fieldValue == null)
                     {
                         return name + " IS " + (invert ? "NOT " : "") + "NULL";
                     }
 
-                    //prepare value string
+                    // prepare value string
                     string str1 = fieldValue.ToString();
                     string str2 = StringExtensions.GetValidChars(str1, ASCII.Strings.SafeName);
 #if DEBUG
@@ -838,14 +813,16 @@ namespace Cave.Data
 
                 case SearchMode.Like:
                 {
-                    //escape the fieldname
+                    // escape the fieldname
                     string name = search.Storage.EscapeFieldName(fieldProperties);
-                    //is value null -> yes return "name IS [NOT] NULL"
+
+                    // is value null -> yes return "name IS [NOT] NULL"
                     if (fieldValue == null)
                     {
                         return name + " IS " + (invert ? "NOT " : "") + "NULL";
                     }
-                    //prepare value string
+
+                    // prepare value string
                     string value = fieldValue.ToString();
                     value = StringExtensions.GetValidChars(value, ASCII.Strings.SafeName);
 #if DEBUG
@@ -859,9 +836,10 @@ namespace Cave.Data
 
                 case SearchMode.Greater:
                 {
-                    //escape the fieldname
+                    // escape the fieldname
                     string name = search.Storage.EscapeFieldName(fieldProperties);
-                    //prepare value string
+
+                    // prepare value string
                     string value = fieldValue.ToString();
                     value = StringExtensions.GetValidChars(value, ASCII.Strings.SafeName);
 #if DEBUG
@@ -870,18 +848,15 @@ namespace Cave.Data
                         throw new ArgumentException("Value at search does not match safe name requirements!");
                     }
 #endif
-                    if (invert)
-                    {
-                        return name + " <= " + value;
-                    }
-                    return name + " > " + value;
+                    return invert ? name + " <= " + value : name + " > " + value;
                 }
 
                 case SearchMode.GreaterOrEqual:
                 {
-                    //escape the fieldname
+                    // escape the fieldname
                     string name = search.Storage.EscapeFieldName(fieldProperties);
-                    //prepare value string
+
+                    // prepare value string
                     string value = fieldValue.ToString();
                     value = StringExtensions.GetValidChars(value, ASCII.Strings.SafeName);
 #if DEBUG
@@ -890,18 +865,15 @@ namespace Cave.Data
                         throw new ArgumentException("Value at search does not match safe name requirements!");
                     }
 #endif
-                    if (invert)
-                    {
-                        return name + " < " + value;
-                    }
-                    return name + " >= " + value;
+                    return invert ? name + " < " + value : name + " >= " + value;
                 }
 
                 case SearchMode.Smaller:
                 {
-                    //escape the fieldname
+                    // escape the fieldname
                     string name = search.Storage.EscapeFieldName(fieldProperties);
-                    //prepare value string
+
+                    // prepare value string
                     string value = fieldValue.ToString();
                     value = StringExtensions.GetValidChars(value, ASCII.Strings.SafeName);
 #if DEBUG
@@ -910,18 +882,15 @@ namespace Cave.Data
                         throw new ArgumentException("Value at search does not match safe name requirements!");
                     }
 #endif
-                    if (invert)
-                    {
-                        return name + " >= " + value;
-                    }
-                    return name + " < " + value;
+                    return invert ? name + " >= " + value : name + " < " + value;
                 }
 
                 case SearchMode.SmallerOrEqual:
                 {
-                    //escape the fieldname
+                    // escape the fieldname
                     string name = search.Storage.EscapeFieldName(fieldProperties);
-                    //prepare value string
+
+                    // prepare value string
                     string value = fieldValue.ToString();
                     value = StringExtensions.GetValidChars(value, ASCII.Strings.SafeName);
 #if DEBUG
@@ -930,16 +899,12 @@ namespace Cave.Data
                         throw new ArgumentException("Value at search does not match safe name requirements!");
                     }
 #endif
-                    if (invert)
-                    {
-                        return name + " > " + value;
-                    }
-                    return name + " <= " + value;
+                    return invert ? name + " > " + value : name + " <= " + value;
                 }
 
                 case SearchMode.And: return (invert ? "NOT " : "") + "(" + searchA.ToSqlStringAndParameters(layout, search) + " AND " + searchB.ToSqlStringAndParameters(layout, search) + ")";
                 case SearchMode.Or: return (invert ? "NOT " : "") + "(" + searchA.ToSqlStringAndParameters(layout, search) + " OR " + searchB.ToSqlStringAndParameters(layout, search) + ")";
-                default: throw new NotImplementedException(string.Format("Mode {0} not implemented!", mode));
+                default: throw new NotImplementedException(string.Format("Mode {0} not implemented!", Mode));
             }
         }
 
@@ -950,7 +915,7 @@ namespace Cave.Data
             return result;
         }
 
-        //may be called on different sql database implementations
+        // may be called on different sql database implementations
         internal SqlSearch ToSqlNoParameters(RowLayout layout, SqlStorage storage)
         {
             SqlSearch result = new SqlSearch(storage);
@@ -1026,7 +991,7 @@ namespace Cave.Data
         {
             bool result = true;
 
-            switch (mode)
+            switch (Mode)
             {
                 case SearchMode.None:
                     if (invert)
@@ -1055,7 +1020,7 @@ namespace Cave.Data
                     return result;
             }
 
-            switch (mode)
+            switch (Mode)
             {
                 case SearchMode.Greater:
                 {
@@ -1143,7 +1108,7 @@ namespace Cave.Data
                     result = Like(row.GetValue(fieldNumber));
                     break;
 
-                default: throw new NotImplementedException(string.Format("Mode {0} not implemented!", mode));
+                default: throw new NotImplementedException(string.Format("Mode {0} not implemented!", Mode));
             }
 
             if (invert)
@@ -1169,15 +1134,15 @@ namespace Cave.Data
             return tableValue.Ticks.CompareTo(checkValue.Ticks);
         }
 
-        /// <summary>Scans a Table for matches with the current search</summary>
+        /// <summary>Scans a Table for matches with the current search.</summary>
         /// <param name="preselected">The preselected ids.</param>
-        /// <param name="layout">Layout of the table</param>
-        /// <param name="indices">FieldIndices or null</param>
-        /// <param name="table">The table to scan</param>
+        /// <param name="layout">Layout of the table.</param>
+        /// <param name="indices">FieldIndices or null.</param>
+        /// <param name="table">The table to scan.</param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException">Layout
         /// or
-        /// Table</exception>
+        /// Table.</exception>
         /// <exception cref="NotImplementedException"></exception>
         public IItemSet<long> Scan(IItemSet<long> preselected, RowLayout layout, IFieldIndex[] indices, IDictionary<long, Row> table)
         {
@@ -1193,16 +1158,11 @@ namespace Cave.Data
 
             LoadLayout(layout);
 
-            switch (mode)
+            switch (Mode)
             {
                 case SearchMode.None:
                 {
-                    if (invert)
-                    {
-                        return new Set<long>();
-                    }
-
-                    return preselected == null ? table.Keys.AsSet() : preselected;
+                    return invert ? new Set<long>() : preselected == null ? table.Keys.AsSet() : preselected;
                 }
 
                 case SearchMode.And:
@@ -1230,7 +1190,7 @@ namespace Cave.Data
                     IItemSet<long> result = new Set<long>();
                     if (fieldNumber == layout.IDFieldIndex)
                     {
-                        //get all ids with given ids
+                        // get all ids with given ids
                         IEnumerable<long> idsToLookFor = ((Set<object>)fieldValue).Select(o => (long)o);
                         result.AddRange(idsToLookFor.Where(id => table.ContainsKey(id)));
                         if (preselected != null)
@@ -1238,10 +1198,11 @@ namespace Cave.Data
                             result = Set<long>.BitwiseAnd(result, preselected);
                         }
                     }
-                    //check if we can do an index search
+
+                    // check if we can do an index search
                     else if ((indices != null) && (indices[fieldNumber] != null))
                     {
-                        //field has an index, get all ids with field value
+                        // field has an index, get all ids with field value
                         foreach (object value in (Set<object>)fieldValue)
                         {
                             result.AddRange(indices[fieldNumber].Find(value));
@@ -1251,7 +1212,8 @@ namespace Cave.Data
                             result = Set<long>.BitwiseAnd(result, preselected);
                         }
                     }
-                    //full scan required...
+
+                    // full scan required...
                     else
                     {
                         Search search = Search.None;
@@ -1271,9 +1233,9 @@ namespace Cave.Data
                 case SearchMode.Like:
                 case SearchMode.Equals:
                 {
-                    if (mode == SearchMode.Equals)
+                    if (Mode == SearchMode.Equals)
                     {
-                        //id field select?
+                        // id field select?
                         if (fieldNumber == layout.IDFieldIndex)
                         {
                             Set<long> result = new Set<long>();
@@ -1285,10 +1247,10 @@ namespace Cave.Data
                             return invert ? Invert(preselected == null ? table.Keys : preselected, result) : result;
                         }
 
-                        //check if we can do an index search
+                        // check if we can do an index search
                         if ((indices != null) && (indices[fieldNumber] != null))
                         {
-                            //field has an index
+                            // field has an index
                             Set<long> result = new Set<long>(indices[fieldNumber].Find(fieldValue));
                             if (preselected != null)
                             {
@@ -1298,14 +1260,15 @@ namespace Cave.Data
                             return invert ? Invert(preselected == null ? table.Keys : preselected, result) : result;
                         }
 #if DEBUG
-						//field has no index, need table scan
+						// field has no index, need table scan
 						if (preselected == null && table.Count > 1000)
 						{
                             Debug.WriteLine(string.Format("<yellow>Warning:<default> Doing slow memory search on Table <red>{0}<default> Field <red>{1}<default>! You should consider adding an index!", layout.Name, fieldName));
 						}
 #endif
                     }
-                    //scan without index 
+
+                    // scan without index
                     {
                         Set<long> result = new Set<long>();
                         if (preselected != null)
@@ -1332,7 +1295,7 @@ namespace Cave.Data
                     }
                 }
 
-                default: throw new NotImplementedException(string.Format("Mode {0} not implemented!", mode));
+                default: throw new NotImplementedException(string.Format("Mode {0} not implemented!", Mode));
             }
         }
     }

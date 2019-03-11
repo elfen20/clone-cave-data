@@ -3,13 +3,13 @@ using System;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides an interface for read table cache
+    /// Provides an interface for read table cache.
     /// </summary>
     /// <seealso cref="ITable" />
     public interface IReadCachedTable : ITable
     {
         /// <summary>
-        /// Obtains the current cache generation (this will increase on each update)
+        /// Obtains the current cache generation (this will increase on each update).
         /// </summary>
         int Generation { get; }
 
@@ -24,11 +24,12 @@ namespace Cave.Data
     }
 
     /// <summary>
-    /// Provides an interface for read table cache
+    /// Provides an interface for read table cache.
     /// </summary>
     /// <typeparam name="T"></typeparam>
     /// <seealso cref="ITable" />
-    public interface IReadCachedTable<T> : ITable<T>, IReadCachedTable where T : struct
+    public interface IReadCachedTable<T> : ITable<T>, IReadCachedTable
+        where T : struct
     {
     }
 }

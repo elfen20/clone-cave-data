@@ -4,7 +4,7 @@ using System.IO;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides a simple directory based storage engine
+    /// Provides a simple directory based storage engine.
     /// </summary>
     public sealed class DatStorage : FileStorage
     {
@@ -13,7 +13,7 @@ namespace Cave.Data
         /// <para>
         /// Following formats are supported:<br />
         /// file://server/relativepath<br />
-        /// file:absolutepath<br /></para>
+        /// file:absolutepath.<br /></para>
         /// </summary>
         /// <param name="connectionString">The connection string.</param>
         /// <param name="options">The options.</param>
@@ -27,7 +27,7 @@ namespace Cave.Data
         /// <para>
         /// Following formats are supported:<br />
         /// file://server/relativepath<br />
-        /// file:absolutepath<br /></para>
+        /// file:absolutepath.<br /></para>
         /// </summary>
         /// <param name="connectionString"></param>
         /// <param name="options"></param>
@@ -37,9 +37,9 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the database with the specified name
+        /// Obtains the database with the specified name.
         /// </summary>
-        /// <param name="database">Name of the database</param>
+        /// <param name="database">Name of the database.</param>
         /// <returns></returns>
         public override IDatabase GetDatabase(string database)
         {

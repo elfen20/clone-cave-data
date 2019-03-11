@@ -1,7 +1,7 @@
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides available transaction types
+    /// Provides available transaction types.
     /// </summary>
     public enum TransactionType : byte
     {

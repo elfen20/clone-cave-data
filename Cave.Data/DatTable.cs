@@ -11,11 +11,11 @@ using Cave.IO;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides a binary dat file database table
+    /// Provides a binary dat file database table.
     /// </summary>
     public class DatTable : Table, IDisposable
     {
-        /// <summary>The current version</summary>
+        /// <summary>The current version.</summary>
         public const int CurrentVersion = 3;
 
         #region private variables
@@ -44,7 +44,8 @@ namespace Cave.Data
             {
                 throw new InvalidDataException(string.Format("Unknown Table version!"));
             }
-            //read name and create layout
+
+            // read name and create layout
             string layoutName = reader.ReadString();
             List<FieldProperties> fields = new List<FieldProperties>();
             int fieldCount = reader.Read7BitEncodedInt32();
@@ -228,7 +229,8 @@ namespace Cave.Data
                             else
                             {
                                 string text = data.ToString();
-                                //check for invalid characters
+
+                                // check for invalid characters
                                 switch (fieldProperties.StringEncoding)
                                 {
                                     case StringEncoding.ASCII:
@@ -436,12 +438,12 @@ namespace Cave.Data
             byte[] data = GetData(Layout, row, Version);
             int minSize = data.Length + BitCoder32.GetByteCount7BitEncoded(data.Length + 10);
 
-            //reuse old entry ?
+            // reuse old entry ?
             if (entry.ID != 0)
             {
                 if (entry.BucketLength >= minSize)
                 {
-                    //write entry
+                    // write entry
                     m_FileStream.Position = entry.BucketPosition;
                     DataWriter writer = new DataWriter(m_FileStream);
                     BitCoder32.Write7BitEncoded(writer, entry.BucketLength);
@@ -458,21 +460,22 @@ namespace Cave.Data
 
                     return id;
                 }
-                //no reuse -> release old
+
+                // no reuse -> release old
                 m_Index.Free(entry);
             }
 
-            //find free entry
+            // find free entry
             entry = m_Index.GetFree(id, minSize);
             if (entry.ID == 0)
             {
-                //create new
+                // create new
                 entry = new DatEntry(id, m_CurrentLength, minSize);
                 m_CurrentLength += entry.BucketLength;
             }
             m_Index.Save(entry);
             {
-                //write entry
+                // write entry
                 m_FileStream.Position = entry.BucketPosition;
                 DataWriter writer = new DataWriter(m_FileStream);
                 BitCoder32.Write7BitEncoded(writer, entry.BucketLength);
@@ -493,7 +496,7 @@ namespace Cave.Data
         #endregion
 
         /// <summary>
-        /// Version of the database file
+        /// Version of the database file.
         /// </summary>
         public int Version { get; private set; }
 
@@ -509,21 +512,21 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a new <see cref="DatTable{T}"/> instance
+        /// Creates a new <see cref="DatTable{T}"/> instance.
         /// </summary>
-        /// <param name="database">Database this table belongs to</param>
-        /// <param name="file">File to use</param>
+        /// <param name="database">Database this table belongs to.</param>
+        /// <param name="file">File to use.</param>
         public DatTable(DatDatabase database, string file)
             : this(database, file, GetLayout(file))
         {
         }
 
         /// <summary>
-        /// Creates a new <see cref="DatTable{T}"/> instance
+        /// Creates a new <see cref="DatTable{T}"/> instance.
         /// </summary>
-        /// <param name="database">Database this table belongs to</param>
-        /// <param name="file">File to use</param>
-        /// <param name="layout">The layout of the table</param>
+        /// <param name="database">Database this table belongs to.</param>
+        /// <param name="file">File to use.</param>
+        /// <param name="layout">The layout of the table.</param>
         public DatTable(DatDatabase database, string file, RowLayout layout)
             : base(database, layout)
         {
@@ -575,9 +578,9 @@ namespace Cave.Data
         #region Table member
 
         /// <summary>Searches the table for rows with given field value combinations.</summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the ID of the row found or -1</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the ID of the row found or -1.</returns>
         public override List<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             if (search == null)
@@ -598,10 +601,10 @@ namespace Cave.Data
 
         /// <summary>
         /// This function does a lookup on the ids of the table and returns the row with the n-th ID where n is the specified index.
-        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!
+        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
         /// <param name="index">The index of the row to be fetched</param>
         /// </summary>
-        /// <returns>Returns the row</returns>
+        /// <returns>Returns the row.</returns>
         public override Row GetRowAt(int index)
         {
             long id = m_Index.IDs.ElementAt(index);
@@ -609,20 +612,20 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains a row from the table
+        /// Obtains a row from the table.
         /// </summary>
-        /// <param name="id">The ID of the row to be fetched</param>
-        /// <returns>Returns the row</returns>
+        /// <param name="id">The ID of the row to be fetched.</param>
+        /// <returns>Returns the row.</returns>
         public override Row GetRow(long id)
         {
             return ReadRow(id);
         }
 
         /// <summary>
-        /// Checks a specified ID for existance
+        /// Checks a specified ID for existance.
         /// </summary>
-        /// <param name="id">The dataset ID to look for</param>
-        /// <returns>Returns whether the dataset exists or not</returns>
+        /// <param name="id">The dataset ID to look for.</param>
+        /// <returns>Returns whether the dataset exists or not.</returns>
         public override bool Exist(long id)
         {
             return m_Index.TryGet(id, out DatEntry e);
@@ -632,7 +635,7 @@ namespace Cave.Data
         /// Inserts a row to the table. If an ID &lt;= 0 is specified an automatically generated ID will be used to add the dataset.
         /// </summary>
         /// <param name="row">The row to insert. If an ID &lt;= 0 is specified an automatically generated ID will be used to add the dataset.</param>
-        /// <returns>Returns the ID of the inserted dataset</returns>
+        /// <returns>Returns the ID of the inserted dataset.</returns>
         public override long Insert(Row row)
         {
             long id = Layout.GetID(row);
@@ -656,7 +659,7 @@ namespace Cave.Data
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
         /// </summary>
-        /// <param name="row">The row to replace (valid ID needed)</param>
+        /// <param name="row">The row to replace (valid ID needed).</param>
         public override void Replace(Row row)
         {
             long id = Layout.GetID(row);
@@ -670,9 +673,9 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Updates a row to the table. The row must exist already!
+        /// Updates a row to the table. The row must exist already!.
         /// </summary>
-        /// <param name="row">The row to update</param>
+        /// <param name="row">The row to update.</param>
         public override void Update(Row row)
         {
             long id = Layout.GetID(row);
@@ -692,7 +695,7 @@ namespace Cave.Data
         /// <summary>
         /// Removes a row from the table.
         /// </summary>
-        /// <param name="id">The dataset ID to remove</param>
+        /// <param name="id">The dataset ID to remove.</param>
         public override void Delete(long id)
         {
             if (!m_Index.TryGet(id, out DatEntry entry))
@@ -707,7 +710,7 @@ namespace Cave.Data
         }
 
         /// <summary>Removes all rows from the table matching the specified search.</summary>
-        /// <param name="search">The Search used to identify rows for removal</param>
+        /// <param name="search">The Search used to identify rows for removal.</param>
         /// <returns>Returns the number of dataset deleted.</returns>
         public override int TryDelete(Search search)
         {
@@ -725,12 +728,12 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the RowCount
+        /// Obtains the RowCount.
         /// </summary>
         public override long RowCount => m_Index == null ? 0 : m_Index.Count;
 
         /// <summary>
-        /// Obtains the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!)
+        /// Obtains the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!).
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -740,7 +743,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the next free ID at the table
+        /// Obtains the next free ID at the table.
         /// </summary>
         /// <returns></returns>
         public override long GetNextFreeID()
@@ -749,7 +752,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// searches for a specified databaset (first occurence)
+        /// searches for a specified databaset (first occurence).
         /// </summary>
         /// <param name="match"></param>
         /// <param name="result"></param>
@@ -761,7 +764,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// searches for a specified databaset (next occurence after <see cref="FindFirst"/>)
+        /// searches for a specified databaset (next occurence after <see cref="FindFirst"/>).
         /// </summary>
         /// <param name="match"></param>
         /// <param name="result"></param>
@@ -789,7 +792,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains an array containing all rows of the table
+        /// Obtains an array containing all rows of the table.
         /// </summary>
         /// <returns></returns>
         public override List<Row> GetRows()
@@ -808,9 +811,9 @@ namespace Cave.Data
             return result;
         }
 
-        /// <summary>Obtains the rows with the given ids</summary>
-        /// <param name="ids">IDs of the rows to fetch from the table</param>
-        /// <returns>Returns the rows</returns>
+        /// <summary>Obtains the rows with the given ids.</summary>
+        /// <param name="ids">IDs of the rows to fetch from the table.</param>
+        /// <returns>Returns the rows.</returns>
         public override List<Row> GetRows(IEnumerable<long> ids)
         {
             List<Row> rows = new List<Row>();
@@ -824,7 +827,7 @@ namespace Cave.Data
 
         #region IDisposable Member
         /// <summary>
-        /// Frees all used resources
+        /// Frees all used resources.
         /// </summary>
         /// <param name="disposing"></param>
         /*protected virtual*/
@@ -840,7 +843,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Frees all used resources
+        /// Frees all used resources.
         /// </summary>
         public void Dispose()
         {
@@ -851,18 +854,19 @@ namespace Cave.Data
     }
 
     /// <summary>
-    /// Provides a binary dat file database table
+    /// Provides a binary dat file database table.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class DatTable<T> : DatTable, ITable<T> where T : struct
+    public class DatTable<T> : DatTable, ITable<T>
+        where T : struct
     {
         #region constructor
         /// <summary>
-        /// Creates a new <see cref="DatTable{T}"/> instance
+        /// Creates a new <see cref="DatTable{T}"/> instance.
         /// </summary>
-        /// <param name="database">Database this table belongs to</param>
-        /// <param name="file">Filename of the table file</param>
-        /// <param name="layout">Layout and name of the table</param>
+        /// <param name="database">Database this table belongs to.</param>
+        /// <param name="file">Filename of the table file.</param>
+        /// <param name="layout">Layout and name of the table.</param>
         public DatTable(DatDatabase database, RowLayout layout, string file)
             : base(database, file, layout)
         {
@@ -872,7 +876,7 @@ namespace Cave.Data
         #region additional functionality
 
         /// <summary>
-        /// searches for a specified databaset (first occurence)
+        /// searches for a specified databaset (first occurence).
         /// </summary>
         /// <param name="match"></param>
         /// <param name="result"></param>
@@ -884,7 +888,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// searches for a specified databaset (next occurence after <see cref="FindFirst"/>)
+        /// searches for a specified databaset (next occurence after <see cref="FindFirst"/>).
         /// </summary>
         /// <param name="match"></param>
         /// <param name="result"></param>
@@ -921,9 +925,9 @@ namespace Cave.Data
         /// <summary>
         /// Obtains the row struct with the specified index.
         /// This allows a memorytable to be used as virtual list for listviews, ...
-        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!
+        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
         /// </summary>
-        /// <param name="index">The rows index (0..RowCount-1)</param>
+        /// <param name="index">The rows index (0..RowCount-1).</param>
         /// <returns></returns>
         /// <exception cref="IndexOutOfRangeException"></exception>
         public T GetStructAt(int index)
@@ -932,7 +936,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Inserts rows into the table using a transaction. 
+        /// Inserts rows into the table using a transaction.
         /// </summary>
         /// <param name="rows">The rows to insert.</param>
         public void Insert(IEnumerable<T> rows)
@@ -948,9 +952,9 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Updates rows at the table. The rows must exist already!
+        /// Updates rows at the table. The rows must exist already!.
         /// </summary>
-        /// <param name="rows">The rows to update</param>
+        /// <param name="rows">The rows to update.</param>
         public void Update(IEnumerable<T> rows)
         {
             if (rows == null)
@@ -966,7 +970,7 @@ namespace Cave.Data
         /// <summary>
         /// Replaces rows at the table. This inserts (if the row does not exist) or updates (if it exists) each row.
         /// </summary>
-        /// <param name="rows">The rows to replace (valid ID needed)</param>
+        /// <param name="rows">The rows to replace (valid ID needed).</param>
         public void Replace(IEnumerable<T> rows)
         {
             if (rows == null)
@@ -982,7 +986,7 @@ namespace Cave.Data
         /// <summary>Tries to get the (unique) row with the given fieldvalue.</summary>
         /// <param name="search">The search.</param>
         /// <param name="row">The row.</param>
-        /// <returns>Returns true on success, false otherwise</returns>
+        /// <returns>Returns true on success, false otherwise.</returns>
         public bool TryGetStruct(Search search, out T row)
         {
             long id = FindRow(search);
@@ -999,10 +1003,10 @@ namespace Cave.Data
 
         #region implemented virtual
         /// <summary>
-        /// Obtains a row from the table
+        /// Obtains a row from the table.
         /// </summary>
-        /// <param name="id">The ID of the row to be fetched</param>
-        /// <returns>Returns the row</returns>
+        /// <param name="id">The ID of the row to be fetched.</param>
+        /// <returns>Returns the row.</returns>
         public virtual T GetStruct(long id)
         {
             return GetRow(id).GetStruct<T>(Layout);
@@ -1011,9 +1015,9 @@ namespace Cave.Data
         /// <summary>
         /// Searches the table for a single row with specified search.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the row found</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the row found.</returns>
         public virtual T GetStruct(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             long id = FindRow(search, resultOption);
@@ -1028,19 +1032,19 @@ namespace Cave.Data
         /// <summary>
         /// Searches the table for rows with specified field value combinations.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the rows found</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the rows found.</returns>
         public virtual List<T> GetStructs(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             return ToStructs<T>(Layout, GetRows(search, resultOption));
         }
 
         /// <summary>
-        /// Obtains the rows with the specified ids
+        /// Obtains the rows with the specified ids.
         /// </summary>
-        /// <param name="ids">IDs of the rows to fetch from the table</param>
-        /// <returns>Returns the rows</returns>
+        /// <param name="ids">IDs of the rows to fetch from the table.</param>
+        /// <returns>Returns the rows.</returns>
         public virtual List<T> GetStructs(IEnumerable<long> ids)
         {
             return ToStructs<T>(Layout, GetRows(ids));
@@ -1049,17 +1053,17 @@ namespace Cave.Data
         /// <summary>
         /// Inserts a row to the table. If an ID <![CDATA[<=]]> 0 is specified an automatically generated ID will be used to add the dataset.
         /// </summary>
-        /// <param name="row">The row to insert</param>
-        /// <returns>Returns the ID of the inserted dataset</returns>
+        /// <param name="row">The row to insert.</param>
+        /// <returns>Returns the ID of the inserted dataset.</returns>
         public virtual long Insert(T row)
         {
             return Insert(Row.Create(Layout, row));
         }
 
         /// <summary>
-        /// Updates a row to the table. The row must exist already!
+        /// Updates a row to the table. The row must exist already!.
         /// </summary>
-        /// <param name="row">The row to update</param>
+        /// <param name="row">The row to update.</param>
         public virtual void Update(T row)
         {
             Update(Row.Create(Layout, row));
@@ -1068,7 +1072,7 @@ namespace Cave.Data
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
         /// </summary>
-        /// <param name="row">The row to replace (valid ID needed)</param>
+        /// <param name="row">The row to replace (valid ID needed).</param>
         public virtual void Replace(T row)
         {
             Replace(Row.Create(Layout, row));
@@ -1076,7 +1080,7 @@ namespace Cave.Data
 
         /// <summary>
         /// Checks whether a row is present unchanged at the database and removes it.
-        /// (Use Delete(ID) to delete a DataSet without any checks)
+        /// (Use Delete(ID) to delete a DataSet without any checks).
         /// </summary>
         /// <param name="row"></param>
         public virtual void Delete(T row)
@@ -1092,7 +1096,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Provides access to the row with the specified ID
+        /// Provides access to the row with the specified ID.
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -1112,7 +1116,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Copies all rows to a specified array
+        /// Copies all rows to a specified array.
         /// </summary>
         /// <param name="rowArray"></param>
         /// <param name="startIndex"></param>

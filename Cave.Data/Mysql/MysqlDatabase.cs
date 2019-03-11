@@ -7,7 +7,7 @@ using Cave.IO;
 namespace Cave.Data.Mysql
 {
     /// <summary>
-    /// Provides a mysql database implementation
+    /// Provides a mysql database implementation.
     /// </summary>
     public sealed class MySqlDatabase : SqlDatabase
     {
@@ -28,17 +28,17 @@ namespace Cave.Data.Mysql
         }
 
         /// <summary>
-        /// Creates a new mysql database instance
+        /// Creates a new mysql database instance.
         /// </summary>
-        /// <param name="storage">the mysql storage engine</param>
-        /// <param name="name">the name of the database</param>
+        /// <param name="storage">the mysql storage engine.</param>
+        /// <param name="name">the name of the database.</param>
         public MySqlDatabase(MySqlStorage storage, string name)
             : base(storage, name)
         {
         }
 
         /// <summary>
-        /// Obtains the available table names
+        /// Obtains the available table names.
         /// </summary>
         public override string[] TableNames
         {
@@ -55,9 +55,9 @@ namespace Cave.Data.Mysql
         }
 
         /// <summary>
-        /// Obtains whether the specified table exists or not
+        /// Obtains whether the specified table exists or not.
         /// </summary>
-        /// <param name="table">The name of the table</param>
+        /// <param name="table">The name of the table.</param>
         /// <returns></returns>
         public override bool HasTable(string table)
         {
@@ -70,10 +70,10 @@ namespace Cave.Data.Mysql
         }
 
         /// <summary>
-        /// Opens the table with the specified name
+        /// Opens the table with the specified name.
         /// </summary>
-        /// <param name="table">Name of the table</param>
-        /// <returns>Returns an <see cref="ITable"/> instance for the specified table</returns>
+        /// <param name="table">Name of the table.</param>
+        /// <returns>Returns an <see cref="ITable"/> instance for the specified table.</returns>
         public override ITable GetTable(string table)
         {
             if (!HasTable(table))
@@ -85,7 +85,7 @@ namespace Cave.Data.Mysql
         }
 
         /// <summary>
-        /// Opens the table with the specified name
+        /// Opens the table with the specified name.
         /// </summary>
         protected override ITable<T> OpenTable<T>(RowLayout layout)
         {
@@ -93,11 +93,11 @@ namespace Cave.Data.Mysql
         }
 
         /// <summary>
-        /// Adds a new table with the specified name
+        /// Adds a new table with the specified name.
         /// </summary>
-        /// <typeparam name="T">The row struct to use for the table</typeparam>
-        /// <param name="flags">The flags for table creation</param>
-        /// <param name="table">Name of the table to create (optional, use this to overwrite the default table name)</param>
+        /// <typeparam name="T">The row struct to use for the table.</typeparam>
+        /// <param name="flags">The flags for table creation.</param>
+        /// <param name="table">Name of the table to create (optional, use this to overwrite the default table name).</param>
         /// <returns></returns>
         public override ITable<T> CreateTable<T>(TableFlags flags, string table)
         {
@@ -107,11 +107,11 @@ namespace Cave.Data.Mysql
         }
 
         /// <summary>
-        /// Adds a new table with the specified name
+        /// Adds a new table with the specified name.
         /// </summary>
-        /// <param name="layout">Layout of the table</param>
-        /// <param name="flags">The flags for table creation</param>
-        /// <returns>Returns an <see cref="ITable"/> instance for the specified table</returns>
+        /// <param name="layout">Layout of the table.</param>
+        /// <param name="flags">The flags for table creation.</param>
+        /// <returns>Returns an <see cref="ITable"/> instance for the specified table.</returns>
         public override ITable CreateTable(RowLayout layout, TableFlags flags)
         {
             if (layout == null)
@@ -181,7 +181,7 @@ namespace Cave.Data.Mysql
                                 break;
                             default: throw new NotImplementedException();
                         }
-                        break;                        
+                        break;
                     case DataType.TimeSpan:
                         switch (fieldProperties.DateTimeType )
                         {
@@ -200,7 +200,7 @@ namespace Cave.Data.Mysql
                                 queryText.Append("BIGINT");
                                 break;
                             default: throw new NotImplementedException();
-                        }                        
+                        }
                         break;
                     case DataType.Int8: queryText.Append("TINYINT"); break;
                     case DataType.Int16: queryText.Append("SMALLINT"); break;

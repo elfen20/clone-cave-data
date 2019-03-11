@@ -12,16 +12,16 @@ using Cave.IO;
 namespace Cave
 {
     /// <summary>
-    /// Provides field properties
+    /// Provides field properties.
     /// </summary>
     public sealed class FieldProperties
     {
         /// <summary>
-        /// Creates new <see cref="FieldProperties" /> using the specified FieldInfo
+        /// Creates new <see cref="FieldProperties" /> using the specified FieldInfo.
         /// </summary>
         /// <param name="sourceName">Name of the source (class, struct, table).</param>
         /// <param name="fieldInfo">The field information.</param>
-        /// <exception cref="NotSupportedException">Array types (except byte[]) are not supported!</exception>
+        /// <exception cref="NotSupportedException">Array types (except byte[]) are not supported!.</exception>
         public static FieldProperties Create(string sourceName, FieldInfo fieldInfo)
         {
             if (fieldInfo == null)
@@ -139,7 +139,7 @@ namespace Cave
         /// <param name="sourceName">Name of the source.</param>
         /// <param name="reader">The reader.</param>
         /// <returns></returns>
-        /// <exception cref="ArgumentNullException">reader</exception>
+        /// <exception cref="ArgumentNullException">reader.</exception>
         /// <exception cref="TypeLoadException"></exception>
         /// <exception cref="NotSupportedException"></exception>
         public static FieldProperties Load(string sourceName, DataReader reader)
@@ -180,135 +180,135 @@ namespace Cave
         MethodInfo m_StaticParse;
         ConstructorInfo m_Constructor;
 
-        /// <summary>The name of the source of the field definition (struct, class, table)</summary>
+        /// <summary>The name of the source of the field definition (struct, class, table).</summary>
         public readonly string SourceName;
 
         /// <summary>
-        /// Obtains the dotnet type of the value
+        /// Obtains the dotnet type of the value.
         /// </summary>
         public readonly Type ValueType;
 
         /// <summary>
-        /// Obtains the <see cref="DataType"/> of the field
+        /// Obtains the <see cref="DataType"/> of the field.
         /// </summary>
         public readonly DataType DataType;
 
         /// <summary>
-        /// Obtains the <see cref="FieldFlags"/> of the field
+        /// Obtains the <see cref="FieldFlags"/> of the field.
         /// </summary>
         public readonly FieldFlags Flags;
 
         /// <summary>
-        /// Obtains the name of the field
+        /// Obtains the name of the field.
         /// </summary>
         public readonly string Name;
 
         /// <summary>
-        /// Obtains the name of the field at the database
+        /// Obtains the name of the field at the database.
         /// </summary>
         public readonly string NameAtDatabase;
 
         /// <summary>
-        /// Obtains the DataType of the field at the database
+        /// Obtains the DataType of the field at the database.
         /// </summary>
         public readonly DataType TypeAtDatabase;
 
         /// <summary>
-        /// Provides the date time kind used at the database
+        /// Provides the date time kind used at the database.
         /// </summary>
         public readonly DateTimeKind DateTimeKind;
 
         /// <summary>
-        /// Provides the date time type used at the database (has to match the <see cref="TypeAtDatabase"/>)
+        /// Provides the date time type used at the database (has to match the <see cref="TypeAtDatabase"/>).
         /// </summary>
         public readonly DateTimeType DateTimeType;
 
-        /// <summary>The string encoding used at the database</summary>
+        /// <summary>The string encoding used at the database.</summary>
         public readonly StringEncoding StringEncoding;
 
         /// <summary>
-        /// Obtains the maximum length of the field
+        /// Obtains the maximum length of the field.
         /// </summary>
         public readonly float MaximumLength;
 
         /// <summary>
-        /// Description of the field
+        /// Description of the field.
         /// </summary>
         public readonly string Description;
 
         /// <summary>
-        /// Format arguments for displaying values
+        /// Format arguments for displaying values.
         /// </summary>
         public readonly string DisplayFormat;
 
-        /// <summary>The alternative names for this field</summary>
+        /// <summary>The alternative names for this field.</summary>
         public readonly string AlternativeNames;
 
         /// <summary>
-        /// Obtains the fieldinfo used to create this instance (if any)
+        /// Obtains the fieldinfo used to create this instance (if any).
         /// </summary>
         public readonly FieldInfo FieldInfo;
 
-        /// <summary>Creates new <see cref="FieldProperties" /> and sets the database name and datatype to the default name and datatype</summary>
+        /// <summary>Creates new <see cref="FieldProperties" /> and sets the database name and datatype to the default name and datatype.</summary>
         /// <param name="sourceName">Name of the source of the field definition (tablename, typename, ...).</param>
-        /// <param name="fieldFlags">The <see cref="FieldFlags" /> of the field</param>
-        /// <param name="dataType">The <see cref="DataType" /> of the field</param>
-        /// <param name="name">The <see cref="Name" /> of the field</param>
+        /// <param name="fieldFlags">The <see cref="FieldFlags" /> of the field.</param>
+        /// <param name="dataType">The <see cref="DataType" /> of the field.</param>
+        /// <param name="name">The <see cref="Name" /> of the field.</param>
         public FieldProperties(string sourceName, FieldFlags fieldFlags, DataType dataType, string name)
             : this(sourceName, fieldFlags, dataType, null, 0, name, dataType, 0, 0, 0, name, null, null, null)
         {
         }
 
         /// <summary>
-        /// Creates new <see cref="FieldProperties"/> and sets the database name and datatype to the default name and datatype
+        /// Creates new <see cref="FieldProperties"/> and sets the database name and datatype to the default name and datatype.
         /// </summary>
         /// <param name="sourceName">Name of the source of the field definition (tablename, typename, ...).</param>
-        /// <param name="dataType">The <see cref="DataType"/> of the field</param>
-        /// <param name="fieldFlags">The <see cref="FieldFlags"/> of the field</param>
-        /// <param name="valueType">The dotnet type of the value</param>
-        /// <param name="name">The <see cref="Name"/> of the field</param>
+        /// <param name="dataType">The <see cref="DataType"/> of the field.</param>
+        /// <param name="fieldFlags">The <see cref="FieldFlags"/> of the field.</param>
+        /// <param name="valueType">The dotnet type of the value.</param>
+        /// <param name="name">The <see cref="Name"/> of the field.</param>
         public FieldProperties(string sourceName, FieldFlags fieldFlags, DataType dataType, Type valueType, string name)
             : this(sourceName, fieldFlags, dataType, valueType, 0, name, dataType, 0, 0, 0, name, null, null, null)
         {
         }
 
         /// <summary>
-        /// Creates new <see cref="FieldProperties"/> and sets the database name and datatype to the default name and datatype
+        /// Creates new <see cref="FieldProperties"/> and sets the database name and datatype to the default name and datatype.
         /// </summary>
         /// <param name="sourceName">Name of the source of the field definition (tablename, typename, ...).</param>
-        /// <param name="dataType">The <see cref="DataType"/> of the field</param>
-        /// <param name="fieldFlags">The <see cref="FieldFlags"/> of the field</param>
-        /// <param name="valueType">The dotnet type of the value</param>
-        /// <param name="maximumLength">The maximum length of the field</param>
-        /// <param name="name">The <see cref="Name"/> of the field</param>
-        /// <param name="description">The description of the field</param>
+        /// <param name="dataType">The <see cref="DataType"/> of the field.</param>
+        /// <param name="fieldFlags">The <see cref="FieldFlags"/> of the field.</param>
+        /// <param name="valueType">The dotnet type of the value.</param>
+        /// <param name="maximumLength">The maximum length of the field.</param>
+        /// <param name="name">The <see cref="Name"/> of the field.</param>
+        /// <param name="description">The description of the field.</param>
         public FieldProperties(string sourceName, FieldFlags fieldFlags, DataType dataType, Type valueType, float maximumLength, string name, string description)
             : this(sourceName, fieldFlags, dataType, valueType, maximumLength, name, dataType, DateTimeType.Undefined, DateTimeKind.Unspecified, StringEncoding.Undefined, name, description, null, null)
         {
         }
 
-        /// <summary>Creates new <see cref="FieldProperties" /></summary>
+        /// <summary>Creates new <see cref="FieldProperties" />.</summary>
         /// <param name="sourceName">Name of the source of the field definition (tablename, typename, ...).</param>
-        /// <param name="fieldFlags">The <see cref="FieldFlags" /> of the field</param>
-        /// <param name="dataType">The <see cref="DataType" /> of the field</param>
-        /// <param name="valueType">The dotnet type of the value</param>
-        /// <param name="maximumLength">The maximum length of the field</param>
-        /// <param name="fieldName">The <see cref="Name" /> of the field</param>
-        /// <param name="databaseDataType">The <see cref="DataType" /> of the field at the database</param>
-        /// <param name="dateTimeType">DateTimeType used to store the value at the database</param>
-        /// <param name="dateTimeKind">DateTimeKind used to convert the local value to the database value</param>
+        /// <param name="fieldFlags">The <see cref="FieldFlags" /> of the field.</param>
+        /// <param name="dataType">The <see cref="DataType" /> of the field.</param>
+        /// <param name="valueType">The dotnet type of the value.</param>
+        /// <param name="maximumLength">The maximum length of the field.</param>
+        /// <param name="fieldName">The <see cref="Name" /> of the field.</param>
+        /// <param name="databaseDataType">The <see cref="DataType" /> of the field at the database.</param>
+        /// <param name="dateTimeType">DateTimeType used to store the value at the database.</param>
+        /// <param name="dateTimeKind">DateTimeKind used to convert the local value to the database value.</param>
         /// <param name="stringEncoding">The string encoding.</param>
-        /// <param name="databaseFieldName">The name of the field at the database</param>
-        /// <param name="description">The description of the field</param>
-        /// <param name="displayFormat">Provides agruments used when formatting field values with <see cref="Row.GetDisplayStrings" /></param>
+        /// <param name="databaseFieldName">The name of the field at the database.</param>
+        /// <param name="description">The description of the field.</param>
+        /// <param name="displayFormat">Provides agruments used when formatting field values with <see cref="Row.GetDisplayStrings" />.</param>
         /// <param name="alternativeNames">The alternative names.</param>
         /// <exception cref="ArgumentNullException">ValueType
         /// or
         /// ValueType
         /// or
-        /// DatabaseDataType</exception>
+        /// DatabaseDataType.</exception>
         /// <exception cref="NotSupportedException"></exception>
-        /// <exception cref="NotImplementedException">Unknown DataType!</exception>
+        /// <exception cref="NotImplementedException">Unknown DataType!.</exception>
         public FieldProperties(string sourceName, FieldFlags fieldFlags, DataType dataType, Type valueType, float maximumLength, string fieldName, DataType databaseDataType, DateTimeType dateTimeType, DateTimeKind dateTimeKind, StringEncoding stringEncoding, string databaseFieldName, string description, string displayFormat, string alternativeNames)
         {
             if (string.IsNullOrEmpty(sourceName))
@@ -355,7 +355,7 @@ namespace Cave
                 case DataType.UInt32:
                 case DataType.UInt64:
                 case DataType.Char:
-                case DataType.Single:                
+                case DataType.Single:
                     break;
                 case DataType.TimeSpan:
                     if (DateTimeType == DateTimeType.Undefined)
@@ -416,11 +416,11 @@ namespace Cave
             }
         }
 
-        /// <summary>Creates new <see cref="FieldProperties" /> by changing the database datatype and field name</summary>
+        /// <summary>Creates new <see cref="FieldProperties" /> by changing the database datatype and field name.</summary>
         /// <param name="properties">The properties.</param>
         /// <param name="dataTypeAtDatabase">The data type at database.</param>
         /// <param name="fieldNameAtDatabase">The field name at database.</param>
-        /// <exception cref="System.ArgumentNullException">properties</exception>
+        /// <exception cref="System.ArgumentNullException">properties.</exception>
         public FieldProperties(FieldProperties properties, DataType dataTypeAtDatabase, string fieldNameAtDatabase = null)
         {
             if (properties == null)
@@ -444,7 +444,7 @@ namespace Cave
         }
 
         /// <summary>
-        /// Creates new <see cref="FieldProperties"/> by changing the database datatype
+        /// Creates new <see cref="FieldProperties"/> by changing the database datatype.
         /// </summary>
         /// <param name="properties"></param>
         /// <param name="databaseDataType"></param>
@@ -458,7 +458,7 @@ namespace Cave
         /// <summary>
         /// Parses a string and obtains the object by using the <see cref="ValueType" />s static Parse(string) method.
         /// </summary>
-        /// <param name="text">The string to parse</param>
+        /// <param name="text">The string to parse.</param>
         /// <param name="stringMarker">The string marker.</param>
         /// <param name="culture">The culture.</param>
         /// <returns></returns>
@@ -705,22 +705,25 @@ namespace Cave
 
             if (!m_ParserUsed)
             {
-                //lookup static Parse(string) method first
+                // lookup static Parse(string) method first
                 m_StaticParse = ValueType.GetMethod("Parse", BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string) }, null);
-                //if there is none, search constructor(string)
+
+                // if there is none, search constructor(string)
                 if (m_StaticParse == null)
                 {
                     m_Constructor = ValueType.GetConstructor(new Type[] { typeof(string) });
                 }
                 m_ParserUsed = true;
             }
-            //has static Parse(string) ?
+
+            // has static Parse(string) ?
             if (m_StaticParse != null)
             {
-                //use method to parse value
+                // use method to parse value
                 return m_StaticParse.Invoke(null, new object[] { text });
             }
-            //has constructor(string) ?
+
+            // has constructor(string) ?
             if (m_Constructor != null)
             {
                 return m_Constructor.Invoke(new object[] { text });
@@ -729,7 +732,7 @@ namespace Cave
         }
 
         /// <summary>
-        /// Retrieves a string for the specified value. The string may be parsed back to a value using <see cref="ParseValue(string, string, CultureInfo)" />
+        /// Retrieves a string for the specified value. The string may be parsed back to a value using <see cref="ParseValue(string, string, CultureInfo)" />.
         /// </summary>
         /// <param name="value">The value.</param>
         /// <param name="stringMarker">The string marker.</param>
@@ -748,12 +751,7 @@ namespace Cave
 
             if (value == null)
             {
-                if (stringMarker == null)
-                {
-                    return null;
-                }
-
-                return "null";
+                return stringMarker == null ? null : "null";
             }
             switch (DataType)
             {
@@ -767,7 +765,7 @@ namespace Cave
                     }
                     if (jsonMode)
                     {
-                        //javascript uses time/date in milliseconds. var timeInMsec = new Date() - pastDate;
+                        // javascript uses time/date in milliseconds. var timeInMsec = new Date() - pastDate;
                         return (dt - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind)).TotalMilliseconds.ToString(culture);
                     }
                     switch (DateTimeType)
@@ -789,12 +787,7 @@ namespace Cave
                 case DataType.Binary:
                 {
                     byte[] data = (byte[])value;
-                    if (data.Length == 0)
-                    {
-                        return "\"\"";
-                    }
-
-                    return Base64.NoPadding.Encode(data).Box(stringMarker);
+                    return data.Length == 0 ? "\"\"" : Base64.NoPadding.Encode(data).Box(stringMarker);
                 }
                 case DataType.Bool:
                 {
@@ -802,13 +795,8 @@ namespace Cave
                 }
                 case DataType.TimeSpan:
                 {
-                    //json does not support 64bit integers, so we transmit it as string
-                    if (jsonMode)
-                    {
-                        return ((TimeSpan)value).TotalMilliseconds.ToString(culture);
-                    }
-
-                    return ((TimeSpan)value).Ticks.ToString();
+                    // json does not support 64bit integers, so we transmit it as string
+                    return jsonMode ? ((TimeSpan)value).TotalMilliseconds.ToString(culture) : ((TimeSpan)value).Ticks.ToString();
                 }
                 case DataType.Single:
                 {
@@ -836,26 +824,16 @@ namespace Cave
                 case DataType.Int32: return ((int)value).ToString(culture);
                 case DataType.Int64:
                 {
-                    //json does not support 64bit integers, so we transmit it as string
-                    if (jsonMode)
-                    {
-                        return ((long)value).ToString(culture).Box(stringMarker);
-                    }
-
-                    return ((long)value).ToString(culture);
+                    // json does not support 64bit integers, so we transmit it as string
+                    return jsonMode ? ((long)value).ToString(culture).Box(stringMarker) : ((long)value).ToString(culture);
                 }
                 case DataType.UInt8: return ((byte)value).ToString(culture);
                 case DataType.UInt16: return ((ushort)value).ToString(culture);
                 case DataType.UInt32: return ((uint)value).ToString(culture);
                 case DataType.UInt64:
                 {
-                    //json does not support 64bit integers, so we transmit it as string
-                    if (jsonMode)
-                    {
-                        return ((long)value).ToString(culture).Box(stringMarker);
-                    }
-
-                    return ((ulong)value).ToString(culture);
+                    // json does not support 64bit integers, so we transmit it as string
+                    return jsonMode ? ((long)value).ToString(culture).Box(stringMarker) : ((ulong)value).ToString(culture);
                 }
                 case DataType.Enum: return value.ToString().Box(stringMarker);
                 case DataType.Char: return value.ToString().Box(stringMarker);
@@ -870,7 +848,7 @@ namespace Cave
         }
 
         /// <summary>
-        /// Obtains an enum value from the specified long value
+        /// Obtains an enum value from the specified long value.
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
@@ -880,7 +858,8 @@ namespace Cave
             {
                 throw new InvalidOperationException(string.Format("This function requires a valid ValueType!"));
             }
-            //handle enum
+
+            // handle enum
             if (DataType != DataType.Enum)
             {
                 throw new ArgumentException(string.Format("DataType is not an enum!"));
@@ -890,7 +869,7 @@ namespace Cave
         }
 
         /// <summary>
-        /// Obtains the dot net type name of the field
+        /// Obtains the dot net type name of the field.
         /// </summary>
         public string DotNetTypeName
         {
@@ -917,8 +896,8 @@ namespace Cave
                     case DataType.Char: return "char";
 
                     default:
-                        //case DataType.User: 
-                        //case DataType.Enum:
+                        // case DataType.User:
+                        // case DataType.Enum:
                         if (ValueType != null)
                         {
                             return ValueType.Name;
@@ -960,7 +939,7 @@ namespace Cave
 
 
         /// <summary>
-        /// Obtains the hashcode for the instance
+        /// Obtains the hashcode for the instance.
         /// </summary>
         /// <returns></returns>
         public override int GetHashCode()
@@ -969,17 +948,18 @@ namespace Cave
         }
 
         /// <summary>
-        /// Checks another FieldProperties instance for equality
+        /// Checks another FieldProperties instance for equality.
         /// </summary>
-        /// <param name="other">The FieldProperties to check for equality</param>
-        /// <returns>Returns true if the other instance equals this one, false otherwise</returns>
+        /// <param name="other">The FieldProperties to check for equality.</param>
+        /// <returns>Returns true if the other instance equals this one, false otherwise.</returns>
         public bool Equals(FieldProperties other)
         {
             if (other == null)
             {
                 return false;
             }
-            //check name
+
+            // check name
             if ((other.Name != Name) && (other.Name != NameAtDatabase) && (other.NameAtDatabase != Name))
             {
                 char[] splitters = " ,;".ToCharArray();
@@ -988,28 +968,25 @@ namespace Cave
                     return true;
                 }
 
-                if (true == other.AlternativeNames?.Split(splitters, StringSplitOptions.RemoveEmptyEntries).Any(n => n == Name || n == NameAtDatabase))
-                {
-                    return true;
-                }
-
-                return false;
+                return true == other.AlternativeNames?.Split(splitters, StringSplitOptions.RemoveEmptyEntries).Any(n => n == Name || n == NameAtDatabase);
             }
-            //check flags
+
+            // check flags
             if ((other.Flags & FieldFlags.MatchMask) != (Flags & FieldFlags.MatchMask))
             {
                 return false;
             }
-            //additional checks
+
+            // additional checks
             if (FieldInfo != null)
             {
                 if (other.FieldInfo != null)
                 {
-                    //both typed, full match needed
+                    // both typed, full match needed
                     return (other.ValueType == ValueType);
                 }
 
-                //only this typed, other is db -> check conversions
+                // only this typed, other is db -> check conversions
                 switch (DataType)
                 {
                     case DataType.TimeSpan:
@@ -1030,21 +1007,16 @@ namespace Cave
 
             if (other.FieldInfo == null)
             {
-                //TODO check if this is enough
+                // TODO check if this is enough
                 if (DataType == other.DataType)
                 {
                     return true;
                 }
 
-                if (TypeAtDatabase == other.TypeAtDatabase)
-                {
-                    return true;
-                }
-
-                return false;
+                return TypeAtDatabase == other.TypeAtDatabase;
             }
 
-            //only other typed, other is db -> check conversions
+            // only other typed, other is db -> check conversions
             switch (other.DataType)
             {
                 case DataType.TimeSpan:
@@ -1064,20 +1036,13 @@ namespace Cave
         }
 
         /// <summary>
-        /// Checks another FieldProperties instance for equality
+        /// Checks another FieldProperties instance for equality.
         /// </summary>
-        /// <param name="obj">The FieldProperties to check for equality</param>
-        /// <returns>Returns true if the other instance equals this one, false otherwise</returns>
+        /// <param name="obj">The FieldProperties to check for equality.</param>
+        /// <returns>Returns true if the other instance equals this one, false otherwise.</returns>
         public override bool Equals(object obj)
         {
-            if (obj is FieldProperties other)
-            {
-                return Equals(other);
-            }
-            else
-            {
-                return false;
-            }
+            return obj is FieldProperties other ? Equals(other) : false;
         }
 
         /// <summary>Returns a <see cref="System.String" /> that represents this instance.</summary>

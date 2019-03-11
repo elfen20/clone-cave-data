@@ -11,16 +11,16 @@ using Cave.IO;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides a row layout implementation
+    /// Provides a row layout implementation.
     /// </summary>
     public sealed class RowLayout
     {
         /// <summary>
-        /// Checks two layouts for equality
+        /// Checks two layouts for equality.
         /// </summary>
-        /// <param name="expected">The expected layout</param>
-        /// <param name="current">The layout to check</param>
-        /// <param name="fieldPropertiesConversion">field conversion function to use</param>
+        /// <param name="expected">The expected layout.</param>
+        /// <param name="current">The layout to check.</param>
+        /// <param name="fieldPropertiesConversion">field conversion function to use.</param>
         public static void CheckLayout(RowLayout expected, RowLayout current, Func<FieldProperties, FieldProperties> fieldPropertiesConversion = null)
         {
             if (expected == null)
@@ -80,7 +80,7 @@ namespace Cave.Data
         /// <summary>Creates an alien row layout without using any field properies.</summary>
         /// <param name="type">Type to parse fields from.</param>
         /// <param name="onlyPublic">if set to <c>true</c> [use only public].</param>
-        /// <returns>Returns a new RowLayout instance</returns>
+        /// <returns>Returns a new RowLayout instance.</returns>
         /// <exception cref="Exception"></exception>
         public static RowLayout CreateAlien(Type type, bool onlyPublic)
         {
@@ -120,41 +120,41 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a new layout with the given name and field properties
+        /// Creates a new layout with the given name and field properties.
         /// </summary>
-        /// <param name="name">Name of the layout</param>
-        /// <param name="fields">FieldProperties to use</param>
+        /// <param name="name">Name of the layout.</param>
+        /// <param name="fields">FieldProperties to use.</param>
         /// <returns>
-        /// Returns a new RowLayout instance
+        /// Returns a new RowLayout instance.
         /// </returns>
         public static RowLayout CreateUntyped(string name, params FieldProperties[] fields)
         {
             return new RowLayout(name, fields);
         }
 
-        /// <summary>Creates a RowLayout instance for the specified struct</summary>
-        /// <param name="type">The type to build the rowlayout for</param>
+        /// <summary>Creates a RowLayout instance for the specified struct.</summary>
+        /// <param name="type">The type to build the rowlayout for.</param>
         /// <param name="excludedFields">The excluded fields.</param>
-        /// <returns>Returns a new RowLayout instance</returns>
+        /// <returns>Returns a new RowLayout instance.</returns>
         /// <exception cref="ArgumentException"></exception>
         /// <exception cref="Exception">Cannot add multiple ID fields!
         /// or
-        /// Error while loading field properties of type {0} field {1}!</exception>
+        /// Error while loading field properties of type {0} field {1}!.</exception>
         public static RowLayout CreateTyped(Type type, string[] excludedFields)
         {
             return CreateTyped(type, null, null, excludedFields);
         }
 
-        /// <summary>Creates a RowLayout instance for the specified struct</summary>
-        /// <param name="type">The type to build the rowlayout for</param>
+        /// <summary>Creates a RowLayout instance for the specified struct.</summary>
+        /// <param name="type">The type to build the rowlayout for.</param>
         /// <param name="nameOverride">The table name override.</param>
-        /// <param name="storage">The Storage engine to use</param>
+        /// <param name="storage">The Storage engine to use.</param>
         /// <param name="excludedFields">The excluded fields.</param>
-        /// <returns>Returns a new RowLayout instance</returns>
+        /// <returns>Returns a new RowLayout instance.</returns>
         /// <exception cref="ArgumentException"></exception>
         /// <exception cref="Exception">Cannot add multiple ID fields!
         /// or
-        /// Error while loading field properties of type {0} field {1}!</exception>
+        /// Error while loading field properties of type {0} field {1}!.</exception>
         public static RowLayout CreateTyped(Type type, string nameOverride = null, IStorage storage = null, params string[] excludedFields)
         {
             if (type == null)
@@ -230,9 +230,9 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the <see cref="DataType"/> for a given <see cref="Type"/>
+        /// Obtains the <see cref="DataType"/> for a given <see cref="Type"/>.
         /// </summary>
-        /// <param name="type">The <see cref="Type"/> to convert</param>
+        /// <param name="type">The <see cref="Type"/> to convert.</param>
         /// <returns></returns>
         public static DataType DataTypeFromType(Type type)
         {
@@ -258,8 +258,7 @@ namespace Cave.Data
             if (type == typeof(byte[])) { return DataType.Binary; }
             if (type == typeof(TimeSpan)) { return DataType.TimeSpan; }
             if (type == typeof(DateTime)) { return DataType.DateTime; }
-            if (type.IsEnum) { return DataType.Enum; }
-            return DataType.User;
+            return type.IsEnum ? DataType.Enum : DataType.User;
         }
 
         /// <summary>Gets the string representing the specified value using the field properties.</summary>
@@ -308,45 +307,45 @@ namespace Cave.Data
         FieldInfo[] m_Infos;
 
         /// <summary>
-        /// Provides direct access to the field properties
+        /// Provides direct access to the field properties.
         /// </summary>
         public FieldProperties GetProperties(int field) { return m_Properties[field]; }
 
         /// <summary>
-        /// Provides direct access to the field properties
+        /// Provides direct access to the field properties.
         /// </summary>
         public FieldProperties GetProperties(string fieldName) { return m_Properties[GetFieldIndex(fieldName)]; }
 
         /// <summary>
-        /// Provides direct access to the field infos
+        /// Provides direct access to the field infos.
         /// </summary>
         public FieldInfo GetInfo(int field) { return m_Infos[field]; }
 
         /// <summary>
-        /// Obtains the name of the layout
+        /// Obtains the name of the layout.
         /// </summary>
         public readonly string Name;
 
         /// <summary>
-        /// Obtains whether the layout was created from a typed struct or not
+        /// Obtains whether the layout was created from a typed struct or not.
         /// </summary>
         public bool IsTyped => RowType != null;
 
-        /// <summary>The row type</summary>
+        /// <summary>The row type.</summary>
         public readonly Type RowType;
 
         /// <summary>
-        /// Obtains the fieldcount
+        /// Obtains the fieldcount.
         /// </summary>
         public readonly int FieldCount;
 
         /// <summary>
-        /// Obtains the index of the ID field
+        /// Obtains the index of the ID field.
         /// </summary>
         public readonly int IDFieldIndex = -1;
 
         /// <summary>
-        /// Obtains the name of the ID field
+        /// Obtains the name of the ID field.
         /// </summary>
         public readonly FieldProperties IDField;
 
@@ -361,8 +360,8 @@ namespace Cave.Data
         /// <summary>
         /// Creates a RowLayout instance for the specified fields.
         /// </summary>
-        /// <param name="name">The Name of the Layout</param>
-        /// <param name="fields">The fieldproperties to use</param>
+        /// <param name="name">The Name of the Layout.</param>
+        /// <param name="fields">The fieldproperties to use.</param>
         RowLayout(string name, FieldProperties[] fields)
         {
             if (name.HasInvalidChars(ASCII.Strings.SafeName))
@@ -416,9 +415,9 @@ namespace Cave.Data
         /// <param name="infos">The field infos.</param>
         /// <param name="idFieldIndex">Index of the identifier field.</param>
         /// <param name="rowType">Type of the row.</param>
-        /// <exception cref="System.ArgumentNullException">Name</exception>
-        /// <exception cref="System.ArgumentException">Invalid characters at table name!</exception>
-        /// <exception cref="InvalidDataException">FieldCount does not match!</exception>
+        /// <exception cref="System.ArgumentNullException">Name.</exception>
+        /// <exception cref="System.ArgumentException">Invalid characters at table name!.</exception>
+        /// <exception cref="InvalidDataException">FieldCount does not match!.</exception>
         RowLayout(string name, FieldProperties[] properties, FieldInfo[] infos, int idFieldIndex, Type rowType)
         {
             if (string.IsNullOrEmpty(name))
@@ -445,11 +444,12 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the ID of the dataset from the specified struct
+        /// Obtains the ID of the dataset from the specified struct.
         /// </summary>
-        /// <param name="item">The struct to read the ID from</param>
-        /// <returns>Returns the ID of the dataset</returns>
-        public long GetID<T>(T item) where T : struct
+        /// <param name="item">The struct to read the ID from.</param>
+        /// <returns>Returns the ID of the dataset.</returns>
+        public long GetID<T>(T item)
+            where T : struct
         {
             if (IDFieldIndex < 0)
             {
@@ -471,19 +471,14 @@ namespace Cave.Data
             }
 
             object value = row.GetValue(IDFieldIndex);
-            if (value is long)
-            {
-                return (long)value;
-            }
-
-            return Convert.ToInt64(value);
+            return value is long ? (long)value : Convert.ToInt64(value);
         }
 
         /// <summary>
-        /// Sets the ID of the dataset at the specified boxed struct
+        /// Sets the ID of the dataset at the specified boxed struct.
         /// </summary>
-        /// <param name="item">The struct to set the ID at</param>
-        /// <param name="id">The ID of the dataset</param>
+        /// <param name="item">The struct to set the ID at.</param>
+        /// <param name="id">The ID of the dataset.</param>
         public void SetID(ref object item, long id)
         {
             if (IDFieldIndex < 0)
@@ -495,10 +490,10 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Sets the ID of the dataset at the specified boxed struct
+        /// Sets the ID of the dataset at the specified boxed struct.
         /// </summary>
-        /// <param name="item">The struct to set the ID at</param>
-        /// <param name="id">The ID of the dataset</param>
+        /// <param name="item">The struct to set the ID at.</param>
+        /// <param name="id">The ID of the dataset.</param>
         public void SetID<T>(ref T item, long id)
         {
             if (IDFieldIndex < 0)
@@ -512,7 +507,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Gets the name of the field with the given number
+        /// Gets the name of the field with the given number.
         /// </summary>
         /// <param name="field"></param>
         /// <returns></returns>
@@ -522,11 +517,11 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the value of a field from the specified struct
+        /// Obtains the value of a field from the specified struct.
         /// </summary>
-        /// <param name="field">The field number/index</param>
-        /// <param name="item">The struct to read the value from</param>
-        /// <returns>Returns the value of the specified field</returns>
+        /// <param name="field">The field number/index.</param>
+        /// <param name="item">The struct to read the value from.</param>
+        /// <returns>Returns the value of the specified field.</returns>
         public object GetValue(int field, object item)
         {
             if (!IsTyped)
@@ -538,11 +533,11 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Sets a value at the specified struct
+        /// Sets a value at the specified struct.
         /// </summary>
-        /// <param name="field">The field number/index</param>
-        /// <param name="item">The struct to set the value at</param>
-        /// <param name="value">The value to set</param>
+        /// <param name="field">The field number/index.</param>
+        /// <param name="item">The struct to set the value at.</param>
+        /// <param name="value">The value to set.</param>
         public void SetValue(int field, ref object item, object value)
         {
             if (!IsTyped)
@@ -558,11 +553,12 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains all values of the struct
+        /// Obtains all values of the struct.
         /// </summary>
-        /// <param name="item">The struct to get the values from</param>
-        /// <returns>Returns all values of the struct</returns>
-        public object[] GetValues<T>(T item) where T : struct
+        /// <param name="item">The struct to get the values from.</param>
+        /// <returns>Returns all values of the struct.</returns>
+        public object[] GetValues<T>(T item)
+            where T : struct
         {
             if (!IsTyped)
             {
@@ -578,10 +574,10 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Sets all values of the struct
+        /// Sets all values of the struct.
         /// </summary>
-        /// <param name="item">The struct to set the values at</param>
-        /// <param name="values">The values to set</param>
+        /// <param name="item">The struct to set the values at.</param>
+        /// <param name="values">The values to set.</param>
         public void SetValues(ref object item, object[] values)
         {
             if (values == null)
@@ -612,10 +608,10 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the field index of the specified field name
+        /// Obtains the field index of the specified field name.
         /// </summary>
-        /// <param name="field">The fieldname to search for</param>
-        /// <returns>Returns the field index of the specified field name</returns>
+        /// <param name="field">The fieldname to search for.</param>
+        /// <returns>Returns the field index of the specified field name.</returns>
         public int GetFieldIndex(string field)
         {
             for (int i = 0; i < FieldCount; i++)
@@ -638,7 +634,7 @@ namespace Cave.Data
 
         /// <summary>Creates a copy of this layout without the specified field.</summary>
         /// <param name="fieldName">Name of the field to remove.</param>
-        /// <returns>Returns a new <see cref="RowLayout"/> instance</returns>
+        /// <returns>Returns a new <see cref="RowLayout"/> instance.</returns>
         public RowLayout Remove(string fieldName)
         {
             int index = GetFieldIndex(fieldName);
@@ -658,7 +654,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Checks another RowLayout for equality with this one
+        /// Checks another RowLayout for equality with this one.
         /// </summary>
         /// <param name="layout"></param>
         /// <returns></returns>
@@ -685,22 +681,17 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Checks another RowLayout for equality with this one
+        /// Checks another RowLayout for equality with this one.
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
         public override bool Equals(object obj)
         {
-            if (obj is RowLayout layout)
-            {
-                return Equals(layout);
-            }
-
-            return false;
+            return obj is RowLayout layout ? Equals(layout) : false;
         }
 
         /// <summary>
-        /// Obtains the hash code for this instance
+        /// Obtains the hash code for this instance.
         /// </summary>
         /// <returns></returns>
         public override int GetHashCode()

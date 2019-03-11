@@ -1,7 +1,7 @@
 ﻿namespace Cave.Data
 {
     /// <summary>
-    /// Sql search modes
+    /// Sql search modes.
     /// </summary>
     public enum SearchMode
     {

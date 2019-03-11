@@ -6,7 +6,7 @@ using System.Text;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides resultset options for search, sort and grouping functions
+    /// Provides resultset options for search, sort and grouping functions.
     /// </summary>
     public sealed class ResultOption
     {
@@ -21,12 +21,7 @@ namespace Cave.Data
                 return ReferenceEquals(A, null);
             }
 
-            if (ReferenceEquals(A, null))
-            {
-                return false;
-            }
-
-            return A.Mode == B.Mode && A.Parameter == B.Parameter;
+            return ReferenceEquals(A, null) ? false : A.Mode == B.Mode && A.Parameter == B.Parameter;
         }
 
         /// <summary>Implements the operator !=.</summary>
@@ -39,7 +34,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Combines two <see cref="ResultOption"/>s with AND
+        /// Combines two <see cref="ResultOption"/>s with AND.
         /// </summary>
         /// <param name="A"></param>
         /// <param name="B"></param>
@@ -56,12 +51,12 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// No option
+        /// No option.
         /// </summary>
         public static ResultOption None { get; } = new ResultOption(ResultOptionMode.None, null);
 
         /// <summary>
-        /// Sort ascending by the specified fieldname
+        /// Sort ascending by the specified fieldname.
         /// </summary>
         /// <param name="field"></param>
         /// <returns></returns>
@@ -71,7 +66,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Sort descending by the specified fieldname
+        /// Sort descending by the specified fieldname.
         /// </summary>
         /// <param name="field"></param>
         /// <returns></returns>
@@ -81,7 +76,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Limit the number of result sets
+        /// Limit the number of result sets.
         /// </summary>
         /// <param name="resultCount"></param>
         /// <returns></returns>
@@ -96,7 +91,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Set start offset of result sets
+        /// Set start offset of result sets.
         /// </summary>
         /// <param name="offset"></param>
         /// <returns></returns>
@@ -111,7 +106,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Group the fields with the specified fieldname
+        /// Group the fields with the specified fieldname.
         /// </summary>
         /// <param name="field"></param>
         /// <returns></returns>
@@ -212,7 +207,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains a string describing this instance
+        /// Obtains a string describing this instance.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -242,16 +237,11 @@ namespace Cave.Data
         public override bool Equals(object obj)
         {
             ResultOption o = obj as ResultOption;
-            if (o == null)
-            {
-                return false;
-            }
-
-            return o.Mode == Mode && o.Parameter == Parameter;
+            return o == null ? false : o.Mode == Mode && o.Parameter == Parameter;
         }
 
         /// <summary>
-        /// Obtains the hashcode for this instance
+        /// Obtains the hashcode for this instance.
         /// </summary>
         /// <returns></returns>
         public override int GetHashCode()

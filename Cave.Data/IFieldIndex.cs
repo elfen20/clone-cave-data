@@ -4,7 +4,7 @@ using Cave.Collections.Generic;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides a table field index implementation
+    /// Provides a table field index implementation.
     /// </summary>
     public interface IFieldIndex
     {

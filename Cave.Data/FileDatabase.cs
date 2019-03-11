@@ -4,27 +4,26 @@ using System.IO;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides an abstract base class for file databases containing multiple tables
+    /// Provides an abstract base class for file databases containing multiple tables.
     /// </summary>
     public abstract class FileDatabase : Database, IDisposable
     {
-        string m_Folder;
 
         /// <summary>
-        /// Checks whether the instance was already closed
+        /// Checks whether the instance was already closed.
         /// </summary>
-        public override bool Closed => m_Folder == null;
+        public override bool Closed => Folder == null;
 
         /// <summary>
-        /// The path (directory) the database can be found at
+        /// The path (directory) the database can be found at.
         /// </summary>
-        public string Folder => m_Folder;
+        public string Folder { get; private set; }
 
         /// <summary>
-        /// Creates a new FileDatabase instance
+        /// Creates a new FileDatabase instance.
         /// </summary>
-        /// <param name="storage">The storage engine</param>
-        /// <param name="directory">The directory the database can be found at</param>
+        /// <param name="storage">The storage engine.</param>
+        /// <param name="directory">The directory the database can be found at.</param>
         protected FileDatabase(FileStorage storage, string directory)
             : base(storage, Path.GetFileName(directory))
         {
@@ -33,24 +32,24 @@ namespace Cave.Data
                 throw new ArgumentNullException("Directory");
             }
 
-            m_Folder = directory;
-            Directory.CreateDirectory(m_Folder);
+            Folder = directory;
+            Directory.CreateDirectory(Folder);
         }
 
         #region IDatabase Member
 
         /// <summary>
-        /// Closes the instance and flushes all cached data
+        /// Closes the instance and flushes all cached data.
         /// </summary>
         public override void Close()
         {
-            m_Folder = null;
+            Folder = null;
         }
 
         #endregion
 
         /// <summary>
-        /// Obtains the name of the database
+        /// Obtains the name of the database.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -58,7 +57,7 @@ namespace Cave.Data
             return Name;
         }
 
-        #region IDisposable Support        
+        #region IDisposable Support
         /// <summary>Releases unmanaged and - optionally - managed resources.</summary>
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)

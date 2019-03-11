@@ -1,7 +1,7 @@
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides an interface for tables caching data
+    /// Provides an interface for tables caching data.
     /// </summary>
     public interface ICachedTable : IMemoryTable
     {
@@ -20,7 +20,9 @@ namespace Cave.Data
     }
 
     /// <summary>
-    /// Provides an interface for tables caching data
+    /// Provides an interface for tables caching data.
     /// </summary>
-    public interface ICachedTable<T> : IMemoryTable<T>, ICachedTable where T : struct { }
+    public interface ICachedTable<T> : IMemoryTable<T>, ICachedTable
+        where T : struct
+    { }
 }

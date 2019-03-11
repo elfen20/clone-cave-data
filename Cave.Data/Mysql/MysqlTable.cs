@@ -6,7 +6,7 @@ using Cave.Data.Sql;
 namespace Cave.Data.Mysql
 {
     /// <summary>
-    /// Provides a mysql table implementation
+    /// Provides a mysql table implementation.
     /// </summary>
     public class MySqlTable : SqlTable
     {
@@ -14,10 +14,10 @@ namespace Cave.Data.Mysql
 
         /// <summary>
         /// This function does a lookup on the ids of the table and returns the row with the n-th ID where n is the specified index.
-        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!
+        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
         /// <param name="index">The index of the row to be fetched</param>
         /// </summary>
-        /// <returns>Returns the row</returns>
+        /// <returns>Returns the row.</returns>
         public override Row GetRowAt(int index)
         {
             long id = (long)SqlStorage.QueryValue(Database.Name, Name, "SELECT ID FROM " + FQTN + " ORDER BY ID LIMIT " + index + ",1");
@@ -25,9 +25,9 @@ namespace Cave.Data.Mysql
         }
 
         /// <summary>
-        /// Obtains the command to retrieve the last inserted row
+        /// Obtains the command to retrieve the last inserted row.
         /// </summary>
-        /// <param name="row">The row to be inserted</param>
+        /// <param name="row">The row to be inserted.</param>
         /// <returns></returns>
         protected override string GetLastInsertedIDCommand(Row row)
         {
@@ -37,8 +37,8 @@ namespace Cave.Data.Mysql
         /// <summary>
         /// Inserts a row to the table. If an ID <![CDATA[<]]> 0 is specified an automatically generated ID will be used to add the dataset.
         /// </summary>
-        /// <param name="row">The row to insert</param>
-        /// <returns>Returns the ID of the inserted dataset</returns>
+        /// <param name="row">The row to insert.</param>
+        /// <returns>Returns the ID of the inserted dataset.</returns>
         public override long Insert(Row row)
         {
             StringBuilder commandBuilder = new StringBuilder();
@@ -57,16 +57,17 @@ namespace Cave.Data.Mysql
             bool autoSetID = false;
             bool autoIncrementID = false;
 
-            //autoset id ?            
+            // autoset id ?
             long id = Layout.GetID(row);
             if (id <= 0)
             {
                 autoSetID = true;
-                //yes, autoinc ?
+
+                // yes, autoinc ?
                 autoIncrementID = ((Layout.IDField.Flags & FieldFlags.AutoIncrement) != 0);
             }
 
-            //prepare ID field
+            // prepare ID field
             if (autoSetID && !autoIncrementID)
             {
                 commandBuilder.Append(SqlStorage.EscapeFieldName(Layout.IDField));
@@ -162,20 +163,20 @@ namespace Cave.Data.Mysql
         #endregion
 
         /// <summary>
-        /// Creates a new mysql table instance (checks layout against database)
+        /// Creates a new mysql table instance (checks layout against database).
         /// </summary>
-        /// <param name="database">The database the table belongs to</param>
-        /// <param name="layout">Layout of the table</param>
+        /// <param name="database">The database the table belongs to.</param>
+        /// <param name="layout">Layout of the table.</param>
         public MySqlTable(MySqlDatabase database, RowLayout layout)
             : base(database, layout)
         {
         }
 
         /// <summary>
-        /// Creates a new mysql table instance (retrieves layout from database)
+        /// Creates a new mysql table instance (retrieves layout from database).
         /// </summary>
-        /// <param name="database">The database the table belongs to</param>
-        /// <param name="table">Name of the table</param>
+        /// <param name="database">The database the table belongs to.</param>
+        /// <param name="table">Name of the table.</param>
         public MySqlTable(MySqlDatabase database, string table)
             : base(database, table)
         {
@@ -183,18 +184,19 @@ namespace Cave.Data.Mysql
     }
 
     /// <summary>
-    /// Provides a mysql table implementation
+    /// Provides a mysql table implementation.
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class MySqlTable<T> : SqlTable<T> where T : struct
+    public class MySqlTable<T> : SqlTable<T>
+        where T : struct
     {
         #region MySql specific overrides
         /// <summary>
         /// This function does a lookup on the ids of the table and returns the row with the n-th ID where n is the specified index.
-        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!
+        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
         /// <param name="index">The index of the row to be fetched</param>
         /// </summary>
-        /// <returns>Returns the row</returns>
+        /// <returns>Returns the row.</returns>
         public override Row GetRowAt(int index)
         {
             long id = (long)SqlStorage.QueryValue(Database.Name, Name, "SELECT ID FROM " + FQTN + " ORDER BY ID LIMIT " + index + ",1");
@@ -202,9 +204,9 @@ namespace Cave.Data.Mysql
         }
 
         /// <summary>
-        /// Obtains the command to retrieve the last inserted row
+        /// Obtains the command to retrieve the last inserted row.
         /// </summary>
-        /// <param name="row">The row to be inserted</param>
+        /// <param name="row">The row to be inserted.</param>
         /// <returns></returns>
         protected override string GetLastInsertedIDCommand(Row row)
         {
@@ -214,8 +216,8 @@ namespace Cave.Data.Mysql
         /// <summary>
         /// Inserts a row to the table. If an ID <![CDATA[<]]> 0 is specified an automatically generated ID will be used to add the dataset.
         /// </summary>
-        /// <param name="row">The row to insert</param>
-        /// <returns>Returns the ID of the inserted dataset</returns>
+        /// <param name="row">The row to insert.</param>
+        /// <returns>Returns the ID of the inserted dataset.</returns>
         public override long Insert(Row row)
         {
             StringBuilder commandBuilder = new StringBuilder();
@@ -234,16 +236,17 @@ namespace Cave.Data.Mysql
             bool autoSetID = false;
             bool autoIncrementID = false;
 
-            //autoset id ?
+            // autoset id ?
             long id = Layout.GetID(row);
             if (id <= 0)
             {
                 autoSetID = true;
-                //yes, autoinc ?
+
+                // yes, autoinc ?
                 autoIncrementID = ((Layout.IDField.Flags & FieldFlags.AutoIncrement) != 0);
             }
 
-            //prepare ID field
+            // prepare ID field
             if (autoSetID && !autoIncrementID)
             {
                 commandBuilder.Append(SqlStorage.EscapeFieldName(Layout.IDField));
@@ -309,10 +312,10 @@ namespace Cave.Data.Mysql
         #endregion
 
         /// <summary>
-        /// Creates a new mysql table instance
+        /// Creates a new mysql table instance.
         /// </summary>
-        /// <param name="database">The database the table belongs to</param>
-        /// <param name="layout">Layout and name of the table</param>
+        /// <param name="database">The database the table belongs to.</param>
+        /// <param name="layout">Layout and name of the table.</param>
         public MySqlTable(MySqlDatabase database, RowLayout layout)
             : base(database, layout)
         {
