@@ -7,7 +7,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cave.Data", "Cave.Data\Cave
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{94D4E64B-81DE-4F1A-8582-7EADFFFA9075}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
 		.gitignore = .gitignore
+		azure-pipelines.yml = azure-pipelines.yml
+		build.bat = build.bat
 		LICENSE = LICENSE
 		Rebracer.xml = Rebracer.xml
 	EndProjectSection
