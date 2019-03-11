@@ -3,7 +3,7 @@
 namespace Cave.Data
 {
     /// <summary>
-    /// Database connection options
+    /// Database connection options.
     /// </summary>
     [Flags]
     public enum DbConnectionOptions

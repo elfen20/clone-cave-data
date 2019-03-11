@@ -9,14 +9,14 @@ namespace Cave.Data.Postgres
 {
     /// <summary>
     /// Provides a postgre sql storage implementation.
-    /// Attention: <see cref="float"/> variables stored at the mysqldatabase loose their last precision digit (a value of 1 may differ by &lt;= 0.000001f)
+    /// Attention: <see cref="float"/> variables stored at the mysqldatabase loose their last precision digit (a value of 1 may differ by &lt;= 0.000001f).
     /// </summary>
     public sealed class PgSqlStorage : SqlStorage
     {
         #region protected overrides
 
         /// <summary>
-        /// Obtains FieldProperties for the Database based on requested FieldProperties
+        /// Obtains FieldProperties for the Database based on requested FieldProperties.
         /// </summary>
         /// <param name="field"></param>
         /// <returns></returns>
@@ -37,9 +37,9 @@ namespace Cave.Data.Postgres
             return new FieldProperties(field, field.TypeAtDatabase, GetObjectName(field.Name));
         }
 
-        /// <summary>Obtains the local <see cref="DataType" /> for the specified database fieldtype</summary>
-        /// <param name="fieldType">The field type at the database</param>
-        /// <param name="fieldSize">The field size at the database</param>
+        /// <summary>Obtains the local <see cref="DataType" /> for the specified database fieldtype.</summary>
+        /// <param name="fieldType">The field type at the database.</param>
+        /// <param name="fieldSize">The field size at the database.</param>
         /// <returns></returns>
         protected override DataType GetLocalDataType(Type fieldType, uint fieldSize)
         {
@@ -55,9 +55,9 @@ namespace Cave.Data.Postgres
         }
 
         /// <summary>
-        /// Obtains a reusable connection or creates a new one
+        /// Obtains a reusable connection or creates a new one.
         /// </summary>
-        /// <param name="database">The database to connect to</param>
+        /// <param name="database">The database to connect to.</param>
         /// <returns></returns>
         protected override string GetConnectionString(string database)
         {
@@ -78,8 +78,8 @@ namespace Cave.Data.Postgres
                 "SSL Mode=" + (requireSSL ? "Require;" : "Prefer;");
         }
 
-        /// <summary>Creates a new database connection</summary>
-        /// <param name="databaseName">The name of the database</param>
+        /// <summary>Creates a new database connection.</summary>
+        /// <param name="databaseName">The name of the database.</param>
         /// <returns></returns>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2100:SQL-Abfragen auf Sicherheitsrisiken überprüfen")]
         public override IDbConnection CreateNewConnection(string databaseName)
@@ -102,17 +102,17 @@ namespace Cave.Data.Postgres
         #endregion
 
         /// <summary>
-        /// Obtains the mysql storage version
+        /// Obtains the mysql storage version.
         /// </summary>
         public readonly string VersionString;
 
         /// <summary>
-        /// Obtains the mysql storage version
+        /// Obtains the mysql storage version.
         /// </summary>
         public readonly Version Version;
 
-        /// <summary>Creates a new mysql storage instance</summary>
-        /// <param name="connectionString">the connection details</param>
+        /// <summary>Creates a new mysql storage instance.</summary>
+        /// <param name="connectionString">the connection details.</param>
         /// <param name="options">The options.</param>
         public PgSqlStorage(ConnectionString connectionString, DbConnectionOptions options)
             : base(connectionString, options)
@@ -123,17 +123,17 @@ namespace Cave.Data.Postgres
             Trace.TraceInformation(string.Format("pgsql version {0}", Version));
         }
 
-        /// <summary>Escapes a field name for direct use in a query</summary>
+        /// <summary>Escapes a field name for direct use in a query.</summary>
         /// <param name="field">The field.</param>
         /// <returns></returns>
-        /// <exception cref="System.ArgumentException">FieldName is invalid!</exception>
+        /// <exception cref="System.ArgumentException">FieldName is invalid!.</exception>
         public override string EscapeFieldName(FieldProperties field)
         {
             return "\"" + field.NameAtDatabase + "\"";
         }
 
         /// <summary>
-        /// Obtains a full qualified table name
+        /// Obtains a full qualified table name.
         /// </summary>
         /// <param name="database"></param>
         /// <param name="table"></param>
@@ -157,7 +157,7 @@ namespace Cave.Data.Postgres
         }
 
         /// <summary>
-        /// Obtains all available database names
+        /// Obtains all available database names.
         /// </summary>
         public override string[] DatabaseNames
         {
@@ -174,9 +174,9 @@ namespace Cave.Data.Postgres
         }
 
         /// <summary>
-        /// Checks whether the database with the specified name exists at the database or not
+        /// Checks whether the database with the specified name exists at the database or not.
         /// </summary>
-        /// <param name="database">The name of the database</param>
+        /// <param name="database">The name of the database.</param>
         /// <returns></returns>
         public override bool HasDatabase(string database)
         {
@@ -185,9 +185,9 @@ namespace Cave.Data.Postgres
         }
 
         /// <summary>
-        /// Obtains the database with the specified name
+        /// Obtains the database with the specified name.
         /// </summary>
-        /// <param name="database">The name of the database</param>
+        /// <param name="database">The name of the database.</param>
         /// <returns></returns>
         public override IDatabase GetDatabase(string database)
         {
@@ -200,9 +200,9 @@ namespace Cave.Data.Postgres
         }
 
         /// <summary>
-        /// Adds a new database with the specified name
+        /// Adds a new database with the specified name.
         /// </summary>
-        /// <param name="database">The name of the database</param>
+        /// <param name="database">The name of the database.</param>
         /// <returns></returns>
         public override IDatabase CreateDatabase(string database)
         {
@@ -216,9 +216,9 @@ namespace Cave.Data.Postgres
         }
 
         /// <summary>
-        /// Removes the specified database
+        /// Removes the specified database.
         /// </summary>
-        /// <param name="database">The name of the database</param>
+        /// <param name="database">The name of the database.</param>
         public override void DeleteDatabase(string database)
         {
             if (database.HasInvalidChars(ASCII.Strings.SafeName))
@@ -234,10 +234,10 @@ namespace Cave.Data.Postgres
         protected override bool DBConnectionCanChangeDataBase => true;
 
         /// <summary>
-        /// Initializes the needed interop assembly and type
+        /// Initializes the needed interop assembly and type.
         /// </summary>
-        /// <param name="dbAdapterAssembly">Assembly containing all needed types</param>
-        /// <param name="dbConnectionType">IDbConnection type used for the database</param>
+        /// <param name="dbAdapterAssembly">Assembly containing all needed types.</param>
+        /// <param name="dbConnectionType">IDbConnection type used for the database.</param>
         protected override void InitializeInterOp(out Assembly dbAdapterAssembly, out Type dbConnectionType)
         {
             dbConnectionType = AppDom.FindType("Npgsql.NpgsqlConnection", AppDom.LoadMode.LoadAssemblies);
@@ -247,17 +247,17 @@ namespace Cave.Data.Postgres
         }
 
         /// <summary>
-        /// true
+        /// true.
         /// </summary>
         public override bool SupportsNamedParameters => true;
 
         /// <summary>
-        /// Obtains wether the connection supports select * groupby
+        /// Obtains wether the connection supports select * groupby.
         /// </summary>
         public override bool SupportsAllFieldsGroupBy => true;
 
         /// <summary>
-        /// Obtains the parameter prefix char (?)
+        /// Obtains the parameter prefix char (?).
         /// </summary>
         public override string ParameterPrefix => "@_";
 
@@ -271,22 +271,22 @@ namespace Cave.Data.Postgres
 
         #region precision members
         /// <summary>
-        /// Obtains the maximum <see cref="float"/> precision at the value of 1.0f of this storage engine
+        /// Obtains the maximum <see cref="float"/> precision at the value of 1.0f of this storage engine.
         /// </summary>
         public override float FloatPrecision => 0.00001f;
 
         /// <summary>
-        /// Obtains the maximum <see cref="DateTime"/> value precision of this storage engine
+        /// Obtains the maximum <see cref="DateTime"/> value precision of this storage engine.
         /// </summary>
         public override TimeSpan DateTimePrecision => TimeSpan.FromSeconds(1);
 
         /// <summary>
-        /// Obtains the maximum <see cref="TimeSpan"/> value precision of this storage engine
+        /// Obtains the maximum <see cref="TimeSpan"/> value precision of this storage engine.
         /// </summary>
         public override TimeSpan TimeSpanPrecision => TimeSpan.FromMilliseconds(1);
 
         /// <summary>
-        /// Obtains the maximum <see cref="decimal"/> value precision of this storage engine
+        /// Obtains the maximum <see cref="decimal"/> value precision of this storage engine.
         /// </summary>
         public override decimal GetDecimalPrecision(float count)
         {

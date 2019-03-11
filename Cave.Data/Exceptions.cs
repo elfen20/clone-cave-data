@@ -4,13 +4,13 @@ using System.Runtime.Serialization;
 namespace Cave.Data
 {
     /// <summary>
-    /// The table layout is already fixed and can no longer be changed !
+    /// The table layout is already fixed and can no longer be changed !.
     /// </summary>
     [Serializable]
     public class TableLayoutFixedException : Exception
     {
         /// <summary>
-        /// The table layout is already fixed and can no longer be changed !
+        /// The table layout is already fixed and can no longer be changed !.
         /// </summary>
         public TableLayoutFixedException() : base(string.Format("The table layout is already fixed and can no longer be changed!")) { }
 
@@ -30,7 +30,7 @@ namespace Cave.Data
     }
 
     /// <summary>
-    /// The dataset ID {0} is already present!
+    /// The dataset ID {0} is already present!.
     /// </summary>
     [Serializable]
     public class DataSetAlreadyPresentException : Exception
@@ -39,7 +39,7 @@ namespace Cave.Data
         public DataSetAlreadyPresentException() : base("The dataset is already present!") { }
 
         /// <summary>
-        /// The dataset ID {0} is already present at the table!
+        /// The dataset ID {0} is already present at the table!.
         /// </summary>
         public DataSetAlreadyPresentException(long id) : base(string.Format("The dataset ID {0} is already present!", id)) { }
 

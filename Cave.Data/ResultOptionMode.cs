@@ -1,7 +1,7 @@
 namespace Cave.Data
 {
     /// <summary>
-    /// Available result option modes
+    /// Available result option modes.
     /// </summary>
     public enum ResultOptionMode
     {

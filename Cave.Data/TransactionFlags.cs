@@ -3,7 +3,7 @@
 namespace Cave.Data
 {
     /// <summary>
-    /// Transaction flags
+    /// Transaction flags.
     /// </summary>
     [Flags]
     public enum TransactionFlags

@@ -6,16 +6,17 @@ using Cave.IO;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides reading of dat files to a struct / class
+    /// Provides reading of dat files to a struct / class.
     /// </summary>
     public sealed class DatReader : IDisposable
     {
         /// <summary>
-        /// Reads a whole table from the specified dat file
+        /// Reads a whole table from the specified dat file.
         /// </summary>
-        /// <param name="table">Table to read the dat file into</param>
-        /// <param name="fileName">File name of the dat file</param>
-        public static bool TryReadTable<T>(ITable<T> table, string fileName) where T : struct
+        /// <param name="table">Table to read the dat file into.</param>
+        /// <param name="fileName">File name of the dat file.</param>
+        public static bool TryReadTable<T>(ITable<T> table, string fileName)
+            where T : struct
         {
             if (!File.Exists(fileName))
             {
@@ -34,11 +35,12 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Reads a whole table from the specified dat file
+        /// Reads a whole table from the specified dat file.
         /// </summary>
-        /// <param name="table">Table to read the dat file into</param>
-        /// <param name="fileName">File name of the dat file</param>
-        public static void ReadTable<T>(ITable<T> table, string fileName) where T : struct
+        /// <param name="table">Table to read the dat file into.</param>
+        /// <param name="fileName">File name of the dat file.</param>
+        public static void ReadTable<T>(ITable<T> table, string fileName)
+            where T : struct
         {
             using (DatReader reader = new DatReader(fileName))
             {
@@ -47,10 +49,10 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Reads a whole table from the specified dat file
+        /// Reads a whole table from the specified dat file.
         /// </summary>
-        /// <param name="table">Table to read the dat file into</param>
-        /// <param name="fileName">File name of the dat file</param>
+        /// <param name="table">Table to read the dat file into.</param>
+        /// <param name="fileName">File name of the dat file.</param>
         public static void ReadTable(ITable table, string fileName)
         {
             using (DatReader reader = new DatReader(fileName))
@@ -59,11 +61,12 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>Reads a whole table from the specified dat file</summary>
+        /// <summary>Reads a whole table from the specified dat file.</summary>
         /// <typeparam name="T"></typeparam>
-        /// <param name="table">Table to read the dat file into</param>
+        /// <param name="table">Table to read the dat file into.</param>
         /// <param name="stream">The stream.</param>
-        public static void ReadTable<T>(ITable<T> table, Stream stream) where T : struct
+        public static void ReadTable<T>(ITable<T> table, Stream stream)
+            where T : struct
         {
             using (DatReader reader = new DatReader(stream))
             {
@@ -71,8 +74,8 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>Reads a whole table from the specified dat file</summary>
-        /// <param name="table">Table to read the dat file into</param>
+        /// <summary>Reads a whole table from the specified dat file.</summary>
+        /// <param name="table">Table to read the dat file into.</param>
         /// <param name="stream">The stream.</param>
         public static void ReadTable(ITable table, Stream stream)
         {
@@ -92,12 +95,12 @@ namespace Cave.Data
             }
 
             m_Reader = new DataReader(stream);
-            m_Layout = DatTable.LoadFieldDefinition(m_Reader, out int version);
+            Layout = DatTable.LoadFieldDefinition(m_Reader, out int version);
             Version = version;
         }
 
         /// <summary>
-        /// Creates a new dat file reader
+        /// Creates a new dat file reader.
         /// </summary>
         /// <param name="fileName"></param>
         public DatReader(string fileName)
@@ -108,7 +111,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a new dat file reader
+        /// Creates a new dat file reader.
         /// </summary>
         /// <param name="stream"></param>
         public DatReader(Stream stream)
@@ -117,37 +120,33 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Holds the row layout
+        /// Obtains the layout of the table.
         /// </summary>
-        RowLayout m_Layout;
+        public RowLayout Layout { get; private set; }
 
         /// <summary>
-        /// Obtains the layout of the table
-        /// </summary>
-        public RowLayout Layout => m_Layout;
-
-        /// <summary>
-        /// Obtains the version the database was created with
+        /// Obtains the version the database was created with.
         /// </summary>
         public int Version { get; private set; }
 
         /// <summary>
-        /// Reads a row from the file
+        /// Reads a row from the file.
         /// </summary>
-        /// <param name="checkLayout">Check layout prior read</param>
-        /// <param name="row">The read row</param>
-        /// <returns>Returns true is the row was read, false otherwise</returns>
-        public bool ReadRow<T>(bool checkLayout, out T row) where T : struct
+        /// <param name="checkLayout">Check layout prior read.</param>
+        /// <param name="row">The read row.</param>
+        /// <returns>Returns true is the row was read, false otherwise.</returns>
+        public bool ReadRow<T>(bool checkLayout, out T row)
+            where T : struct
         {
             RowLayout layout = RowLayout.CreateTyped(typeof(T));
             if (checkLayout)
             {
-                RowLayout.CheckLayout(m_Layout, layout);
+                RowLayout.CheckLayout(Layout, layout);
             }
 
-            if (!m_Layout.IsTyped)
+            if (!Layout.IsTyped)
             {
-                m_Layout = layout;
+                Layout = layout;
             }
 
             while (m_Reader.BaseStream.Position < m_Reader.BaseStream.Length)
@@ -164,25 +163,26 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Reads the whole file to the specified table
+        /// Reads the whole file to the specified table.
         /// </summary>
         /// <param name="table"></param>
-        public void ReadTable<T>(ITable<T> table) where T : struct
+        public void ReadTable<T>(ITable<T> table)
+            where T : struct
         {
             if (table == null)
             {
                 throw new ArgumentNullException("Table");
             }
 
-            RowLayout.CheckLayout(m_Layout, table.Layout);
-            if (!m_Layout.IsTyped)
+            RowLayout.CheckLayout(Layout, table.Layout);
+            if (!Layout.IsTyped)
             {
-                m_Layout = table.Layout;
+                Layout = table.Layout;
             }
 
             while (m_Reader.BaseStream.Position < m_Reader.BaseStream.Length)
             {
-                Row row = DatTable.ReadCurrentRow(m_Reader, Version, m_Layout);
+                Row row = DatTable.ReadCurrentRow(m_Reader, Version, Layout);
                 if (row != null)
                 {
                     table.Insert(row);
@@ -202,15 +202,15 @@ namespace Cave.Data
                 throw new ArgumentNullException("Table");
             }
 
-            RowLayout.CheckLayout(m_Layout, table.Layout);
-            if (!m_Layout.IsTyped)
+            RowLayout.CheckLayout(Layout, table.Layout);
+            if (!Layout.IsTyped)
             {
-                m_Layout = table.Layout;
+                Layout = table.Layout;
             }
 
             while (m_Reader.BaseStream.Position < m_Reader.BaseStream.Length)
             {
-                Row row = DatTable.ReadCurrentRow(m_Reader, Version, m_Layout);
+                Row row = DatTable.ReadCurrentRow(m_Reader, Version, Layout);
                 if (row != null)
                 {
                     table.Insert(row);
@@ -219,16 +219,17 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Reads the whole file to a new list
+        /// Reads the whole file to a new list.
         /// </summary>
         /// <returns></returns>
-        public List<T> ReadList<T>() where T : struct
+        public List<T> ReadList<T>()
+            where T : struct
         {
             RowLayout layout = RowLayout.CreateTyped(typeof(T));
-            RowLayout.CheckLayout(m_Layout, layout);
-            if (!m_Layout.IsTyped)
+            RowLayout.CheckLayout(Layout, layout);
+            if (!Layout.IsTyped)
             {
-                m_Layout = layout;
+                Layout = layout;
             }
 
             List<T> result = new List<T>();
@@ -244,7 +245,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Closes the reader
+        /// Closes the reader.
         /// </summary>
         public void Close()
         {
@@ -256,7 +257,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Disposes the base stream
+        /// Disposes the base stream.
         /// </summary>
         public void Dispose()
         {

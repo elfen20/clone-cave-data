@@ -7,11 +7,11 @@ using Cave.Data.SQLite;
 namespace Cave.Data
 {
     /// <summary>
-    /// Connects to different database types
+    /// Connects to different database types.
     /// </summary>
     public static class Connector
     {
-        /// <summary>Connects to a database storage</summary>
+        /// <summary>Connects to a database storage.</summary>
         /// <param name="connectionString">The connection string.</param>
         /// <param name="options">The options.</param>
         /// <returns>Returns a new storage connection.</returns>
@@ -34,8 +34,8 @@ namespace Cave.Data
         /// <param name="connection">The ConnectionString.</param>
         /// <param name="options">The database connection options.</param>
         /// <returns>Returns a new database connection.</returns>
-        /// <exception cref="ArgumentException">Missing database name at connection string!</exception>
-        /// <exception cref="Exception">Missing database name at connection string!</exception>
+        /// <exception cref="ArgumentException">Missing database name at connection string!.</exception>
+        /// <exception cref="Exception">Missing database name at connection string!.</exception>
         public static IDatabase ConnectDatabase(ConnectionString connection, DbConnectionOptions options = DbConnectionOptions.None)
         {
             IStorage storage = ConnectStorage(connection, options);

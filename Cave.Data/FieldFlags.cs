@@ -3,7 +3,7 @@ using System;
 namespace Cave
 {
     /// <summary>
-    /// Provides available field flags
+    /// Provides available field flags.
     /// </summary>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2217:DoNotMarkEnumsWithFlags")]
     [Flags]

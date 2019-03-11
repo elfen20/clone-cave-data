@@ -1,7 +1,7 @@
 namespace Cave
 {
     /// <summary>
-    /// Provides available field data types
+    /// Provides available field data types.
     /// </summary>
     public enum DataType
     {

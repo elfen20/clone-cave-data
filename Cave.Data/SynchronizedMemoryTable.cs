@@ -7,7 +7,7 @@ using Cave.Collections.Generic;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides a thread safe table stored completely in memory
+    /// Provides a thread safe table stored completely in memory.
     /// </summary>
     [DebuggerDisplay("{Name}")]
     public class SynchronizedMemoryTable : IMemoryTable
@@ -47,12 +47,12 @@ namespace Cave.Data
             this.table = table;
         }
 
-        /// <summary>Replaces all data present with the data at the given table</summary>
-        /// <param name="table">The table to load</param>
+        /// <summary>Replaces all data present with the data at the given table.</summary>
+        /// <param name="table">The table to load.</param>
         /// <param name="search">The search.</param>
         /// <param name="callback">The callback.</param>
         /// <param name="userItem">The user item.</param>
-        /// <exception cref="ArgumentNullException">Table</exception>
+        /// <exception cref="ArgumentNullException">Table.</exception>
         public void LoadTable(ITable table, Search search = null, ProgressCallback callback = null, object userItem = null)
         {
             if (table == null)
@@ -69,31 +69,31 @@ namespace Cave.Data
         #region ITable members
 
         /// <summary>
-        /// The storage engine the database belongs to
+        /// The storage engine the database belongs to.
         /// </summary>
         public IStorage Storage => table.Storage;
 
         /// <summary>
-        /// Obtains the database the table belongs to
+        /// Obtains the database the table belongs to.
         /// </summary>
         public IDatabase Database => table.Database;
 
         /// <summary>
-        /// Obtains the name of the table
+        /// Obtains the name of the table.
         /// </summary>
         public string Name => table.Name;
 
         /// <summary>
-        /// Obtains the RowLayout of the table
+        /// Obtains the RowLayout of the table.
         /// </summary>
         public RowLayout Layout => table.Layout;
 
         /// <summary>
-        /// Counts the results of a given search
+        /// Counts the results of a given search.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the number of rows found matching the criteria given</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the number of rows found matching the criteria given.</returns>
         public virtual long Count(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             lock (this)
@@ -103,7 +103,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the RowCount
+        /// Obtains the RowCount.
         /// </summary>
         public long RowCount
         {
@@ -137,10 +137,10 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains a row from the table
+        /// Obtains a row from the table.
         /// </summary>
-        /// <param name="id">The ID of the row to be fetched</param>
-        /// <returns>Returns the row</returns>
+        /// <param name="id">The ID of the row to be fetched.</param>
+        /// <returns>Returns the row.</returns>
         public Row GetRow(long id)
         {
             lock (this)
@@ -151,10 +151,10 @@ namespace Cave.Data
 
         /// <summary>
         /// This function does a lookup on the ids of the table and returns the row with the n-th ID where n is the given index.
-        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!
+        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
         /// <param name="index">The index of the row to be fetched</param>
         /// </summary>
-        /// <returns>Returns the row</returns>
+        /// <returns>Returns the row.</returns>
         public Row GetRowAt(int index)
         {
             lock (this)
@@ -164,10 +164,10 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Sets the specified value to the specified fieldname on all rows
+        /// Sets the specified value to the specified fieldname on all rows.
         /// </summary>
-        /// <param name="field">The fields name</param>
-        /// <param name="value">The value to set</param>
+        /// <param name="field">The fields name.</param>
+        /// <param name="value">The value to set.</param>
         public void SetValue(string field, object value)
         {
             lock (this)
@@ -177,10 +177,10 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Checks a given ID for existance
+        /// Checks a given ID for existance.
         /// </summary>
-        /// <param name="id">The dataset ID to look for</param>
-        /// <returns>Returns whether the dataset exists or not</returns>
+        /// <param name="id">The dataset ID to look for.</param>
+        /// <returns>Returns whether the dataset exists or not.</returns>
         public bool Exist(long id)
         {
             lock (this)
@@ -189,7 +189,7 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>Checks a given search for any datasets matching</summary>
+        /// <summary>Checks a given search for any datasets matching.</summary>
         /// <param name="search"></param>
         /// <returns></returns>
         public bool Exist(Search search)
@@ -204,7 +204,7 @@ namespace Cave.Data
         /// Inserts a row into the table. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.
         /// </summary>
         /// <param name="row">The row to insert. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.</param>
-        /// <returns>Returns the ID of the inserted dataset</returns>
+        /// <returns>Returns the ID of the inserted dataset.</returns>
         public long Insert(Row row)
         {
             lock (this)
@@ -226,10 +226,10 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Updates a row at the table. The row must exist already!
+        /// Updates a row at the table. The row must exist already!.
         /// </summary>
-        /// <param name="row">The row to update</param>
-        /// <returns>Returns the ID of the dataset</returns>
+        /// <param name="row">The row to update.</param>
+        /// <returns>Returns the ID of the dataset.</returns>
         public void Update(Row row)
         {
             lock (this)
@@ -252,7 +252,7 @@ namespace Cave.Data
 
         /// <summary>Updates rows at the table using a transaction.</summary>
         /// <param name="rows">The rows to insert.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
         public void Update(IEnumerable<Row> rows, bool writeTransaction)
         {
             lock (this)
@@ -264,7 +264,7 @@ namespace Cave.Data
         /// <summary>
         /// Removes a row from the table.
         /// </summary>
-        /// <param name="id">The dataset ID to remove</param>
+        /// <param name="id">The dataset ID to remove.</param>
         public void Delete(long id)
         {
             lock (this)
@@ -276,7 +276,7 @@ namespace Cave.Data
         /// <summary>
         /// Removes rows from the table.
         /// </summary>
-        /// <param name="ids">The dataset IDs to remove</param>
+        /// <param name="ids">The dataset IDs to remove.</param>
         public void Delete(IEnumerable<long> ids)
         {
             lock (this)
@@ -286,8 +286,8 @@ namespace Cave.Data
         }
 
         /// <summary>Removes rows from the table.</summary>
-        /// <param name="ids">The dataset IDs to remove</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        /// <param name="ids">The dataset IDs to remove.</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
         public void Delete(IEnumerable<long> ids, bool writeTransaction)
         {
             lock (this)
@@ -299,7 +299,7 @@ namespace Cave.Data
         /// <summary>
         /// Removes all rows from the table matching the given search.
         /// </summary>
-        /// <param name="search">The Search used to identify rows for removal</param>
+        /// <param name="search">The Search used to identify rows for removal.</param>
         public int TryDelete(Search search)
         {
             lock (this)
@@ -311,7 +311,7 @@ namespace Cave.Data
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
         /// </summary>
-        /// <param name="row">The row to replace (valid ID needed)</param>
+        /// <param name="row">The row to replace (valid ID needed).</param>
         public void Replace(Row row)
         {
             lock (this)
@@ -323,7 +323,7 @@ namespace Cave.Data
         /// <summary>
         /// Replaces rows at the table. This inserts (if the row does not exist) or updates (if it exists) each row.
         /// </summary>
-        /// <param name="rows">The rows to replace (valid ID needed)</param>
+        /// <param name="rows">The rows to replace (valid ID needed).</param>
         public void Replace(IEnumerable<Row> rows)
         {
             lock (this)
@@ -335,8 +335,8 @@ namespace Cave.Data
         /// <summary>
         /// Replaces rows at the table. This inserts (if the row does not exist) or updates (if it exists) each row.
         /// </summary>
-        /// <param name="rows">The rows to replace (valid ID needed)</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        /// <param name="rows">The rows to replace (valid ID needed).</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
         public void Replace(IEnumerable<Row> rows, bool writeTransaction)
         {
             lock (this)
@@ -348,9 +348,9 @@ namespace Cave.Data
         /// <summary>
         /// Searches the table for a row with given field value combinations.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the ID of the row found or -1</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the ID of the row found or -1.</returns>
         public long FindRow(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             lock (this)
@@ -362,9 +362,9 @@ namespace Cave.Data
         /// <summary>
         /// Searches the table for rows with given field value combinations.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the IDs of the rows found</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the IDs of the rows found.</returns>
         public List<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             lock (this)
@@ -376,9 +376,9 @@ namespace Cave.Data
         /// <summary>
         /// Searches the table for a single row with given search.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the row found</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the row found.</returns>
         public Row GetRow(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             lock (this)
@@ -390,9 +390,9 @@ namespace Cave.Data
         /// <summary>
         /// Searches the table for rows with given search.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the rows found</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the rows found.</returns>
         public List<Row> GetRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             lock (this)
@@ -402,7 +402,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!)
+        /// Obtains the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!).
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -415,7 +415,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the next free ID at the table
+        /// Obtains the next free ID at the table.
         /// </summary>
         /// <returns></returns>
         public long GetNextFreeID()
@@ -427,10 +427,10 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the rows with the given ids
+        /// Obtains the rows with the given ids.
         /// </summary>
-        /// <param name="ids">IDs of the rows to fetch from the table</param>
-        /// <returns>Returns the rows</returns>
+        /// <param name="ids">IDs of the rows to fetch from the table.</param>
+        /// <returns>Returns the rows.</returns>
         public virtual List<Row> GetRows(IEnumerable<long> ids)
         {
             lock (this)
@@ -440,7 +440,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains an array with all rows
+        /// Obtains an array with all rows.
         /// </summary>
         /// <returns></returns>
         public List<Row> GetRows()
@@ -451,10 +451,10 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>Obtains all different field values of a given field</summary>
+        /// <summary>Obtains all different field values of a given field.</summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="field">The field.</param>
-        /// <param name="includeNull">allow null value to be added to the results</param>
+        /// <param name="includeNull">allow null value to be added to the results.</param>
         /// <param name="ids">The ids to check or null for any.</param>
         /// <returns></returns>
         public IItemSet<T> GetValues<T>(string field, bool includeNull = false, IEnumerable<long> ids = null)
@@ -465,11 +465,11 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>Commits a whole TransactionLog to the table</summary>
-        /// <param name="transactions">The transaction log to read</param>
+        /// <summary>Commits a whole TransactionLog to the table.</summary>
+        /// <param name="transactions">The transaction log to read.</param>
         /// <param name="flags">The flags to use.</param>
-        /// <param name="count">Number of transactions to combine at one write</param>
-        /// <returns>Returns the number of transactions done or -1 if unknown</returns>
+        /// <param name="count">Number of transactions to combine at one write.</param>
+        /// <returns>Returns the number of transactions done or -1 if unknown.</returns>
         public int Commit(TransactionLog transactions, TransactionFlags flags = TransactionFlags.Default, int count = -1)
         {
             lock (this)
@@ -493,7 +493,7 @@ namespace Cave.Data
         #region MemoryTable additions
 
         /// <summary>
-        /// Replaces the whole data at the table with the specified one without writing transactions
+        /// Replaces the whole data at the table with the specified one without writing transactions.
         /// </summary>
         /// <param name="rows"></param>
         public void SetRows(IEnumerable<Row> rows)
@@ -510,13 +510,13 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains all IDs
+        /// Obtains all IDs.
         /// </summary>
         public List<long> IDs { get { lock (this) { return table.IDs; } } }
 
         /// <summary>
         /// Gets/sets the transaction log used to store all changes. The user has to create it, dequeue the items and
-        /// dispose it after usage!
+        /// dispose it after usage!.
         /// </summary>
         public virtual TransactionLog TransactionLog
         {
@@ -542,8 +542,8 @@ namespace Cave.Data
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
         /// </summary>
-        /// <param name="row">The row to replace (valid ID needed)</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        /// <param name="row">The row to replace (valid ID needed).</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
         public void Replace(Row row, bool writeTransaction)
         {
             lock (this)
@@ -556,8 +556,8 @@ namespace Cave.Data
         /// Inserts a row to the table. If an ID &lt; 0 is given an automatically generated ID will be used to add the dataset.
         /// </summary>
         /// <param name="row">The row to insert. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
-        /// <returns>Returns the ID of the inserted dataset</returns>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
+        /// <returns>Returns the ID of the inserted dataset.</returns>
         public long Insert(Row row, bool writeTransaction)
         {
             lock (this)
@@ -568,7 +568,7 @@ namespace Cave.Data
 
         /// <summary>Inserts rows into the table using a transaction.</summary>
         /// <param name="rows">The rows to insert.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
         public void Insert(IEnumerable<Row> rows, bool writeTransaction)
         {
             lock (this)
@@ -577,9 +577,9 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>Updates a row to the table. The row must exist already!</summary>
-        /// <param name="row">The row to update</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        /// <summary>Updates a row to the table. The row must exist already!.</summary>
+        /// <param name="row">The row to update.</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
         /// <returns></returns>
         public void Update(Row row, bool writeTransaction)
         {
@@ -590,8 +590,8 @@ namespace Cave.Data
         }
 
         /// <summary>Removes a row from the table.</summary>
-        /// <param name="id">The dataset ID to remove</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        /// <param name="id">The dataset ID to remove.</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
         public void Delete(long id, bool writeTransaction)
         {
             lock (this)
@@ -601,8 +601,8 @@ namespace Cave.Data
         }
 
         /// <summary>Removes all rows from the table matching the specified search.</summary>
-        /// <param name="search">The Search used to identify rows for removal</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        /// <param name="search">The Search used to identify rows for removal.</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
         /// <returns>Returns the number of dataset deleted.</returns>
         public int TryDelete(Search search, bool writeTransaction)
         {
@@ -623,17 +623,18 @@ namespace Cave.Data
     }
 
     /// <summary>
-    /// Provides a thread safe table stored completely in memory
+    /// Provides a thread safe table stored completely in memory.
     /// </summary>
     [DebuggerDisplay("{Name}")]
-    public class SynchronizedMemoryTable<T> : IMemoryTable<T> where T : struct
+    public class SynchronizedMemoryTable<T> : IMemoryTable<T>
+        where T : struct
     {
         /// <summary>Gets the name of the log source.</summary>
         /// <value>The name of the log source.</value>
         public virtual string LogSourceName => "SynchronizedMemoryTable <" + Name + ">";
 
         /// <summary>
-        /// Converts the typed instance to an untyped one
+        /// Converts the typed instance to an untyped one.
         /// </summary>
         /// <param name="table"></param>
         /// <returns></returns>
@@ -674,12 +675,12 @@ namespace Cave.Data
             this.table = table;
         }
 
-        /// <summary>Replaces all data present with the data at the given table</summary>
-        /// <param name="table">The table to load</param>
+        /// <summary>Replaces all data present with the data at the given table.</summary>
+        /// <param name="table">The table to load.</param>
         /// <param name="search">The search.</param>
         /// <param name="callback">The callback.</param>
         /// <param name="userItem">The user item.</param>
-        /// <exception cref="ArgumentNullException">Table</exception>
+        /// <exception cref="ArgumentNullException">Table.</exception>
         public void LoadTable(ITable table, Search search = null, ProgressCallback callback = null, object userItem = null)
         {
             if (table == null)
@@ -696,10 +697,10 @@ namespace Cave.Data
         #region ITable<T> members
 
         /// <summary>
-        /// Obtains a row from the table
+        /// Obtains a row from the table.
         /// </summary>
-        /// <param name="id">The ID of the row to be fetched</param>
-        /// <returns>Returns the row</returns>
+        /// <param name="id">The ID of the row to be fetched.</param>
+        /// <returns>Returns the row.</returns>
         public T GetStruct(long id)
         {
             lock (this)
@@ -712,7 +713,7 @@ namespace Cave.Data
         /// Inserts a row into the table. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.
         /// </summary>
         /// <param name="row">The row to insert. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.</param>
-        /// <returns>Returns the ID of the inserted dataset</returns>
+        /// <returns>Returns the ID of the inserted dataset.</returns>
         public long Insert(T row)
         {
             lock (this)
@@ -745,9 +746,9 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Updates a row at the table. The row must exist already!
+        /// Updates a row at the table. The row must exist already!.
         /// </summary>
-        /// <param name="row">The row to update</param>
+        /// <param name="row">The row to update.</param>
         public void Update(T row)
         {
             lock (this)
@@ -757,9 +758,9 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Updates rows at the table. The rows must exist already!
+        /// Updates rows at the table. The rows must exist already!.
         /// </summary>
-        /// <param name="rows">The rows to update</param>
+        /// <param name="rows">The rows to update.</param>
         public void Update(IEnumerable<T> rows)
         {
             lock (this)
@@ -768,8 +769,8 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>Updates rows at the table. The rows must exist already!</summary>
-        /// <param name="rows">The rows to update</param>
+        /// <summary>Updates rows at the table. The rows must exist already!.</summary>
+        /// <param name="rows">The rows to update.</param>
         /// <param name="writeTransaction">if set to <c>true</c> [write transaction].</param>
         public void Update(IEnumerable<T> rows, bool writeTransaction = true)
         {
@@ -782,7 +783,7 @@ namespace Cave.Data
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
         /// </summary>
-        /// <param name="row">The row to replace (valid ID needed)</param>
+        /// <param name="row">The row to replace (valid ID needed).</param>
         public void Replace(T row)
         {
             lock (this)
@@ -794,7 +795,7 @@ namespace Cave.Data
         /// <summary>
         /// Replaces rows at the table. This inserts (if the row does not exist) or updates (if it exists) each row.
         /// </summary>
-        /// <param name="rows">The rows to replace (valid ID needed)</param>
+        /// <param name="rows">The rows to replace (valid ID needed).</param>
         public void Replace(IEnumerable<T> rows)
         {
             lock (this)
@@ -806,7 +807,7 @@ namespace Cave.Data
         /// <summary>
         /// Replaces rows at the table. This inserts (if the row does not exist) or updates (if it exists) each row.
         /// </summary>
-        /// <param name="rows">The rows to replace (valid ID needed)</param>
+        /// <param name="rows">The rows to replace (valid ID needed).</param>
         /// <param name="writeTransaction">if set to <c>true</c> [write transaction].</param>
         public void Replace(IEnumerable<T> rows, bool writeTransaction)
         {
@@ -819,9 +820,9 @@ namespace Cave.Data
         /// <summary>
         /// Searches the table for a single row with given search.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the row found</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the row found.</returns>
         public T GetStruct(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             lock (this)
@@ -833,9 +834,9 @@ namespace Cave.Data
         /// <summary>
         /// Searches the table for rows with given search.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the rows found</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the rows found.</returns>
         public List<T> GetStructs(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             lock (this)
@@ -845,7 +846,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the row with the specified ID
+        /// Obtains the row with the specified ID.
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -861,10 +862,10 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the rows with the given ids
+        /// Obtains the rows with the given ids.
         /// </summary>
-        /// <param name="ids">IDs of the rows to fetch from the table</param>
-        /// <returns>Returns the rows</returns>
+        /// <param name="ids">IDs of the rows to fetch from the table.</param>
+        /// <returns>Returns the rows.</returns>
         public virtual List<T> GetStructs(IEnumerable<long> ids)
         {
             lock (this)
@@ -874,31 +875,31 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// The storage engine the database belongs to
+        /// The storage engine the database belongs to.
         /// </summary>
         public IStorage Storage => table.Storage;
 
         /// <summary>
-        /// Obtains the database the table belongs to
+        /// Obtains the database the table belongs to.
         /// </summary>
         public IDatabase Database => table.Database;
 
         /// <summary>
-        /// Obtains the name of the table
+        /// Obtains the name of the table.
         /// </summary>
         public string Name => table.Name;
 
         /// <summary>
-        /// Obtains the RowLayout of the table
+        /// Obtains the RowLayout of the table.
         /// </summary>
         public RowLayout Layout => table.Layout;
 
         /// <summary>
-        /// Counts the results of a given search
+        /// Counts the results of a given search.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the number of rows found matching the criteria given</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the number of rows found matching the criteria given.</returns>
         public virtual long Count(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             lock (this)
@@ -908,7 +909,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the RowCount
+        /// Obtains the RowCount.
         /// </summary>
         public long RowCount
         {
@@ -942,10 +943,10 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains a row from the table
+        /// Obtains a row from the table.
         /// </summary>
-        /// <param name="id">The ID of the row to be fetched</param>
-        /// <returns>Returns the row</returns>
+        /// <param name="id">The ID of the row to be fetched.</param>
+        /// <returns>Returns the row.</returns>
         public Row GetRow(long id)
         {
             lock (this)
@@ -956,10 +957,10 @@ namespace Cave.Data
 
         /// <summary>
         /// This function does a lookup on the ids of the table and returns the row with the n-th ID where n is the given index.
-        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!
+        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
         /// <param name="index">The index of the row to be fetched</param>
         /// </summary>
-        /// <returns>Returns the row</returns>
+        /// <returns>Returns the row.</returns>
         public Row GetRowAt(int index)
         {
             lock (this)
@@ -969,10 +970,10 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Sets the specified value to the specified fieldname on all rows
+        /// Sets the specified value to the specified fieldname on all rows.
         /// </summary>
-        /// <param name="field">The fields name</param>
-        /// <param name="value">The value to set</param>
+        /// <param name="field">The fields name.</param>
+        /// <param name="value">The value to set.</param>
         public void SetValue(string field, object value)
         {
             lock (this)
@@ -982,10 +983,10 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Checks a given ID for existance
+        /// Checks a given ID for existance.
         /// </summary>
-        /// <param name="id">The dataset ID to look for</param>
-        /// <returns>Returns whether the dataset exists or not</returns>
+        /// <param name="id">The dataset ID to look for.</param>
+        /// <returns>Returns whether the dataset exists or not.</returns>
         public bool Exist(long id)
         {
             lock (this)
@@ -994,7 +995,7 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>Checks a given search for any datasets matching</summary>
+        /// <summary>Checks a given search for any datasets matching.</summary>
         /// <param name="search"></param>
         /// <returns></returns>
         public bool Exist(Search search)
@@ -1021,7 +1022,7 @@ namespace Cave.Data
         /// Inserts a row into the table. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.
         /// </summary>
         /// <param name="row">The row to insert. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.</param>
-        /// <returns>Returns the ID of the inserted dataset</returns>
+        /// <returns>Returns the ID of the inserted dataset.</returns>
         public long Insert(Row row)
         {
             lock (this)
@@ -1044,7 +1045,7 @@ namespace Cave.Data
 
         /// <summary>Inserts rows into the table using a transaction.</summary>
         /// <param name="rows">The rows to insert.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
         public void Insert(IEnumerable<Row> rows, bool writeTransaction)
         {
             lock (this)
@@ -1054,10 +1055,10 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Updates a row at the table. The row must exist already!
+        /// Updates a row at the table. The row must exist already!.
         /// </summary>
-        /// <param name="row">The row to update</param>
-        /// <returns>Returns the ID of the dataset</returns>
+        /// <param name="row">The row to update.</param>
+        /// <returns>Returns the ID of the dataset.</returns>
         public void Update(Row row)
         {
             lock (this)
@@ -1080,7 +1081,7 @@ namespace Cave.Data
 
         /// <summary>Updates rows at the table using a transaction.</summary>
         /// <param name="rows">The rows to insert.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
         public void Update(IEnumerable<Row> rows, bool writeTransaction)
         {
             lock (this)
@@ -1092,7 +1093,7 @@ namespace Cave.Data
         /// <summary>
         /// Removes a row from the table.
         /// </summary>
-        /// <param name="id">The dataset ID to remove</param>
+        /// <param name="id">The dataset ID to remove.</param>
         public void Delete(long id)
         {
             lock (this)
@@ -1104,7 +1105,7 @@ namespace Cave.Data
         /// <summary>
         /// Removes rows from the table.
         /// </summary>
-        /// <param name="ids">The dataset IDs to remove</param>
+        /// <param name="ids">The dataset IDs to remove.</param>
         public void Delete(IEnumerable<long> ids)
         {
             lock (this)
@@ -1116,7 +1117,7 @@ namespace Cave.Data
         /// <summary>
         /// Removes all rows from the table matching the given search.
         /// </summary>
-        /// <param name="search">The Search used to identify rows for removal</param>
+        /// <param name="search">The Search used to identify rows for removal.</param>
         public int TryDelete(Search search)
         {
             lock (this)
@@ -1128,8 +1129,8 @@ namespace Cave.Data
         /// <summary>
         /// Removes all rows from the table matching the given search.
         /// </summary>
-        /// <param name="search">The Search used to identify rows for removal</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/></param>
+        /// <param name="search">The Search used to identify rows for removal.</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
         public int TryDelete(Search search, bool writeTransaction)
         {
             lock (this)
@@ -1141,7 +1142,7 @@ namespace Cave.Data
         /// <summary>
         /// Replaces rows at the table. This inserts (if the row does not exist) or updates (if it exists) each row.
         /// </summary>
-        /// <param name="rows">The rows to replace (valid ID needed)</param>
+        /// <param name="rows">The rows to replace (valid ID needed).</param>
         public void Replace(IEnumerable<Row> rows)
         {
             lock (this)
@@ -1153,8 +1154,8 @@ namespace Cave.Data
         /// <summary>
         /// Replaces rows at the table. This inserts (if the row does not exist) or updates (if it exists) each row.
         /// </summary>
-        /// <param name="rows">The rows to replace (valid ID needed)</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        /// <param name="rows">The rows to replace (valid ID needed).</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
         public void Replace(IEnumerable<Row> rows, bool writeTransaction)
         {
             lock (this)
@@ -1166,9 +1167,9 @@ namespace Cave.Data
         /// <summary>
         /// Searches the table for a row with given field value combinations.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the ID of the row found or -1</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the ID of the row found or -1.</returns>
         public long FindRow(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             lock (this)
@@ -1180,9 +1181,9 @@ namespace Cave.Data
         /// <summary>
         /// Searches the table for rows with given field value combinations.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the IDs of the rows found</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the IDs of the rows found.</returns>
         public List<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             lock (this)
@@ -1194,9 +1195,9 @@ namespace Cave.Data
         /// <summary>
         /// Searches the table for a single row with given search.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the row found</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the row found.</returns>
         public Row GetRow(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             lock (this)
@@ -1208,9 +1209,9 @@ namespace Cave.Data
         /// <summary>
         /// Searches the table for rows with given search.
         /// </summary>
-        /// <param name="search">The search to run</param>
-        /// <param name="resultOption">Options for the search and the result set</param>
-        /// <returns>Returns the rows found</returns>
+        /// <param name="search">The search to run.</param>
+        /// <param name="resultOption">Options for the search and the result set.</param>
+        /// <returns>Returns the rows found.</returns>
         public List<Row> GetRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             lock (this)
@@ -1220,7 +1221,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!)
+        /// Obtains the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!).
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
@@ -1233,7 +1234,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the next free ID at the table
+        /// Obtains the next free ID at the table.
         /// </summary>
         /// <returns></returns>
         public long GetNextFreeID()
@@ -1245,10 +1246,10 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the rows with the given ids
+        /// Obtains the rows with the given ids.
         /// </summary>
-        /// <param name="ids">IDs of the rows to fetch from the table</param>
-        /// <returns>Returns the rows</returns>
+        /// <param name="ids">IDs of the rows to fetch from the table.</param>
+        /// <returns>Returns the rows.</returns>
         public virtual List<Row> GetRows(IEnumerable<long> ids)
         {
             lock (this)
@@ -1258,7 +1259,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains an array with all rows
+        /// Obtains an array with all rows.
         /// </summary>
         /// <returns></returns>
         public List<Row> GetRows()
@@ -1269,10 +1270,10 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>Obtains all different field values of a given field</summary>
+        /// <summary>Obtains all different field values of a given field.</summary>
         /// <typeparam name="TValue">The type of the value.</typeparam>
         /// <param name="field">The field.</param>
-        /// <param name="includeNull">allow null value to be added to the results</param>
+        /// <param name="includeNull">allow null value to be added to the results.</param>
         /// <param name="ids">The ids.</param>
         /// <returns></returns>
         public IItemSet<TValue> GetValues<TValue>(string field, bool includeNull = false, IEnumerable<long> ids = null)
@@ -1283,11 +1284,11 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>Commits a whole TransactionLog to the table</summary>
-        /// <param name="transactions">The transaction log to read</param>
+        /// <summary>Commits a whole TransactionLog to the table.</summary>
+        /// <param name="transactions">The transaction log to read.</param>
         /// <param name="flags">The flags to use.</param>
-        /// <param name="count">Number of transactions to combine at one write</param>
-        /// <returns>Returns the number of transactions done or -1 if unknown</returns>
+        /// <param name="count">Number of transactions to combine at one write.</param>
+        /// <returns>Returns the number of transactions done or -1 if unknown.</returns>
         public int Commit(TransactionLog transactions, TransactionFlags flags = TransactionFlags.Default, int count = -1)
         {
             lock (this)
@@ -1299,7 +1300,7 @@ namespace Cave.Data
         /// <summary>Tries to get the (unique) row with the given fieldvalue.</summary>
         /// <param name="search">The search.</param>
         /// <param name="row">The row.</param>
-        /// <returns>Returns true on success, false otherwise</returns>
+        /// <returns>Returns true on success, false otherwise.</returns>
         public bool TryGetStruct(Search search, out T row)
         {
             List<long> ids = FindRows(search);
@@ -1326,7 +1327,7 @@ namespace Cave.Data
 
         #region MemoryTable<T> additions
         /// <summary>
-        /// Replaces the whole data at the table with the specified one without writing transactions
+        /// Replaces the whole data at the table with the specified one without writing transactions.
         /// </summary>
         /// <param name="items"></param>
         public void SetStructs(IEnumerable<T> items)
@@ -1338,7 +1339,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Replaces the whole data at the table with the specified one without writing transactions
+        /// Replaces the whole data at the table with the specified one without writing transactions.
         /// </summary>
         /// <param name="rows"></param>
         public void SetRows(IEnumerable<Row> rows)
@@ -1355,13 +1356,13 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains all IDs
+        /// Obtains all IDs.
         /// </summary>
         public List<long> IDs { get { lock (this) { return table.IDs; } } }
 
         /// <summary>
         /// Gets/sets the transaction log used to store all changes. The user has to create it, dequeue the items and
-        /// dispose it after usage!
+        /// dispose it after usage!.
         /// </summary>
         public virtual TransactionLog TransactionLog
         {
@@ -1374,9 +1375,9 @@ namespace Cave.Data
         /// <summary>
         /// Obtains the row struct with the given index.
         /// This allows a memorytable to be used as virtual list for listviews, ...
-        /// Note that indices will change on each update, insert, delete and sorting is not garanteed!
+        /// Note that indices will change on each update, insert, delete and sorting is not garanteed!.
         /// </summary>
-        /// <param name="index">The rows index (0..RowCount-1)</param>
+        /// <param name="index">The rows index (0..RowCount-1).</param>
         /// <returns></returns>
         /// <exception cref="IndexOutOfRangeException"></exception>
         public virtual T GetStructAt(int index)
@@ -1425,7 +1426,7 @@ namespace Cave.Data
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
         /// </summary>
-        /// <param name="row">The row to replace (valid ID needed)</param>
+        /// <param name="row">The row to replace (valid ID needed).</param>
         public void Replace(Row row)
         {
             lock (this)
@@ -1437,8 +1438,8 @@ namespace Cave.Data
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
         /// </summary>
-        /// <param name="row">The row to replace (valid ID needed)</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        /// <param name="row">The row to replace (valid ID needed).</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
         public void Replace(Row row, bool writeTransaction)
         {
             lock (this)
@@ -1451,8 +1452,8 @@ namespace Cave.Data
         /// Inserts a row to the table. If an ID &lt; 0 is given an automatically generated ID will be used to add the dataset.
         /// </summary>
         /// <param name="row">The row to insert. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
-        /// <returns>Returns the ID of the inserted dataset</returns>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
+        /// <returns>Returns the ID of the inserted dataset.</returns>
         public long Insert(Row row, bool writeTransaction)
         {
             lock (this)
@@ -1461,9 +1462,9 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>Updates a row to the table. The row must exist already!</summary>
-        /// <param name="row">The row to update</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        /// <summary>Updates a row to the table. The row must exist already!.</summary>
+        /// <param name="row">The row to update.</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
         /// <returns></returns>
         public void Update(Row row, bool writeTransaction)
         {
@@ -1474,8 +1475,8 @@ namespace Cave.Data
         }
 
         /// <summary>Removes a row from the table.</summary>
-        /// <param name="id">The dataset ID to remove</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        /// <param name="id">The dataset ID to remove.</param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
         public void Delete(long id, bool writeTransaction = true)
         {
             lock (this)
@@ -1486,7 +1487,7 @@ namespace Cave.Data
 
         /// <summary>Removes a row from the table.</summary>
         /// <param name="ids">The ids.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" /></param>
+        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
         public void Delete(IEnumerable<long> ids, bool writeTransaction = true)
         {
             lock (this)

@@ -7,7 +7,7 @@ using Cave.Collections;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides a data row implementation providing untyped data to strong typed struct interop
+    /// Provides a data row implementation providing untyped data to strong typed struct interop.
     /// </summary>
     [DebuggerTypeProxy(typeof(DebugView))]
     public sealed class Row : IEquatable<Row>
@@ -31,12 +31,7 @@ namespace Cave.Data
         /// <returns>The result of the operator.</returns>
         public static bool operator ==(Row x, Row y)
         {
-            if (ReferenceEquals(null, x))
-            {
-                return ReferenceEquals(y, null);
-            }
-
-            return x.Equals(y);
+            return ReferenceEquals(null, x) ? ReferenceEquals(y, null) : x.Equals(y);
         }
 
         /// <summary>Implements the operator !=.</summary>
@@ -45,12 +40,7 @@ namespace Cave.Data
         /// <returns>The result of the operator.</returns>
         public static bool operator !=(Row x, Row y)
         {
-            if (ReferenceEquals(null, x))
-            {
-                return !ReferenceEquals(y, null);
-            }
-
-            return !x.Equals(y);
+            return ReferenceEquals(null, x) ? !ReferenceEquals(y, null) : !x.Equals(y);
         }
 
         #region private implementation
@@ -61,9 +51,10 @@ namespace Cave.Data
         #region constructors
 
         /// <summary>
-        /// Creates a new <see cref="Row"/> instance
+        /// Creates a new <see cref="Row"/> instance.
         /// </summary>
-        public static Row Create<T>(ref RowLayout layoutCache, T item) where T : struct
+        public static Row Create<T>(ref RowLayout layoutCache, T item)
+            where T : struct
         {
             if (layoutCache == null)
             {
@@ -74,9 +65,10 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a new <see cref="Row"/> instance
+        /// Creates a new <see cref="Row"/> instance.
         /// </summary>
-        public static Row Create<T>(RowLayout layout, T item) where T : struct
+        public static Row Create<T>(RowLayout layout, T item)
+            where T : struct
         {
             if (!layout.IsTyped)
             {
@@ -87,7 +79,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a new <see cref="Row"/> instance
+        /// Creates a new <see cref="Row"/> instance.
         /// </summary>
         public Row(object[] values)
         {
@@ -98,17 +90,17 @@ namespace Cave.Data
         #region Row Members
 
         /// <summary>
-        /// Obtains the value of the specified field
+        /// Obtains the value of the specified field.
         /// </summary>
-        /// <param name="fieldNumber">The fieldnumber to read</param>
-        /// <returns>Returns the value</returns>
+        /// <param name="fieldNumber">The fieldnumber to read.</param>
+        /// <returns>Returns the value.</returns>
         public object GetValue(int fieldNumber)
         {
             return data[fieldNumber];
         }
 
         /// <summary>
-        /// Retrieves a string for the specified value. The string may be parsed back to a value using <see cref="RowLayout.ParseValue(int, string, string, CultureInfo)" />
+        /// Retrieves a string for the specified value. The string may be parsed back to a value using <see cref="RowLayout.ParseValue(int, string, string, CultureInfo)" />.
         /// </summary>
         /// <param name="layout">The layout.</param>
         /// <param name="fieldNumber">The field number.</param>
@@ -140,16 +132,11 @@ namespace Cave.Data
         public long GetID(int idFieldIndex)
         {
             object value = data[idFieldIndex];
-            if (value is long)
-            {
-                return (long)value;
-            }
-
-            return Convert.ToInt64(value);
+            return value is long ? (long)value : Convert.ToInt64(value);
         }
 
         /// <summary>
-        /// Obtains all values of the row
+        /// Obtains all values of the row.
         /// </summary>
         /// <returns></returns>
         public object[] GetValues()
@@ -158,10 +145,11 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains a struct containing all values of the row
+        /// Obtains a struct containing all values of the row.
         /// </summary>
         /// <exception cref="NotSupportedException">Thrown if the row was not created with a typed layout.</exception>
-        public T GetStruct<T>(RowLayout layout) where T : struct
+        public T GetStruct<T>(RowLayout layout)
+            where T : struct
         {
             if (!layout.IsTyped)
             {
@@ -175,23 +163,18 @@ namespace Cave.Data
 
         #endregion
 
-        /// <summary>Obtains a row value as string using the string format defined at the rowlayout</summary>
+        /// <summary>Obtains a row value as string using the string format defined at the rowlayout.</summary>
         /// <param name="layout">The layout.</param>
         /// <param name="field">The field.</param>
         /// <returns></returns>
         public string GetDisplayString(RowLayout layout, int field)
         {
             object value = GetValue(field);
-            if (value == null)
-            {
-                return "";
-            }
-
-            return layout.GetDisplayString(field, value);
+            return value == null ? "" : layout.GetDisplayString(field, value);
         }
 
         /// <summary>
-        /// Obtains all row values as strings using the string format defined at the rowlayout
+        /// Obtains all row values as strings using the string format defined at the rowlayout.
         /// </summary>
         /// <returns></returns>
         public string[] GetDisplayStrings(RowLayout layout)
@@ -208,7 +191,7 @@ namespace Cave.Data
         #region overrides
 
         /// <summary>
-        /// Returns the row type and fieldcount
+        /// Returns the row type and fieldcount.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -259,12 +242,7 @@ namespace Cave.Data
         /// </returns>
         public bool Equals(Row other)
         {
-            if (ReferenceEquals(null, other))
-            {
-                return false;
-            }
-
-            return DefaultComparer.Equals(data, other.data);
+            return ReferenceEquals(null, other) ? false : DefaultComparer.Equals(data, other.data);
         }
 
         /// <summary>Returns a hash code for this instance.</summary>

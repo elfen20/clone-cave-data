@@ -6,16 +6,17 @@ using Cave.IO;
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides writing of csv files using a struct or class
+    /// Provides writing of csv files using a struct or class.
     /// </summary>
     public sealed class DatWriter : IDisposable
     {
         /// <summary>
-        /// Creates a new dat file with the specified name and writes the whole table
+        /// Creates a new dat file with the specified name and writes the whole table.
         /// </summary>
         /// <param name="table"></param>
         /// <param name="fileName"></param>
-        public static void WriteTable<T>(ITable<T> table, string fileName) where T : struct
+        public static void WriteTable<T>(ITable<T> table, string fileName)
+            where T : struct
         {
             if (table == null)
             {
@@ -29,7 +30,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a new dat file with the specified name and writes the whole table
+        /// Creates a new dat file with the specified name and writes the whole table.
         /// </summary>
         /// <param name="table"></param>
         /// <param name="fileName"></param>
@@ -49,7 +50,7 @@ namespace Cave.Data
         DataWriter m_Writer;
 
         /// <summary>
-        /// Creates a new dat file writer
+        /// Creates a new dat file writer.
         /// </summary>
         /// <param name="layout"></param>
         /// <param name="fileName"></param>
@@ -59,7 +60,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a new csv file writer
+        /// Creates a new csv file writer.
         /// </summary>
         /// <param name="layout"></param>
         /// <param name="stream"></param>
@@ -76,7 +77,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// row layout
+        /// row layout.
         /// </summary>
         RowLayout m_Layout;
 
@@ -99,7 +100,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Writes a row to the file
+        /// Writes a row to the file.
         /// </summary>
         /// <param name="row"></param>
         public void Write(Row row)
@@ -109,16 +110,17 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Writes a row to the file
+        /// Writes a row to the file.
         /// </summary>
         /// <param name="value"></param>
-        public void Write<T>(T value) where T : struct
+        public void Write<T>(T value)
+            where T : struct
         {
             Write(new Row(m_Layout.GetValues(value)));
         }
 
         /// <summary>
-        /// Writes a number of rows to the file
+        /// Writes a number of rows to the file.
         /// </summary>
         /// <param name="table"></param>
         public void WriteTable(IEnumerable<Row> table)
@@ -136,10 +138,11 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Writes a number of rows to the file
+        /// Writes a number of rows to the file.
         /// </summary>
         /// <param name="table"></param>
-        public void WriteRows<T>(IEnumerable<T> table) where T : struct
+        public void WriteRows<T>(IEnumerable<T> table)
+            where T : struct
         {
             if (table == null)
             {
@@ -157,7 +160,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Writes a full table of rows to the file
+        /// Writes a full table of rows to the file.
         /// </summary>
         /// <param name="table"></param>
         public void WriteTable(ITable table)
@@ -176,7 +179,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Closes the writer and the stream
+        /// Closes the writer and the stream.
         /// </summary>
         public void Close()
         {
@@ -188,7 +191,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Disposes the base stream
+        /// Disposes the base stream.
         /// </summary>
         public void Dispose()
         {

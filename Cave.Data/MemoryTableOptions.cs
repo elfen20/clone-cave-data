@@ -3,7 +3,7 @@
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides options for memory tables
+    /// Provides options for memory tables.
     /// </summary>
     [Flags]
     public enum MemoryTableOptions

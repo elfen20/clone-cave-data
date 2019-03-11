@@ -4,12 +4,12 @@ using System.IO;
 namespace Cave.Data.SQLite
 {
     /// <summary>
-    /// Provides an interface to subversioned files and directories (reads .svn/entries)
+    /// Provides an interface to subversioned files and directories (reads .svn/entries).
     /// </summary>
     public static class Subversion
     {
         /// <summary>
-        /// Obtains the root .svn path of the repository
+        /// Obtains the root .svn path of the repository.
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
@@ -46,7 +46,7 @@ namespace Cave.Data.SQLite
         #endregion
 
         /// <summary>
-        /// Obtains the subversion version this repository was written by
+        /// Obtains the subversion version this repository was written by.
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>
@@ -81,7 +81,7 @@ namespace Cave.Data.SQLite
         }
 
         /// <summary>
-        /// Obtains the revision of a specified directory
+        /// Obtains the revision of a specified directory.
         /// </summary>
         /// <param name="path"></param>
         /// <returns></returns>

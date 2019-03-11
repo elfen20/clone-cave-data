@@ -12,7 +12,7 @@ using Cave.IO;
 namespace Cave.Data.Sql
 {
     /// <summary>
-    /// Provides a base class for sql 92 <see cref="IStorage"/> implementations
+    /// Provides a base class for sql 92 <see cref="IStorage"/> implementations.
     /// </summary>
     public abstract class SqlStorage : Storage, IDisposable
     {
@@ -125,10 +125,10 @@ namespace Cave.Data.Sql
             }
 
             /// <summary>
-            /// Returns a connection to the connection pool for reuse
+            /// Returns a connection to the connection pool for reuse.
             /// </summary>
-            /// <param name="connection">The connection to return to the queue</param>
-            /// <param name="close">Force close of the connection</param>
+            /// <param name="connection">The connection to return to the queue.</param>
+            /// <param name="close">Force close of the connection.</param>
             public void ReturnConnection(ref SqlConnection connection, bool close = false)
             {
                 if (connection == null)
@@ -212,8 +212,8 @@ namespace Cave.Data.Sql
 
         #region constructors
 
-        /// <summary>Creates a new <see cref="SqlStorage" /> with the specified ConnectionString</summary>
-        /// <param name="connectionString">the connection details</param>
+        /// <summary>Creates a new <see cref="SqlStorage" /> with the specified ConnectionString.</summary>
+        /// <param name="connectionString">the connection details.</param>
         /// <param name="options">The options.</param>
         /// <exception cref="TypeLoadException">
         /// </exception>
@@ -253,10 +253,10 @@ namespace Cave.Data.Sql
 
         #region assembly interface functionality
         /// <summary>
-        /// Initializes the needed interop assembly and type
+        /// Initializes the needed interop assembly and type.
         /// </summary>
-        /// <param name="dbAdapterAssembly">Assembly containing all needed types</param>
-        /// <param name="dbConnectionType">IDbConnection type used for the database</param>
+        /// <param name="dbAdapterAssembly">Assembly containing all needed types.</param>
+        /// <param name="dbConnectionType">IDbConnection type used for the database.</param>
         protected abstract void InitializeInterOp(out Assembly dbAdapterAssembly, out Type dbConnectionType);
 
         /// <summary>
@@ -265,12 +265,12 @@ namespace Cave.Data.Sql
         protected abstract bool DBConnectionCanChangeDataBase { get; }
 
         /// <summary>
-        /// Obtains the <see cref="IDbConnection"/> type
+        /// Obtains the <see cref="IDbConnection"/> type.
         /// </summary>
         protected readonly Type DbConnectionType;
 
         /// <summary>
-        /// Obtains the <see cref="Assembly"/> with the name <see cref="DbAdapterAssembly"/> containing the needed <see cref="DbConnectionType"/>
+        /// Obtains the <see cref="Assembly"/> with the name <see cref="DbAdapterAssembly"/> containing the needed <see cref="DbConnectionType"/>.
         /// </summary>
         protected readonly Assembly DbAdapterAssembly;
 
@@ -282,13 +282,13 @@ namespace Cave.Data.Sql
         /// <value>The native date time format.</value>
         public string NativeDateTimeFormat = "yyyy'-'MM'-'dd' 'HH':'mm':'ss";
 
-        /// <summary>Escapes a field name for direct use in a query</summary>
+        /// <summary>Escapes a field name for direct use in a query.</summary>
         /// <param name="field">The field.</param>
         /// <returns></returns>
         public abstract string EscapeFieldName(FieldProperties field);
 
         /// <summary>
-        /// Escapes a string value for direct use in a query (whenever possible use parameters instead!)
+        /// Escapes a string value for direct use in a query (whenever possible use parameters instead!).
         /// </summary>
         /// <param name="text"></param>
         /// <returns></returns>
@@ -351,10 +351,10 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Escapes a field value for direct use in a query (whenever possible use parameters instead!)
+        /// Escapes a field value for direct use in a query (whenever possible use parameters instead!).
         /// </summary>
-        /// <param name="properties">FieldProperties</param>
-        /// <param name="value">Value to escape</param>
+        /// <param name="properties">FieldProperties.</param>
+        /// <param name="value">Value to escape.</param>
         /// <returns></returns>
         public virtual string EscapeFieldValue(FieldProperties properties, object value)
         {
@@ -420,28 +420,23 @@ namespace Cave.Data.Sql
                 }
             }
 
-            if (value.GetType().IsEnum)
-            {
-                return Convert.ToInt64(value).ToString();
-            }
-
-            return EscapeString(value.ToString());
+            return value.GetType().IsEnum ? Convert.ToInt64(value).ToString() : EscapeString(value.ToString());
         }
 
-        /// <summary>Obtains the local <see cref="DataType" /> for the specified database fieldtype</summary>
-        /// <param name="fieldType">The field type at the database</param>
-        /// <param name="fieldSize">The field size at the database</param>
+        /// <summary>Obtains the local <see cref="DataType" /> for the specified database fieldtype.</summary>
+        /// <param name="fieldType">The field type at the database.</param>
+        /// <param name="fieldSize">The field size at the database.</param>
         /// <returns></returns>
         protected virtual DataType GetLocalDataType(Type fieldType, uint fieldSize)
         {
             return RowLayout.DataTypeFromType(fieldType);
         }
 
-        /// <summary>Converts a local value into a database value</summary>
-        /// <param name="field">The <see cref="FieldProperties" /> of the affected field</param>
-        /// <param name="localValue">The local value to be encoded for the database</param>
+        /// <summary>Converts a local value into a database value.</summary>
+        /// <param name="field">The <see cref="FieldProperties" /> of the affected field.</param>
+        /// <param name="localValue">The local value to be encoded for the database.</param>
         /// <returns></returns>
-        /// <exception cref="System.ArgumentNullException">Field</exception>
+        /// <exception cref="System.ArgumentNullException">Field.</exception>
         /// <exception cref="System.NotSupportedException"></exception>
         /// <exception cref="System.NotImplementedException"></exception>
         public virtual object GetDatabaseValue(FieldProperties field, object localValue)
@@ -533,11 +528,11 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Converts a database value into a local value
+        /// Converts a database value into a local value.
         /// </summary>
-        /// <param name="field">The <see cref="FieldProperties"/> of the affected field</param>
-        /// <param name="databaseValue">The value retrieved from the database</param>
-        /// <returns>Returns a value for local use</returns>
+        /// <param name="field">The <see cref="FieldProperties"/> of the affected field.</param>
+        /// <param name="databaseValue">The value retrieved from the database.</param>
+        /// <returns>Returns a value for local use.</returns>
         public virtual object GetLocalValue(FieldProperties field, object databaseValue)
         {
             if (field == null)
@@ -554,11 +549,7 @@ namespace Cave.Data.Sql
                         return null;
                     }
                     string text = (string)databaseValue;
-                    if (text == null)
-                    {
-                        return null;
-                    }
-                    return field.ParseValue(text, null, CultureInfo.InvariantCulture);
+                    return text == null ? null : field.ParseValue(text, null, CultureInfo.InvariantCulture);
                 }
                 case DataType.Enum:
                 {
@@ -637,12 +628,7 @@ namespace Cave.Data.Sql
                     return new TimeSpan(ticks);
                 }
             }
-            if (databaseValue == DBNull.Value)
-            {
-                return null;
-            }
-
-            return databaseValue;
+            return databaseValue == DBNull.Value ? null : databaseValue;
         }
 
         #endregion
@@ -652,7 +638,7 @@ namespace Cave.Data.Sql
         /// <summary>
         /// Closes and clears all cached connections. 
         /// </summary>
-        /// <exception cref="ObjectDisposedException">SqlConnection</exception>
+        /// <exception cref="ObjectDisposedException">SqlConnection.</exception>
         public void ClearCachedConnections()
         {
             if (m_Pool == null)
@@ -663,13 +649,13 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Obtains a connection string for the <see cref="DbConnectionType"/>
+        /// Obtains a connection string for the <see cref="DbConnectionType"/>.
         /// </summary>
-        /// <param name="database">The database to connect to</param>
+        /// <param name="database">The database to connect to.</param>
         /// <returns></returns>
         protected abstract string GetConnectionString(string database);
 
-        /// <summary>Retrieves a connection (from the cache) or creates a new one if needed</summary>
+        /// <summary>Retrieves a connection (from the cache) or creates a new one if needed.</summary>
         /// <param name="databaseName">Name of the database.</param>
         /// <returns></returns>
         public SqlConnection GetConnection(string databaseName)
@@ -678,17 +664,17 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Returns a connection to the connection pool for reuse
+        /// Returns a connection to the connection pool for reuse.
         /// </summary>
-        /// <param name="connection">The connection to return to the queue</param>
-        /// <param name="close">Force close of the connection</param>
+        /// <param name="connection">The connection to return to the queue.</param>
+        /// <param name="close">Force close of the connection.</param>
         public void ReturnConnection(ref SqlConnection connection, bool close)
         {
             if (connection == null) { return; }
             m_Pool.ReturnConnection(ref connection, close);
         }
 
-        /// <summary>Creates a new database connection</summary>
+        /// <summary>Creates a new database connection.</summary>
         /// <param name="databaseName">Name of the database.</param>
         /// <returns></returns>
         public virtual IDbConnection CreateNewConnection(string databaseName)
@@ -708,7 +694,7 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Generates an command for the databaseconnection
+        /// Generates an command for the databaseconnection.
         /// </summary>
         /// <param name="connection"></param>
         /// <param name="cmd"></param>
@@ -753,27 +739,27 @@ namespace Cave.Data.Sql
         #region sql command and query functions
 
         /// <summary>
-        /// Obtains wether the connection supports named parameters or not
+        /// Obtains wether the connection supports named parameters or not.
         /// </summary>
         public abstract bool SupportsNamedParameters { get; }
 
         /// <summary>
-        /// Obtains wether the connection supports select * groupby
+        /// Obtains wether the connection supports select * groupby.
         /// </summary>
         public abstract bool SupportsAllFieldsGroupBy { get; }
 
         /// <summary>
-        /// Obtains the parameter prefix for this storage
+        /// Obtains the parameter prefix for this storage.
         /// </summary>
         public abstract string ParameterPrefix { get; }
 
         /// <summary>
-        /// Command timeout for all sql commands
+        /// Command timeout for all sql commands.
         /// </summary>
         public TimeSpan CommandTimeout = TimeSpan.FromMinutes(1);
 
         /// <summary>
-        /// Obtains FieldProperties for the Database based on requested FieldProperties
+        /// Obtains FieldProperties for the Database based on requested FieldProperties.
         /// </summary>
         /// <param name="field"></param>
         /// <returns></returns>
@@ -812,10 +798,10 @@ namespace Cave.Data.Sql
         #region Schema reader
 
         /// <summary>
-        /// Reads the <see cref="RowLayout"/> from an <see cref="IDataReader"/> containing a query result
+        /// Reads the <see cref="RowLayout"/> from an <see cref="IDataReader"/> containing a query result.
         /// </summary>
         /// <param name="reader"></param>
-        /// <param name="source">Source</param>
+        /// <param name="source">Source.</param>
         /// <returns></returns>
         protected virtual RowLayout ReadSchema(IDataReader reader, string source)
         {
@@ -886,12 +872,12 @@ namespace Cave.Data.Sql
 
         #region execute function
         /// <summary>
-        /// Executes a database dependent sql statement silently
+        /// Executes a database dependent sql statement silently.
         /// </summary>
-        /// <param name="database">The affected database (dependent on the storage engine this may be null)</param>
-        /// <param name="table">The affected table (dependent on the storage engine this may be null)</param>
-        /// <param name="cmd">the database dependent sql statement</param>
-        /// <param name="parameters">the parameters for the sql statement</param>
+        /// <param name="database">The affected database (dependent on the storage engine this may be null).</param>
+        /// <param name="table">The affected table (dependent on the storage engine this may be null).</param>
+        /// <param name="cmd">the database dependent sql statement.</param>
+        /// <param name="parameters">the parameters for the sql statement.</param>
         public virtual int Execute(string database, string table, string cmd, params DatabaseParameter[] parameters)
         {
             if (Closed)
@@ -923,11 +909,11 @@ namespace Cave.Data.Sql
         #endregion
 
         /// <summary>
-        /// Checks another RowLayout for equality with this one and thows an Exception on differences
+        /// Checks another RowLayout for equality with this one and thows an Exception on differences.
         /// </summary>
-        /// <param name="table">Table name to check layout</param>
-        /// <param name="databaseLayout">The database layout</param>
-        /// <param name="itemLayout">The local struct layout</param>
+        /// <param name="table">Table name to check layout.</param>
+        /// <param name="databaseLayout">The database layout.</param>
+        /// <param name="itemLayout">The local struct layout.</param>
         public void CheckLayout(string table, RowLayout databaseLayout, RowLayout itemLayout)
         {
             if (databaseLayout == null)
@@ -957,7 +943,7 @@ namespace Cave.Data.Sql
         }
 
         #region Query functions
-        /// <summary>Reads a row from a DataReader</summary>
+        /// <summary>Reads a row from a DataReader.</summary>
         /// <param name="layout">The layout.</param>
         /// <param name="reader">The reader.</param>
         /// <returns></returns>
@@ -992,10 +978,10 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Obtains the <see cref="RowLayout"/> of the specified database table
+        /// Obtains the <see cref="RowLayout"/> of the specified database table.
         /// </summary>
-        /// <param name="database">The affected database (dependent on the storage engine this may be null)</param>
-        /// <param name="table">The affected table (dependent on the storage engine this may be null)</param>
+        /// <param name="database">The affected database (dependent on the storage engine this may be null).</param>
+        /// <param name="table">The affected table (dependent on the storage engine this may be null).</param>
         /// <returns></returns>
         public virtual RowLayout QuerySchema(string database, string table)
         {
@@ -1037,12 +1023,12 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// querys a single value with a database dependent sql statement
+        /// querys a single value with a database dependent sql statement.
         /// </summary>
-        /// <param name="database">The affected database (dependent on the storage engine this may be null)</param>
-        /// <param name="table">The affected table (dependent on the storage engine this may be null)</param>
-        /// <param name="cmd">the database dependent sql statement</param>
-        /// <param name="parameters">the parameters for the sql statement</param>
+        /// <param name="database">The affected database (dependent on the storage engine this may be null).</param>
+        /// <param name="table">The affected table (dependent on the storage engine this may be null).</param>
+        /// <param name="cmd">the database dependent sql statement.</param>
+        /// <param name="parameters">the parameters for the sql statement.</param>
         /// <returns></returns>
         public virtual object QueryValue(string database, string table, string cmd, params DatabaseParameter[] parameters)
         {
@@ -1094,13 +1080,13 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Queries for a dataset (selected fields, one row) without field type checks
+        /// Queries for a dataset (selected fields, one row) without field type checks.
         /// </summary>
         /// <param name="layout">The expected layout. This needs to be given to support GetStruct().</param>
-        /// <param name="database">The affected database (dependent on the storage engine this may be null)</param>
-        /// <param name="table">The affected table (dependent on the storage engine this may be null)</param>
-        /// <param name="cmd">the database dependent sql statement</param>
-        /// <param name="parameters">the parameters for the sql statement</param>
+        /// <param name="database">The affected database (dependent on the storage engine this may be null).</param>
+        /// <param name="table">The affected table (dependent on the storage engine this may be null).</param>
+        /// <param name="cmd">the database dependent sql statement.</param>
+        /// <param name="parameters">the parameters for the sql statement.</param>
         /// <returns></returns>
         public Row QueryRow(RowLayout layout, string database, string table, string cmd, params DatabaseParameter[] parameters)
         {
@@ -1117,13 +1103,13 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Queries for all matching datasets (selected fields, multiple rows) without field type checks
+        /// Queries for all matching datasets (selected fields, multiple rows) without field type checks.
         /// </summary>
         /// <param name="layout">The expected layout. This needs to be given to support GetStruct().</param>
-        /// <param name="database">The affected database (dependent on the storage engine this may be null)</param>
-        /// <param name="table">The affected table (dependent on the storage engine this may be null)</param>
-        /// <param name="cmd">the database dependent sql statement</param>
-        /// <param name="parameters">the parameters for the sql statement</param>
+        /// <param name="database">The affected database (dependent on the storage engine this may be null).</param>
+        /// <param name="table">The affected table (dependent on the storage engine this may be null).</param>
+        /// <param name="cmd">the database dependent sql statement.</param>
+        /// <param name="parameters">the parameters for the sql statement.</param>
         /// <returns></returns>
         public virtual List<Row> Query(RowLayout layout, string database, string table, string cmd, params DatabaseParameter[] parameters)
         {
@@ -1181,14 +1167,15 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Queries for a dataset (selected fields, one row) with full field type checks (struct has to match database row)
+        /// Queries for a dataset (selected fields, one row) with full field type checks (struct has to match database row).
         /// </summary>
-        /// <param name="database">The affected database (dependent on the storage engine this may be null)</param>
-        /// <param name="table">The affected table (dependent on the storage engine this may be null)</param>
-        /// <param name="cmd">the database dependent sql statement</param>
-        /// <param name="parameters">the parameters for the sql statement</param>
+        /// <param name="database">The affected database (dependent on the storage engine this may be null).</param>
+        /// <param name="table">The affected table (dependent on the storage engine this may be null).</param>
+        /// <param name="cmd">the database dependent sql statement.</param>
+        /// <param name="parameters">the parameters for the sql statement.</param>
         /// <returns></returns>
-        public T QueryRow<T>(string database, string table, string cmd, params DatabaseParameter[] parameters) where T : struct
+        public T QueryRow<T>(string database, string table, string cmd, params DatabaseParameter[] parameters)
+            where T : struct
         {
             List<T> rows = Query<T>(database, table, cmd, parameters);
             if (rows.Count > 1)
@@ -1205,14 +1192,15 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Queries for all matching datasets (selected fields, multiple rows) with full field type checks (struct has to match database row)
+        /// Queries for all matching datasets (selected fields, multiple rows) with full field type checks (struct has to match database row).
         /// </summary>
-        /// <param name="database">The affected database (dependent on the storage engine this may be null)</param>
-        /// <param name="table">The affected table (dependent on the storage engine this may be null)</param>
-        /// <param name="cmd">the database dependent sql statement</param>
-        /// <param name="parameters">the parameters for the sql statement</param>
+        /// <param name="database">The affected database (dependent on the storage engine this may be null).</param>
+        /// <param name="table">The affected table (dependent on the storage engine this may be null).</param>
+        /// <param name="cmd">the database dependent sql statement.</param>
+        /// <param name="parameters">the parameters for the sql statement.</param>
         /// <returns></returns>
-        public virtual List<T> Query<T>(string database, string table, string cmd, params DatabaseParameter[] parameters) where T : struct
+        public virtual List<T> Query<T>(string database, string table, string cmd, params DatabaseParameter[] parameters)
+            where T : struct
         {
             if (Closed)
             {
@@ -1267,10 +1255,10 @@ namespace Cave.Data.Sql
         #region FQTN Member
 
         /// <summary>
-        /// Obtains a full qualified table name
+        /// Obtains a full qualified table name.
         /// </summary>
-        /// <param name="database">A database name</param>
-        /// <param name="table">A table name</param>
+        /// <param name="database">A database name.</param>
+        /// <param name="table">A table name.</param>
         /// <returns></returns>
         public abstract string FQTN(string database, string table);
 
@@ -1290,7 +1278,7 @@ namespace Cave.Data.Sql
         /// </value>
         public bool AllowUnsafeConnections { get; }
 
-        /// <summary>closes the connection to the storage engine</summary>
+        /// <summary>closes the connection to the storage engine.</summary>
         public override void Close()
         {
             Dispose();
@@ -1300,7 +1288,7 @@ namespace Cave.Data.Sql
         private bool disposedValue = false;
 
         /// <summary>
-        /// Releases all resources used by the SqlConnection
+        /// Releases all resources used by the SqlConnection.
         /// </summary>
         protected virtual void Dispose(bool disposing)
         {
@@ -1321,7 +1309,7 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Releases all resources used by the SqlConnection
+        /// Releases all resources used by the SqlConnection.
         /// </summary>
         public void Dispose()
         {

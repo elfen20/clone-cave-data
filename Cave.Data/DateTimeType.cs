@@ -1,7 +1,7 @@
 namespace Cave
 {
     /// <summary>
-    /// Provides available encodings for the date time values in databases
+    /// Provides available encodings for the date time values in databases.
     /// </summary>
     public enum DateTimeType
     {

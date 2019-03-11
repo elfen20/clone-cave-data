@@ -1,7 +1,7 @@
 namespace Cave.Data.SQLite
 {
     /// <summary>
-    /// Provides the available SQLite value types
+    /// Provides the available SQLite value types.
     /// </summary>
     public enum SQLiteValueType
     {
