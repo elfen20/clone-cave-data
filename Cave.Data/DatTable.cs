@@ -202,21 +202,21 @@ namespace Cave.Data
                             }
                             break;
                         }
-                        case DataType.Bool: writer.Write((bool)row.GetValue(i)); break;
-                        case DataType.TimeSpan: writer.Write(((TimeSpan)row.GetValue(i)).Ticks); break;
-                        case DataType.DateTime: writer.Write(((DateTime)row.GetValue(i)).Ticks); break;
-                        case DataType.Single: writer.Write((float)row.GetValue(i)); break;
-                        case DataType.Double: writer.Write((double)row.GetValue(i)); break;
-                        case DataType.Int8: writer.Write((sbyte)row.GetValue(i)); break;
-                        case DataType.Int16: writer.Write((short)row.GetValue(i)); break;
-                        case DataType.UInt8: writer.Write((byte)row.GetValue(i)); break;
-                        case DataType.UInt16: writer.Write((ushort)row.GetValue(i)); break;
-                        case DataType.Int32: if (version == 1) { writer.Write((int)row.GetValue(i)); break; } writer.Write7BitEncoded32((int)row.GetValue(i)); break;
-                        case DataType.Int64: if (version == 1) { writer.Write((long)row.GetValue(i)); break; } writer.Write7BitEncoded64((long)row.GetValue(i)); break;
-                        case DataType.UInt32: if (version == 1) { writer.Write((uint)row.GetValue(i)); break; } writer.Write7BitEncoded32((uint)row.GetValue(i)); break;
-                        case DataType.UInt64: if (version == 1) { writer.Write((ulong)row.GetValue(i)); break; } writer.Write7BitEncoded64((ulong)row.GetValue(i)); break;
-                        case DataType.Char: writer.Write((char)row.GetValue(i)); break;
-                        case DataType.Decimal: writer.Write((decimal)row.GetValue(i)); break;
+                        case DataType.Bool: writer.Write(Convert.ToBoolean(row.GetValue(i) ?? default(bool))); break;
+                        case DataType.TimeSpan: writer.Write(((TimeSpan)(row.GetValue(i) ?? default(TimeSpan))).Ticks); break;
+                        case DataType.DateTime: writer.Write(((DateTime)(row.GetValue(i) ?? default(DateTime))).Ticks); break;
+                        case DataType.Single: writer.Write((float)(row.GetValue(i) ?? default(float))); break;
+                        case DataType.Double: writer.Write((double)(row.GetValue(i) ?? default(double))); break;
+                        case DataType.Int8: writer.Write((sbyte)(row.GetValue(i) ?? default(sbyte))); break;
+                        case DataType.Int16: writer.Write((short)(row.GetValue(i) ?? default(short))); break;
+                        case DataType.UInt8: writer.Write((byte)(row.GetValue(i) ?? default(byte))); break;
+                        case DataType.UInt16: writer.Write((ushort)(row.GetValue(i) ?? default(ushort))); break;
+                        case DataType.Int32: if (version == 1) { writer.Write((int)row.GetValue(i)); break; } writer.Write7BitEncoded32((int)(row.GetValue(i) ?? default(int))); break;
+                        case DataType.Int64: if (version == 1) { writer.Write((long)row.GetValue(i)); break; } writer.Write7BitEncoded64((long)(row.GetValue(i) ?? default(long))); break;
+                        case DataType.UInt32: if (version == 1) { writer.Write((uint)row.GetValue(i)); break; } writer.Write7BitEncoded32((uint)(row.GetValue(i) ?? default(uint))); break;
+                        case DataType.UInt64: if (version == 1) { writer.Write((ulong)row.GetValue(i)); break; } writer.Write7BitEncoded64((ulong)(row.GetValue(i) ?? default(ulong))); break;
+                        case DataType.Char: writer.Write((char)(row.GetValue(i) ?? default(char))); break;
+                        case DataType.Decimal: writer.Write((decimal)(row.GetValue(i) ?? default(decimal))); break;
 
                         case DataType.String:
                         case DataType.User:
@@ -256,7 +256,7 @@ namespace Cave.Data
 
                         case DataType.Enum:
                         {
-                            long value = Convert.ToInt64(row.GetValue(i));
+                            long value = Convert.ToInt64(row.GetValue(i) ?? 0);
                             writer.Write7BitEncoded64(value);
                             break;
                         }
