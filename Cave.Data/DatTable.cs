@@ -16,18 +16,9 @@ namespace Cave.Data
     public class DatTable : Table, IDisposable
     {
         /// <summary>The current version.</summary>
-        public const int CurrentVersion = 3;
+        public const int CurrentVersion = 4;
 
-        #region private variables
-        internal Stream m_FileStream;
-        internal DatIndex m_Index;
-        long m_CurrentLength = 0;
-        string m_DataFile;
-        string m_IndexFile;
-        long m_Start;
-        #endregion
-
-        #region static internal functionality
+        #region static functionality
 
         internal static RowLayout LoadFieldDefinition(DataReader reader, out int version)
         {
@@ -40,25 +31,31 @@ namespace Cave.Data
             }
 
             version = reader.Read7BitEncodedInt32();
-            if ((version < 1) || (version > 3))
+            if ((version < 1) || (version > 4))
             {
                 throw new InvalidDataException(string.Format("Unknown Table version!"));
             }
 
             // read name and create layout
-            string layoutName = reader.ReadString();
-            List<FieldProperties> fields = new List<FieldProperties>();
-            int fieldCount = reader.Read7BitEncodedInt32();
-            for (int i = 0; i < fieldCount; i++)
+            var layoutName = reader.ReadString();
+            var fields = new List<FieldProperties>();
+            var fieldCount = reader.Read7BitEncodedInt32();
+            for (var i = 0; i < fieldCount; i++)
             {
-                string fieldName = reader.ReadString();
-                DataType dataType = (DataType)reader.Read7BitEncodedInt32();
-                FieldFlags fieldFlags = (FieldFlags)reader.Read7BitEncodedInt32();
+                var fieldName = reader.ReadString();
+                var dataType = (DataType)reader.Read7BitEncodedInt32();
+                var fieldFlags = (FieldFlags)reader.Read7BitEncodedInt32();
+
+                DataType databaseDataType = dataType;
 
                 switch (dataType)
                 {
+                    case DataType.Enum:
+                        databaseDataType = DataType.Int64;
+                        break;
                     case DataType.User:
                     case DataType.String:
+                        databaseDataType = DataType.String;
                         if (version > 2)
                         {
                             stringEncoding = (StringEncoding)reader.Read7BitEncodedInt32();
@@ -66,6 +63,12 @@ namespace Cave.Data
                         else
                         {
                             stringEncoding = StringEncoding.UTF8;
+                        }
+                        break;
+                    case DataType.TimeSpan:
+                        if (version > 3)
+                        {
+                            dateTimeType = (DateTimeType)reader.Read7BitEncodedInt32();
                         }
                         break;
                     case DataType.DateTime:
@@ -85,7 +88,7 @@ namespace Cave.Data
                 Type valueType = null;
                 if ((dataType & DataType.MaskRequireValueType) != 0)
                 {
-                    string typeName = reader.ReadString();
+                    var typeName = reader.ReadString();
                     valueType = AppDom.FindType(typeName, AppDom.LoadMode.NoException);
                     if (valueType == null)
                     {
@@ -93,18 +96,7 @@ namespace Cave.Data
                     }
                 }
 
-                DataType databaseDataType = dataType;
-                if (dataType == DataType.Enum)
-                {
-                    databaseDataType = DataType.Int64;
-                }
-
-                if (dataType == DataType.User)
-                {
-                    databaseDataType = DataType.String;
-                }
-
-                FieldProperties properties = new FieldProperties(layoutName, fieldFlags, dataType, valueType, 0, fieldName, databaseDataType, dateTimeType, dateTimeKind, stringEncoding, fieldName, null, null, null);
+                var properties = new FieldProperties(layoutName, fieldFlags, dataType, valueType, 0, fieldName, databaseDataType, dateTimeType, dateTimeKind, stringEncoding, fieldName, null, null, null);
                 fields.Add(properties);
             }
             return RowLayout.CreateUntyped(layoutName, fields.ToArray());
@@ -117,7 +109,7 @@ namespace Cave.Data
                 throw new ArgumentOutOfRangeException(nameof(version));
             }
 
-            if (version > 3)
+            if (version > 4)
             {
                 throw new NotSupportedException("Version not supported!");
             }
@@ -128,7 +120,7 @@ namespace Cave.Data
                 writer.Write7BitEncoded32(version);
                 writer.WritePrefixed(layout.Name);
                 writer.Write7BitEncoded32(layout.FieldCount);
-                for (int i = 0; i < layout.FieldCount; i++)
+                for (var i = 0; i < layout.FieldCount; i++)
                 {
                     FieldProperties properties = layout.GetProperties(i);
                     writer.WritePrefixed(properties.Name);
@@ -144,13 +136,22 @@ namespace Cave.Data
                             }
                             break;
                         case DataType.DateTime:
-                            writer.Write7BitEncoded32((int)properties.DateTimeKind);
-                            writer.Write7BitEncoded32((int)properties.DateTimeType);
+                            if (version > 1)
+                            {
+                                writer.Write7BitEncoded32((int)properties.DateTimeKind);
+                                writer.Write7BitEncoded32((int)properties.DateTimeType);
+                            }
+                            break;
+                        case DataType.TimeSpan:
+                            if (version > 3)
+                            {
+                                writer.Write7BitEncoded32((int)properties.DateTimeType);
+                            }
                             break;
                     }
                     if ((properties.DataType & DataType.MaskRequireValueType) != 0)
                     {
-                        string typeName = properties.ValueType.AssemblyQualifiedName;
+                        var typeName = properties.ValueType.AssemblyQualifiedName;
                         typeName = typeName.Substring(0, typeName.IndexOf(","));
                         writer.WritePrefixed(typeName);
                     }
@@ -170,22 +171,22 @@ namespace Cave.Data
                 throw new ArgumentOutOfRangeException(nameof(version));
             }
 
-            if (version > 3)
+            if (version > 4)
             {
                 throw new NotSupportedException("Version not supported!");
             }
 
-            using (MemoryStream buffer = new MemoryStream())
+            using (var buffer = new MemoryStream())
             {
-                DataWriter writer = new DataWriter(buffer);
-                for (int i = 0; i < layout.FieldCount; i++)
+                var writer = new DataWriter(buffer);
+                for (var i = 0; i < layout.FieldCount; i++)
                 {
                     FieldProperties fieldProperties = layout.GetProperties(i);
                     switch (fieldProperties.DataType)
                     {
                         case DataType.Binary:
                         {
-                            byte[] data = (byte[])row.GetValue(i);
+                            var data = (byte[])row.GetValue(i);
                             if (version < 3)
                             {
                                 if (data == null)
@@ -211,24 +212,48 @@ namespace Cave.Data
                         case DataType.Int16: writer.Write((short)(row.GetValue(i) ?? default(short))); break;
                         case DataType.UInt8: writer.Write((byte)(row.GetValue(i) ?? default(byte))); break;
                         case DataType.UInt16: writer.Write((ushort)(row.GetValue(i) ?? default(ushort))); break;
-                        case DataType.Int32: if (version == 1) { writer.Write((int)row.GetValue(i)); break; } writer.Write7BitEncoded32((int)(row.GetValue(i) ?? default(int))); break;
-                        case DataType.Int64: if (version == 1) { writer.Write((long)row.GetValue(i)); break; } writer.Write7BitEncoded64((long)(row.GetValue(i) ?? default(long))); break;
-                        case DataType.UInt32: if (version == 1) { writer.Write((uint)row.GetValue(i)); break; } writer.Write7BitEncoded32((uint)(row.GetValue(i) ?? default(uint))); break;
-                        case DataType.UInt64: if (version == 1) { writer.Write((ulong)row.GetValue(i)); break; } writer.Write7BitEncoded64((ulong)(row.GetValue(i) ?? default(ulong))); break;
+                        case DataType.Int32:
+                            if (version == 1)
+                            {
+                                writer.Write((int)row.GetValue(i));
+                                break;
+                            }
+                            writer.Write7BitEncoded32((int)(row.GetValue(i) ?? default(int))); break;
+                        case DataType.Int64:
+                            if (version == 1)
+                            {
+                                writer.Write((long)row.GetValue(i));
+                                break;
+                            }
+                            writer.Write7BitEncoded64((long)(row.GetValue(i) ?? default(long))); break;
+                        case DataType.UInt32:
+                            if (version == 1)
+                            {
+                                writer.Write((uint)row.GetValue(i));
+                                break;
+                            }
+                            writer.Write7BitEncoded32((uint)(row.GetValue(i) ?? default(uint))); break;
+                        case DataType.UInt64:
+                            if (version == 1)
+                            {
+                                writer.Write((ulong)row.GetValue(i));
+                                break;
+                            }
+                            writer.Write7BitEncoded64((ulong)(row.GetValue(i) ?? default(ulong))); break;
                         case DataType.Char: writer.Write((char)(row.GetValue(i) ?? default(char))); break;
                         case DataType.Decimal: writer.Write((decimal)(row.GetValue(i) ?? default(decimal))); break;
 
                         case DataType.String:
                         case DataType.User:
                         {
-                            object data = row.GetValue(i);
+                            var data = row.GetValue(i);
                             if (data == null)
                             {
                                 writer.WritePrefixed((string)null);
                             }
                             else
                             {
-                                string text = data.ToString();
+                                var text = data.ToString();
 
                                 // check for invalid characters
                                 switch (fieldProperties.StringEncoding)
@@ -256,7 +281,7 @@ namespace Cave.Data
 
                         case DataType.Enum:
                         {
-                            long value = Convert.ToInt64(row.GetValue(i) ?? 0);
+                            var value = Convert.ToInt64(row.GetValue(i) ?? 0);
                             writer.Write7BitEncoded64(value);
                             break;
                         }
@@ -276,21 +301,21 @@ namespace Cave.Data
                 throw new ArgumentOutOfRangeException(nameof(version));
             }
 
-            if (version > 3)
+            if (version > 4)
             {
                 throw new NotSupportedException("Version not supported!");
             }
 
-            long dataStart = reader.BaseStream.Position;
-            int dataSize = reader.Read7BitEncodedInt32();
+            var dataStart = reader.BaseStream.Position;
+            var dataSize = reader.Read7BitEncodedInt32();
 
             if (dataSize == 0)
             {
                 return null;
             }
 
-            object[] row = new object[layout.FieldCount];
-            for (int i = 0; i < layout.FieldCount; i++)
+            var row = new object[layout.FieldCount];
+            for (var i = 0; i < layout.FieldCount; i++)
             {
                 FieldProperties field = layout.GetProperties(i);
                 DataType dataType = field.DataType;
@@ -304,7 +329,7 @@ namespace Cave.Data
                         }
                         else
                         {
-                            int size = reader.ReadInt32();
+                            var size = reader.ReadInt32();
                             row[i] = reader.ReadBytes(size);
                         }
                         break;
@@ -314,10 +339,34 @@ namespace Cave.Data
                     case DataType.TimeSpan: row[i] = new TimeSpan(reader.ReadInt64()); break;
                     case DataType.Int8: row[i] = reader.ReadInt8(); break;
                     case DataType.Int16: row[i] = reader.ReadInt16(); break;
-                    case DataType.Int32: if (version == 1) { row[i] = reader.ReadInt32(); break; } row[i] = reader.Read7BitEncodedInt32(); break;
-                    case DataType.Int64: if (version == 1) { row[i] = reader.ReadInt64(); break; } row[i] = reader.Read7BitEncodedInt64(); break;
-                    case DataType.UInt32: if (version == 1) { row[i] = reader.ReadUInt32(); break; } row[i] = reader.Read7BitEncodedUInt32(); break;
-                    case DataType.UInt64: if (version == 1) { row[i] = reader.ReadUInt64(); break; } row[i] = reader.Read7BitEncodedUInt64(); break;
+                    case DataType.Int32:
+                        if (version == 1)
+                        {
+                            row[i] = reader.ReadInt32();
+                            break;
+                        }
+                        row[i] = reader.Read7BitEncodedInt32(); break;
+                    case DataType.Int64:
+                        if (version == 1)
+                        {
+                            row[i] = reader.ReadInt64();
+                            break;
+                        }
+                        row[i] = reader.Read7BitEncodedInt64(); break;
+                    case DataType.UInt32:
+                        if (version == 1)
+                        {
+                            row[i] = reader.ReadUInt32();
+                            break;
+                        }
+                        row[i] = reader.Read7BitEncodedUInt32(); break;
+                    case DataType.UInt64:
+                        if (version == 1)
+                        {
+                            row[i] = reader.ReadUInt64();
+                            break;
+                        }
+                        row[i] = reader.Read7BitEncodedUInt64(); break;
                     case DataType.UInt8: row[i] = reader.ReadUInt8(); break;
                     case DataType.UInt16: row[i] = reader.ReadUInt16(); break;
                     case DataType.Char: row[i] = reader.ReadChar(); break;
@@ -331,7 +380,7 @@ namespace Cave.Data
                     default: throw new NotImplementedException(string.Format("Datatype {0} not implemented!", dataType));
                 }
             }
-            long skip = (dataStart + dataSize) - reader.BaseStream.Position;
+            var skip = dataStart + dataSize - reader.BaseStream.Position;
             if (skip < 0)
             {
                 throw new FormatException();
@@ -344,64 +393,85 @@ namespace Cave.Data
 
             return new Row(row);
         }
+
+        static RowLayout GetLayout(string file)
+        {
+            using (Stream stream = File.Open(file, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            {
+                var reader = new DataReader(stream);
+                return LoadFieldDefinition(reader, out var version);
+            }
+        }
+        #endregion
+
+        #region private variables
+
+        long currentLength = 0;
+        string dataFile;
+        string indexFile;
+        long start;
+
+        internal Stream FileStream;
+        internal DatIndex Index;
+
         #endregion
 
         #region internal implementation
         internal void Recreate()
         {
-            m_Index?.Dispose();
-            if (m_FileStream != null)
+            Index?.Dispose();
+            if (FileStream != null)
             {
-                m_FileStream.Close();
+                FileStream.Close();
             }
 
-            m_FileStream = File.Open(m_DataFile, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
-            WriteFieldDefinition(new DataWriter(m_FileStream), Layout, Version);
-            m_CurrentLength = m_FileStream.Position;
-            File.Delete(m_IndexFile);
-            m_Index = new DatIndex(m_IndexFile);
+            FileStream = File.Open(dataFile, FileMode.Create, FileAccess.ReadWrite, FileShare.Read);
+            WriteFieldDefinition(new DataWriter(FileStream), Layout, Version);
+            currentLength = FileStream.Position;
+            File.Delete(indexFile);
+            Index = new DatIndex(indexFile);
         }
 
         internal void RebuildIndex()
         {
-            m_FileStream.Position = m_Start;
-            m_Index = new DatIndex(m_IndexFile);
+            FileStream.Position = start;
+            Index = new DatIndex(indexFile);
             Trace.TraceWarning(string.Format("Rebuilding index of '{0}' after unclean shutdown...", this));
-            DataReader reader = new DataReader(m_FileStream);
+            var reader = new DataReader(FileStream);
             try
             {
-                while (m_FileStream.Position < m_FileStream.Length)
+                while (FileStream.Position < FileStream.Length)
                 {
-                    long current = m_FileStream.Position;
+                    var current = FileStream.Position;
                     Row row = ReadCurrentRow(reader, Version, Layout);
                     if (row != null)
                     {
-                        DatEntry entry = new DatEntry(Layout.GetID(row), current, (int)(m_FileStream.Position - current));
-                        m_Index.Save(entry);
+                        var entry = new DatEntry(Layout.GetID(row), current, (int)(FileStream.Position - current));
+                        Index.Save(entry);
                     }
                     else
                     {
-                        int count = 1;
-                        while (m_FileStream.ReadByte() == 0)
+                        var count = 1;
+                        while (FileStream.ReadByte() == 0)
                         {
                             count++;
                         }
-                        if (m_FileStream.Position < m_FileStream.Length)
+                        if (FileStream.Position < FileStream.Length)
                         {
-                            m_FileStream.Position--;
+                            FileStream.Position--;
                         }
 
-                        DatEntry emptyEntry = new DatEntry(0, current, count);
-                        m_Index.Free(emptyEntry);
+                        var emptyEntry = new DatEntry(0, current, count);
+                        Index.Free(emptyEntry);
                     }
                 }
-                m_CurrentLength = m_FileStream.Position;
-                if (m_FileStream.Length != m_CurrentLength)
+                currentLength = FileStream.Position;
+                if (FileStream.Length != currentLength)
                 {
-                    m_FileStream.SetLength(m_CurrentLength);
+                    FileStream.SetLength(currentLength);
                 }
 
-                Trace.TraceInformation(string.Format("Index of '{0}' rebuilt with {1} entries and {2} free positions.", this, m_Index.Count, m_Index.FreeItemCount));
+                Trace.TraceInformation(string.Format("Index of '{0}' rebuilt with {1} entries and {2} free positions.", this, Index.Count, Index.FreeItemCount));
             }
             catch (Exception ex)
             {
@@ -412,19 +482,19 @@ namespace Cave.Data
 
         internal Row ReadRow(long id)
         {
-            if (!m_Index.TryGet(id, out DatEntry entry))
+            if (!Index.TryGet(id, out DatEntry entry))
             {
                 throw new KeyNotFoundException();
             }
 
-            m_FileStream.Position = entry.BucketPosition;
-            Row row = ReadCurrentRow(new DataReader(m_FileStream), Version, Layout);
+            FileStream.Position = entry.BucketPosition;
+            Row row = ReadCurrentRow(new DataReader(FileStream), Version, Layout);
             if (row == null)
             {
                 throw new DataException(string.Format("Database corrupt!"));
             }
 
-            if (m_FileStream.Position == entry.BucketPosition + entry.BucketLength)
+            if (FileStream.Position == entry.BucketPosition + entry.BucketLength)
             {
                 return row;
             }
@@ -434,9 +504,9 @@ namespace Cave.Data
 
         internal long WriteEntry(Row row, DatEntry entry = default(DatEntry))
         {
-            long id = Layout.GetID(row);
-            byte[] data = GetData(Layout, row, Version);
-            int minSize = data.Length + BitCoder32.GetByteCount7BitEncoded(data.Length + 10);
+            var id = Layout.GetID(row);
+            var data = GetData(Layout, row, Version);
+            var minSize = data.Length + BitCoder32.GetByteCount7BitEncoded(data.Length + 10);
 
             // reuse old entry ?
             if (entry.ID != 0)
@@ -444,14 +514,14 @@ namespace Cave.Data
                 if (entry.BucketLength >= minSize)
                 {
                     // write entry
-                    m_FileStream.Position = entry.BucketPosition;
-                    DataWriter writer = new DataWriter(m_FileStream);
+                    FileStream.Position = entry.BucketPosition;
+                    var writer = new DataWriter(FileStream);
                     BitCoder32.Write7BitEncoded(writer, entry.BucketLength);
                     writer.Write(data);
-                    long fill = (entry.BucketPosition + entry.BucketLength) - m_FileStream.Position;
+                    var fill = entry.BucketPosition + entry.BucketLength - FileStream.Position;
                     if (fill > 0)
                     {
-                        m_FileStream.Write(new byte[fill], 0, (int)fill);
+                        FileStream.Write(new byte[fill], 0, (int)fill);
                     }
                     else if (fill < 0)
                     {
@@ -462,28 +532,28 @@ namespace Cave.Data
                 }
 
                 // no reuse -> release old
-                m_Index.Free(entry);
+                Index.Free(entry);
             }
 
             // find free entry
-            entry = m_Index.GetFree(id, minSize);
+            entry = Index.GetFree(id, minSize);
             if (entry.ID == 0)
             {
                 // create new
-                entry = new DatEntry(id, m_CurrentLength, minSize);
-                m_CurrentLength += entry.BucketLength;
+                entry = new DatEntry(id, currentLength, minSize);
+                currentLength += entry.BucketLength;
             }
-            m_Index.Save(entry);
+            Index.Save(entry);
             {
                 // write entry
-                m_FileStream.Position = entry.BucketPosition;
-                DataWriter writer = new DataWriter(m_FileStream);
+                FileStream.Position = entry.BucketPosition;
+                var writer = new DataWriter(FileStream);
                 BitCoder32.Write7BitEncoded(writer, entry.BucketLength);
                 writer.Write(data);
-                long fill = (entry.BucketPosition + entry.BucketLength) - m_FileStream.Position;
+                var fill = entry.BucketPosition + entry.BucketLength - FileStream.Position;
                 if (fill > 0)
                 {
-                    m_FileStream.Write(new byte[fill], 0, (int)fill);
+                    FileStream.Write(new byte[fill], 0, (int)fill);
                 }
                 else if (fill < 0)
                 {
@@ -501,15 +571,6 @@ namespace Cave.Data
         public int Version { get; private set; }
 
         #region constructor / destructor
-
-        static RowLayout GetLayout(string file)
-        {
-            using (Stream stream = File.Open(file, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
-            {
-                DataReader reader = new DataReader(stream);
-                return LoadFieldDefinition(reader, out int version);
-            }
-        }
 
         /// <summary>
         /// Creates a new <see cref="DatTable{T}"/> instance.
@@ -530,9 +591,9 @@ namespace Cave.Data
         public DatTable(DatDatabase database, string file, RowLayout layout)
             : base(database, layout)
         {
-            m_DataFile = file;
-            m_IndexFile = m_DataFile + ".idx";
-            bool createNew = !File.Exists(m_DataFile);
+            dataFile = file;
+            indexFile = dataFile + ".idx";
+            var createNew = !File.Exists(dataFile);
 
             if (createNew)
             {
@@ -546,20 +607,20 @@ namespace Cave.Data
                 return;
             }
 
-            DateTime indexWriteTime = File.GetLastWriteTime(m_IndexFile);
-            DateTime fileWriteTime = File.GetLastWriteTime(m_DataFile);
-            m_FileStream = File.Open(m_DataFile, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+            DateTime indexWriteTime = File.GetLastWriteTime(indexFile);
+            DateTime fileWriteTime = File.GetLastWriteTime(dataFile);
+            FileStream = File.Open(dataFile, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
-            DataReader reader = new DataReader(m_FileStream);
-            RowLayout fileLayout = LoadFieldDefinition(reader, out int version);
+            var reader = new DataReader(FileStream);
+            RowLayout fileLayout = LoadFieldDefinition(reader, out var version);
             Storage.CheckLayout(Layout, fileLayout);
             Version = version;
-            m_Start = m_FileStream.Position;
+            start = FileStream.Position;
 
-            bool rebuildIndex = (indexWriteTime + TimeSpan.FromSeconds(1) < fileWriteTime);
+            var rebuildIndex = indexWriteTime + TimeSpan.FromSeconds(1) < fileWriteTime;
             if (!rebuildIndex)
             {
-                m_Index = new DatIndex(m_IndexFile);
+                Index = new DatIndex(indexFile);
                 return;
             }
 
@@ -581,7 +642,7 @@ namespace Cave.Data
         /// <param name="search">The search to run.</param>
         /// <param name="resultOption">Options for the search and the result set.</param>
         /// <returns>Returns the ID of the row found or -1.</returns>
-        public override List<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
+        public override IList<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             if (search == null)
             {
@@ -589,14 +650,29 @@ namespace Cave.Data
             }
 
             search.LoadLayout(Layout);
-            FakeSortedDictionary<long, Row> rows = new FakeSortedDictionary<long, Row>();
-            bool found = FindFirst(r => search.Check(r), out Row row);
-            while (found)
+
+            if (resultOption != null)
             {
-                rows.Add(row.GetID(Layout.IDFieldIndex), row);
-                found = FindNext(r => search.Check(r), out row);
+                var table = new MemoryTable(Layout);
+                var found = FindFirst(r => search.Check(r), out Row row);
+                while (found)
+                {
+                    table.Insert(row);
+                    found = FindNext(r => search.Check(r), out row);
+                }
+                return MemoryTable.FindRows(Layout, null, table, search, resultOption, true);
             }
-            return MemoryTable.FindRows(Layout, null, rows, search, resultOption, true);
+            else
+            {
+                var ids = new List<long>();
+                var found = FindFirst(r => search.Check(r), out Row row);
+                while (found)
+                {
+                    ids.Add(row.GetID(Layout.IDFieldIndex));
+                    found = FindNext(r => search.Check(r), out row);
+                }
+                return ids;
+            }
         }
 
         /// <summary>
@@ -607,12 +683,12 @@ namespace Cave.Data
         /// <returns>Returns the row.</returns>
         public override Row GetRowAt(int index)
         {
-            long id = m_Index.IDs.ElementAt(index);
+            var id = this.Index.IDs.ElementAt(index);
             return GetRow(id);
         }
 
         /// <summary>
-        /// Obtains a row from the table.
+        /// Gets a row from the table.
         /// </summary>
         /// <param name="id">The ID of the row to be fetched.</param>
         /// <returns>Returns the row.</returns>
@@ -628,7 +704,7 @@ namespace Cave.Data
         /// <returns>Returns whether the dataset exists or not.</returns>
         public override bool Exist(long id)
         {
-            return m_Index.TryGet(id, out DatEntry e);
+            return Index.TryGet(id, out DatEntry e);
         }
 
         /// <summary>
@@ -638,16 +714,16 @@ namespace Cave.Data
         /// <returns>Returns the ID of the inserted dataset.</returns>
         public override long Insert(Row row)
         {
-            long id = Layout.GetID(row);
+            var id = Layout.GetID(row);
             if (id <= 0)
             {
-                id = m_Index.GetNextFreeID();
+                id = Index.GetNextFreeID();
                 row = row.SetID(Layout.IDFieldIndex, id);
                 return WriteEntry(row);
             }
             else
             {
-                if (m_Index.TryGet(id, out DatEntry entry))
+                if (Index.TryGet(id, out DatEntry entry))
                 {
                     throw new ArgumentException("ID already present!");
                 }
@@ -662,13 +738,13 @@ namespace Cave.Data
         /// <param name="row">The row to replace (valid ID needed).</param>
         public override void Replace(Row row)
         {
-            long id = Layout.GetID(row);
+            var id = Layout.GetID(row);
             if (id <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(row), "Row ID is invalid!");
             }
 
-            m_Index.TryGet(id, out DatEntry entry);
+            Index.TryGet(id, out DatEntry entry);
             WriteEntry(row, entry);
         }
 
@@ -678,13 +754,13 @@ namespace Cave.Data
         /// <param name="row">The row to update.</param>
         public override void Update(Row row)
         {
-            long id = Layout.GetID(row);
+            var id = Layout.GetID(row);
             if (id <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(row), "Row ID is invalid!");
             }
 
-            if (!m_Index.TryGet(id, out DatEntry entry))
+            if (!Index.TryGet(id, out DatEntry entry))
             {
                 throw new KeyNotFoundException();
             }
@@ -698,15 +774,15 @@ namespace Cave.Data
         /// <param name="id">The dataset ID to remove.</param>
         public override void Delete(long id)
         {
-            if (!m_Index.TryGet(id, out DatEntry entry))
+            if (!Index.TryGet(id, out DatEntry entry))
             {
                 throw new KeyNotFoundException();
             }
 
-            m_FileStream.Position = entry.BucketPosition;
-            m_FileStream.Write(new byte[entry.BucketLength], 0, entry.BucketLength);
-            m_FileStream.Flush();
-            m_Index.Free(entry);
+            FileStream.Position = entry.BucketPosition;
+            FileStream.Write(new byte[entry.BucketLength], 0, entry.BucketLength);
+            FileStream.Flush();
+            Index.Free(entry);
         }
 
         /// <summary>Removes all rows from the table matching the specified search.</summary>
@@ -714,7 +790,7 @@ namespace Cave.Data
         /// <returns>Returns the number of dataset deleted.</returns>
         public override int TryDelete(Search search)
         {
-            List<long> ids = FindRows(search);
+            var ids = FindRows(search);
             Delete(ids);
             return ids.Count;
         }
@@ -728,27 +804,27 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the RowCount.
+        /// Gets the RowCount.
         /// </summary>
-        public override long RowCount => m_Index == null ? 0 : m_Index.Count;
+        public override long RowCount => Index == null ? 0 : Index.Count;
 
         /// <summary>
-        /// Obtains the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!).
+        /// Gets the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!).
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         public override long GetNextUsedID(long id)
         {
-            return m_Index.GetNextUsedID(id);
+            return Index.GetNextUsedID(id);
         }
 
         /// <summary>
-        /// Obtains the next free ID at the table.
+        /// Gets the next free ID at the table.
         /// </summary>
         /// <returns></returns>
         public override long GetNextFreeID()
         {
-            return m_Index.GetNextFreeID();
+            return Index.GetNextFreeID();
         }
 
         /// <summary>
@@ -759,7 +835,7 @@ namespace Cave.Data
         /// <returns></returns>
         public bool FindFirst(Predicate<Row> match, out Row result)
         {
-            m_FileStream.Position = m_Start;
+            FileStream.Position = start;
             return FindNext(match, out result);
         }
 
@@ -776,9 +852,9 @@ namespace Cave.Data
                 throw new ArgumentNullException("match");
             }
 
-            while (m_FileStream.Position < m_FileStream.Length)
+            while (FileStream.Position < FileStream.Length)
             {
-                result = ReadCurrentRow(new DataReader(m_FileStream), Version, Layout);
+                result = ReadCurrentRow(new DataReader(FileStream), Version, Layout);
                 if (result != null)
                 {
                     if (match(result))
@@ -792,15 +868,15 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains an array containing all rows of the table.
+        /// Gets an array containing all rows of the table.
         /// </summary>
         /// <returns></returns>
-        public override List<Row> GetRows()
+        public override IList<Row> GetRows()
         {
-            List<Row> result = new List<Row>((int)RowCount);
-            m_FileStream.Position = m_Start;
-            DataReader reader = new DataReader(m_FileStream);
-            while (m_FileStream.Position < m_FileStream.Length)
+            var result = new List<Row>((int)RowCount);
+            FileStream.Position = start;
+            var reader = new DataReader(FileStream);
+            while (FileStream.Position < FileStream.Length)
             {
                 Row row = ReadCurrentRow(reader, Version, Layout);
                 if (row != null)
@@ -814,10 +890,10 @@ namespace Cave.Data
         /// <summary>Obtains the rows with the given ids.</summary>
         /// <param name="ids">IDs of the rows to fetch from the table.</param>
         /// <returns>Returns the rows.</returns>
-        public override List<Row> GetRows(IEnumerable<long> ids)
+        public override IList<Row> GetRows(IEnumerable<long> ids)
         {
-            List<Row> rows = new List<Row>();
-            foreach (long id in ids.AsSet())
+            var rows = new List<Row>();
+            foreach (var id in ids.AsSet())
             {
                 rows.Add(GetRow(id));
             }
@@ -826,6 +902,7 @@ namespace Cave.Data
         #endregion
 
         #region IDisposable Member
+
         /// <summary>
         /// Frees all used resources.
         /// </summary>
@@ -835,10 +912,10 @@ namespace Cave.Data
         {
             if (disposing)
             {
-                m_FileStream?.Close();
-                m_FileStream = null;
-                m_Index?.Dispose();
-                m_Index = null;
+                FileStream?.Close();
+                FileStream = null;
+                Index?.Dispose();
+                Index = null;
             }
         }
 
@@ -850,283 +927,6 @@ namespace Cave.Data
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-        #endregion
-    }
-
-    /// <summary>
-    /// Provides a binary dat file database table.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public class DatTable<T> : DatTable, ITable<T>
-        where T : struct
-    {
-        #region constructor
-        /// <summary>
-        /// Creates a new <see cref="DatTable{T}"/> instance.
-        /// </summary>
-        /// <param name="database">Database this table belongs to.</param>
-        /// <param name="file">Filename of the table file.</param>
-        /// <param name="layout">Layout and name of the table.</param>
-        public DatTable(DatDatabase database, RowLayout layout, string file)
-            : base(database, file, layout)
-        {
-        }
-        #endregion
-
-        #region additional functionality
-
-        /// <summary>
-        /// searches for a specified databaset (first occurence).
-        /// </summary>
-        /// <param name="match"></param>
-        /// <param name="result"></param>
-        /// <returns></returns>
-        public bool FindFirst(Predicate<T> match, out T result)
-        {
-            m_FileStream.Position = 0;
-            return FindNext(match, out result);
-        }
-
-        /// <summary>
-        /// searches for a specified databaset (next occurence after <see cref="FindFirst"/>).
-        /// </summary>
-        /// <param name="match"></param>
-        /// <param name="result"></param>
-        /// <returns></returns>
-        public bool FindNext(Predicate<T> match, out T result)
-        {
-            if (match == null)
-            {
-                throw new ArgumentNullException("match");
-            }
-
-            while (m_FileStream.Position < m_FileStream.Length)
-            {
-                Row row = ReadCurrentRow(new DataReader(m_FileStream), Version, Layout);
-                if (row != null)
-                {
-                    T value = row.GetStruct<T>(Layout);
-                    if (match(value))
-                    {
-                        result = value;
-                        return true;
-                    }
-                }
-            }
-            result = new T();
-            return false;
-        }
-
-        #endregion
-
-        #region ITable<T> Member
-
-        #region implemented non virtual
-        /// <summary>
-        /// Obtains the row struct with the specified index.
-        /// This allows a memorytable to be used as virtual list for listviews, ...
-        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
-        /// </summary>
-        /// <param name="index">The rows index (0..RowCount-1).</param>
-        /// <returns></returns>
-        /// <exception cref="IndexOutOfRangeException"></exception>
-        public T GetStructAt(int index)
-        {
-            return GetRowAt(index).GetStruct<T>(Layout);
-        }
-
-        /// <summary>
-        /// Inserts rows into the table using a transaction.
-        /// </summary>
-        /// <param name="rows">The rows to insert.</param>
-        public void Insert(IEnumerable<T> rows)
-        {
-            if (rows == null)
-            {
-                throw new ArgumentNullException("Rows");
-            }
-
-            TransactionLog<T> l = new TransactionLog<T>();
-            foreach (T r in rows) { l.AddInserted(r); }
-            Commit(l);
-        }
-
-        /// <summary>
-        /// Updates rows at the table. The rows must exist already!.
-        /// </summary>
-        /// <param name="rows">The rows to update.</param>
-        public void Update(IEnumerable<T> rows)
-        {
-            if (rows == null)
-            {
-                throw new ArgumentNullException("Rows");
-            }
-
-            TransactionLog<T> l = new TransactionLog<T>();
-            foreach (T r in rows) { l.AddUpdated(r); }
-            Commit(l);
-        }
-
-        /// <summary>
-        /// Replaces rows at the table. This inserts (if the row does not exist) or updates (if it exists) each row.
-        /// </summary>
-        /// <param name="rows">The rows to replace (valid ID needed).</param>
-        public void Replace(IEnumerable<T> rows)
-        {
-            if (rows == null)
-            {
-                throw new ArgumentNullException("Rows");
-            }
-
-            TransactionLog<T> l = new TransactionLog<T>();
-            foreach (T i in rows) { l.AddReplaced(i); }
-            Commit(l);
-        }
-
-        /// <summary>Tries to get the (unique) row with the given fieldvalue.</summary>
-        /// <param name="search">The search.</param>
-        /// <param name="row">The row.</param>
-        /// <returns>Returns true on success, false otherwise.</returns>
-        public bool TryGetStruct(Search search, out T row)
-        {
-            long id = FindRow(search);
-            if (id > -1)
-            {
-                row = GetStruct(id);
-                return true;
-            }
-            row = new T();
-            return false;
-        }
-
-        #endregion
-
-        #region implemented virtual
-        /// <summary>
-        /// Obtains a row from the table.
-        /// </summary>
-        /// <param name="id">The ID of the row to be fetched.</param>
-        /// <returns>Returns the row.</returns>
-        public virtual T GetStruct(long id)
-        {
-            return GetRow(id).GetStruct<T>(Layout);
-        }
-
-        /// <summary>
-        /// Searches the table for a single row with specified search.
-        /// </summary>
-        /// <param name="search">The search to run.</param>
-        /// <param name="resultOption">Options for the search and the result set.</param>
-        /// <returns>Returns the row found.</returns>
-        public virtual T GetStruct(Search search = default(Search), ResultOption resultOption = default(ResultOption))
-        {
-            long id = FindRow(search, resultOption);
-            if (id <= 0)
-            {
-                throw new DataException(string.Format("Dataset could not be found!"));
-            }
-
-            return GetStruct(id);
-        }
-
-        /// <summary>
-        /// Searches the table for rows with specified field value combinations.
-        /// </summary>
-        /// <param name="search">The search to run.</param>
-        /// <param name="resultOption">Options for the search and the result set.</param>
-        /// <returns>Returns the rows found.</returns>
-        public virtual List<T> GetStructs(Search search = default(Search), ResultOption resultOption = default(ResultOption))
-        {
-            return ToStructs<T>(Layout, GetRows(search, resultOption));
-        }
-
-        /// <summary>
-        /// Obtains the rows with the specified ids.
-        /// </summary>
-        /// <param name="ids">IDs of the rows to fetch from the table.</param>
-        /// <returns>Returns the rows.</returns>
-        public virtual List<T> GetStructs(IEnumerable<long> ids)
-        {
-            return ToStructs<T>(Layout, GetRows(ids));
-        }
-
-        /// <summary>
-        /// Inserts a row to the table. If an ID <![CDATA[<=]]> 0 is specified an automatically generated ID will be used to add the dataset.
-        /// </summary>
-        /// <param name="row">The row to insert.</param>
-        /// <returns>Returns the ID of the inserted dataset.</returns>
-        public virtual long Insert(T row)
-        {
-            return Insert(Row.Create(Layout, row));
-        }
-
-        /// <summary>
-        /// Updates a row to the table. The row must exist already!.
-        /// </summary>
-        /// <param name="row">The row to update.</param>
-        public virtual void Update(T row)
-        {
-            Update(Row.Create(Layout, row));
-        }
-
-        /// <summary>
-        /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
-        /// </summary>
-        /// <param name="row">The row to replace (valid ID needed).</param>
-        public virtual void Replace(T row)
-        {
-            Replace(Row.Create(Layout, row));
-        }
-
-        /// <summary>
-        /// Checks whether a row is present unchanged at the database and removes it.
-        /// (Use Delete(ID) to delete a DataSet without any checks).
-        /// </summary>
-        /// <param name="row"></param>
-        public virtual void Delete(T row)
-        {
-            long id = Layout.GetID(row);
-            T data = GetStruct(id);
-            if (!data.Equals(row))
-            {
-                throw new DataException(string.Format("Row does not match row at database!"));
-            }
-
-            Delete(id);
-        }
-
-        /// <summary>
-        /// Provides access to the row with the specified ID.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public virtual T this[long id]
-        {
-            get => GetStruct(id);
-            set
-            {
-                long i = Layout.GetID(value);
-                if (i != id)
-                {
-                    throw new ArgumentException(string.Format("ID mismatch!"));
-                }
-
-                Replace(value);
-            }
-        }
-
-        /// <summary>
-        /// Copies all rows to a specified array.
-        /// </summary>
-        /// <param name="rowArray"></param>
-        /// <param name="startIndex"></param>
-        public void CopyTo(T[] rowArray, int startIndex)
-        {
-            GetStructs().CopyTo(rowArray, startIndex);
-        }
-
-        #endregion
-
         #endregion
     }
 }

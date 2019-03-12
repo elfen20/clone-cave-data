@@ -20,10 +20,13 @@ namespace Cave.Data.Mysql
         /// <param name="field">The <see cref="FieldProperties" /> of the affected field.</param>
         /// <param name="databaseValue">The value retrieved from the database.</param>
         /// <returns>Returns a value for local use.</returns>
-        /// <exception cref="System.ArgumentNullException">Field.</exception>
+        /// <exception cref="ArgumentNullException">Field.</exception>
         public override object GetLocalValue(FieldProperties field, object databaseValue)
         {
-            if (field == null) { throw new ArgumentNullException("Field"); }
+            if (field == null)
+            {
+                throw new ArgumentNullException("Field");
+            }
 
             if (databaseValue != DBNull.Value)
             {
@@ -31,14 +34,20 @@ namespace Cave.Data.Mysql
                 {
                     case DataType.Double:
                     {
-                        double d = Convert.ToDouble(databaseValue);
-                        if (d >= double.MaxValue) { return double.PositiveInfinity; }
+                        var d = Convert.ToDouble(databaseValue);
+                        if (d >= double.MaxValue)
+                        {
+                            return double.PositiveInfinity;
+                        }
                         return d <= double.MinValue ? double.NegativeInfinity : (object)d;
                     }
                     case DataType.Single:
                     {
-                        float f = Convert.ToSingle(databaseValue);
-                        if (f >= float.MaxValue) { return float.PositiveInfinity; }
+                        var f = Convert.ToSingle(databaseValue);
+                        if (f >= float.MaxValue)
+                        {
+                            return float.PositiveInfinity;
+                        }
                         return f <= float.MinValue ? float.NegativeInfinity : (object)f;
                     }
                 }
@@ -73,8 +82,8 @@ namespace Cave.Data.Mysql
                     if (!SupportsFullUTF8)
                     {
                         // dirty hack: check mysql 3 byte utf-8
-                        string value = (string)localValue;
-                        foreach (char c in value)
+                        var value = (string)localValue;
+                        foreach (var c in value)
                         {
                             if (Encoding.UTF8.GetByteCount(new char[] { c }) > 3)
                             {
@@ -87,7 +96,7 @@ namespace Cave.Data.Mysql
                 }
                 case DataType.Double:
                 {
-                    double d = Convert.ToDouble(localValue);
+                    var d = Convert.ToDouble(localValue);
                     if (double.IsPositiveInfinity(d))
                     {
                         return double.MaxValue;
@@ -97,7 +106,7 @@ namespace Cave.Data.Mysql
                 }
                 case DataType.Single:
                 {
-                    float f = Convert.ToSingle(localValue);
+                    var f = Convert.ToSingle(localValue);
                     if (float.IsPositiveInfinity(f))
                     {
                         return float.MaxValue;
@@ -111,7 +120,7 @@ namespace Cave.Data.Mysql
         }
 
         /// <summary>
-        /// Obtains the <see cref="DataType"/> for the specified fieldtype.
+        /// Gets the <see cref="DataType"/> for the specified fieldtype.
         /// </summary>
         /// <param name="fieldType">The field type.</param>
         /// <param name="fieldSize">The size of the field.</param>
@@ -148,13 +157,13 @@ namespace Cave.Data.Mysql
         }
 
         /// <summary>
-        /// Obtains a reusable connection or creates a new one.
+        /// Gets a reusable connection or creates a new one.
         /// </summary>
         /// <param name="database">The database to connect to.</param>
         /// <returns></returns>
         protected override string GetConnectionString(string database)
         {
-            bool requireSSL = !AllowUnsafeConnections;
+            var requireSSL = !AllowUnsafeConnections;
             if (requireSSL)
             {
                 if (ConnectionString.Server == "127.0.0.1" || ConnectionString.Server == "::1" || ConnectionString.Server == "localhost")
@@ -212,12 +221,12 @@ namespace Cave.Data.Mysql
         public string CharacterSet { get; } = "utf8";
 
         /// <summary>
-        /// Obtains the mysql storage version.
+        /// Gets the mysql storage version.
         /// </summary>
         public string VersionString { get; }
 
         /// <summary>
-        /// Obtains the mysql storage version.
+        /// Gets the mysql storage version.
         /// </summary>
         public Version Version { get; }
 
@@ -261,7 +270,7 @@ namespace Cave.Data.Mysql
         }
 
         /// <summary>
-        /// Obtains a full qualified table name.
+        /// Gets a full qualified table name.
         /// </summary>
         /// <param name="database"></param>
         /// <param name="table"></param>
@@ -272,13 +281,13 @@ namespace Cave.Data.Mysql
         }
 
         /// <summary>
-        /// Obtains all available database names.
+        /// Gets all available database names.
         /// </summary>
         public override string[] DatabaseNames
         {
             get
             {
-                List<string> result = new List<string>();
+                var result = new List<string>();
                 List<Row> rows = Query(null, "information_schema", "SCHEMATA", "SELECT SCHEMA_NAME FROM information_schema.SCHEMATA;");
                 foreach (Row row in rows)
                 {
@@ -299,12 +308,12 @@ namespace Cave.Data.Mysql
             {
                 throw new ArgumentException("Database name contains invalid chars!");
             }
-            object value = QueryValue("information_schema", "SCHEMATA", "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME LIKE " + EscapeString(database) + ";");
+            var value = QueryValue("information_schema", "SCHEMATA", "SELECT COUNT(*) FROM information_schema.SCHEMATA WHERE SCHEMA_NAME LIKE " + EscapeString(database) + ";");
             return Convert.ToInt32(value) > 0;
         }
 
         /// <summary>
-        /// Obtains the database with the specified name.
+        /// Gets the database with the specified name.
         /// </summary>
         /// <param name="database">The name of the database.</param>
         /// <returns></returns>
@@ -347,7 +356,7 @@ namespace Cave.Data.Mysql
         }
 
         /// <summary>
-        /// Obtains whether the db connections can change the database with the Sql92 "USE Database" command.
+        /// Gets whether the db connections can change the database with the Sql92 "USE Database" command.
         /// </summary>
         protected override bool DBConnectionCanChangeDataBase => true;
 
@@ -361,7 +370,7 @@ namespace Cave.Data.Mysql
             Trace.TraceInformation("Searching for mySQL interop libraries...");
             dbConnectionType = AppDom.FindType("MySql.Data.MySqlClient.MySqlConnection", AppDom.LoadMode.LoadAssemblies);
             dbAdapterAssembly = DbConnectionType.Assembly;
-            IDbConnection connection = (IDbConnection)Activator.CreateInstance(dbConnectionType);
+            var connection = (IDbConnection)Activator.CreateInstance(dbConnectionType);
             connection.Dispose();
         }
 
@@ -371,33 +380,34 @@ namespace Cave.Data.Mysql
         public override bool SupportsNamedParameters => true;
 
         /// <summary>
-        /// Obtains wether the connection supports select * groupby.
+        /// Gets wether the connection supports select * groupby.
         /// </summary>
         public override bool SupportsAllFieldsGroupBy => true;
 
         /// <summary>
-        /// Obtains the parameter prefix char (?).
+        /// Gets the parameter prefix char (?).
         /// </summary>
         public override string ParameterPrefix => "?";
 
         #region precision members
+
         /// <summary>
-        /// Obtains the maximum <see cref="float"/> precision at the value of 1.0f of this storage engine.
+        /// Gets the maximum <see cref="float"/> precision at the value of 1.0f of this storage engine.
         /// </summary>
         public override float FloatPrecision => 0.00001f;
 
         /// <summary>
-        /// Obtains the maximum <see cref="DateTime"/> value precision of this storage engine.
+        /// Gets the maximum <see cref="DateTime"/> value precision of this storage engine.
         /// </summary>
         public override TimeSpan DateTimePrecision => TimeSpan.FromSeconds(1);
 
         /// <summary>
-        /// Obtains the maximum <see cref="TimeSpan"/> value precision of this storage engine.
+        /// Gets the maximum <see cref="TimeSpan"/> value precision of this storage engine.
         /// </summary>
         public override TimeSpan TimeSpanPrecision => TimeSpan.FromMilliseconds(1);
 
         /// <summary>
-        /// Obtains the maximum <see cref="decimal"/> value precision of this storage engine.
+        /// Gets the maximum <see cref="decimal"/> value precision of this storage engine.
         /// </summary>
         public override decimal GetDecimalPrecision(float count)
         {

@@ -17,11 +17,21 @@ namespace Cave.Data.Microsoft
         {
             get
             {
-                bool l_Error = false;
+                var l_Error = false;
                 SqlConnection connection = SqlStorage.GetConnection(Name);
-                try { return MsSqlStorage.RequireSSL && connection.ConnectionString.Contains("Encrypt=true"); }
-                catch { l_Error = true; throw; }
-                finally { SqlStorage.ReturnConnection(ref connection, l_Error); }
+                try
+                {
+                    return MsSqlStorage.RequireSSL && connection.ConnectionString.Contains("Encrypt=true");
+                }
+                catch
+                {
+                    l_Error = true;
+                    throw;
+                }
+                finally
+                {
+                    SqlStorage.ReturnConnection(ref connection, l_Error);
+                }
             }
         }
 
@@ -36,17 +46,17 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Obtains the available table names.
+        /// Gets the available table names.
         /// </summary>
         public override string[] TableNames
         {
             get
             {
-                List<string> result = new List<string>();
+                var result = new List<string>();
                 List<Row> rows = SqlStorage.Query(null, Name, "stables", "EXEC stables @table_owner='dbo',@table_qualifier='" + Name + "';");
                 foreach (Row row in rows)
                 {
-                    string tableName = (string)row.GetValue(2);
+                    var tableName = (string)row.GetValue(2);
                     result.Add(tableName);
                 }
                 return result.ToArray();
@@ -54,7 +64,7 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Obtains whether the specified table exists or not.
+        /// Gets whether the specified table exists or not.
         /// </summary>
         /// <param name="table">The name of the table.</param>
         /// <returns></returns>
@@ -64,7 +74,7 @@ namespace Cave.Data.Microsoft
             {
                 throw new ArgumentException("Table name contains invalid chars!");
             }
-            foreach (string name in TableNames)
+            foreach (var name in TableNames)
             {
                 if (string.Equals(table, name, StringComparison.CurrentCultureIgnoreCase))
                 {
@@ -109,7 +119,7 @@ namespace Cave.Data.Microsoft
         /// <returns></returns>
         public override ITable<T> CreateTable<T>(TableFlags flags, string table)
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(T), table, Storage);
+            var layout = RowLayout.CreateTyped(typeof(T), table, Storage);
             CreateTable(layout, flags);
             return OpenTable<T>(layout);
         }
@@ -128,7 +138,7 @@ namespace Cave.Data.Microsoft
             }
 
             LogCreateTable(layout);
-            if (0 != (flags & TableFlags.InMemory))
+            if ((flags & TableFlags.InMemory) != 0)
             {
                 throw new NotSupportedException(string.Format("Table '{0}' does not support TableFlags.{1}", layout.Name, TableFlags.InMemory));
             }
@@ -136,9 +146,9 @@ namespace Cave.Data.Microsoft
             {
                 throw new ArgumentException("Table name contains invalid chars!");
             }
-            StringBuilder queryText = new StringBuilder();
+            var queryText = new StringBuilder();
             queryText.AppendFormat("CREATE TABLE {0} (", SqlStorage.FQTN(Name, layout.Name));
-            for (int i = 0; i < layout.FieldCount; i++)
+            for (var i = 0; i < layout.FieldCount; i++)
             {
                 FieldProperties fieldProperties = layout.GetProperties(i);
                 if (i > 0)
@@ -255,9 +265,9 @@ namespace Cave.Data.Microsoft
                     case DataType.Decimal:
                         if (fieldProperties.MaximumLength > 0)
                         {
-                            int l_PreDecimal = (int)fieldProperties.MaximumLength;
-                            float l_Temp = (fieldProperties.MaximumLength - l_PreDecimal) * 100;
-                            int l_Decimal = (int)l_Temp;
+                            var l_PreDecimal = (int)fieldProperties.MaximumLength;
+                            var l_Temp = (fieldProperties.MaximumLength - l_PreDecimal) * 100;
+                            var l_Decimal = (int)l_Temp;
                             if ((l_Decimal >= l_PreDecimal) || (l_Decimal != l_Temp))
                             {
                                 throw new ArgumentOutOfRangeException(string.Format("Field {0} has an invalid MaximumLength of {1},{2}. Correct values range from s,p = 1,0 to 28,27 with 0 < s < p!", fieldProperties.Name, l_PreDecimal, l_Decimal));
@@ -322,7 +332,7 @@ namespace Cave.Data.Microsoft
             }
             queryText.Append(")");
             SqlStorage.Execute(Name, layout.Name, queryText.ToString());
-            for (int i = 0; i < layout.FieldCount; i++)
+            for (var i = 0; i < layout.FieldCount; i++)
             {
                 FieldProperties fieldProperties = layout.GetProperties(i);
                 if ((fieldProperties.Flags & FieldFlags.ID) != 0)
@@ -332,7 +342,7 @@ namespace Cave.Data.Microsoft
 
                 if ((fieldProperties.Flags & FieldFlags.Index) != 0)
                 {
-                    string command = string.Format("CREATE INDEX {0} ON {1} ({2})", SqlStorage.EscapeString("idx_" + layout.Name + "_" + fieldProperties.Name), SqlStorage.FQTN(Name, layout.Name), SqlStorage.EscapeFieldName(fieldProperties));
+                    var command = string.Format("CREATE INDEX {0} ON {1} ({2})", SqlStorage.EscapeString("idx_" + layout.Name + "_" + fieldProperties.Name), SqlStorage.FQTN(Name, layout.Name), SqlStorage.EscapeFieldName(fieldProperties));
                     SqlStorage.Execute(Name, layout.Name, command);
                 }
             }

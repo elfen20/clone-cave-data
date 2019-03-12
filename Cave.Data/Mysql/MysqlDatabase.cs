@@ -19,11 +19,21 @@ namespace Cave.Data.Mysql
         {
             get
             {
-                bool error = false;
+                var error = false;
                 SqlConnection connection = SqlStorage.GetConnection(Name);
-                try { return connection.ConnectionString.ToUpperInvariant().Contains("SSLMODE=REQUIRED"); }
-                catch { error = true; throw; }
-                finally { SqlStorage.ReturnConnection(ref connection, error); }
+                try
+                {
+                    return connection.ConnectionString.ToUpperInvariant().Contains("SSLMODE=REQUIRED");
+                }
+                catch
+                {
+                    error = true;
+                    throw;
+                }
+                finally
+                {
+                    SqlStorage.ReturnConnection(ref connection, error);
+                }
             }
         }
 
@@ -38,13 +48,13 @@ namespace Cave.Data.Mysql
         }
 
         /// <summary>
-        /// Obtains the available table names.
+        /// Gets the available table names.
         /// </summary>
         public override string[] TableNames
         {
             get
             {
-                List<string> result = new List<string>();
+                var result = new List<string>();
                 List<Row> rows = SqlStorage.Query(null, "information_schema", "TABLES", "SELECT table_name, table_schema FROM information_schema.TABLES where table_schema LIKE " + SqlStorage.EscapeString(Name));
                 foreach (Row row in rows)
                 {
@@ -55,7 +65,7 @@ namespace Cave.Data.Mysql
         }
 
         /// <summary>
-        /// Obtains whether the specified table exists or not.
+        /// Gets whether the specified table exists or not.
         /// </summary>
         /// <param name="table">The name of the table.</param>
         /// <returns></returns>
@@ -65,7 +75,7 @@ namespace Cave.Data.Mysql
             {
                 throw new ArgumentException("Table name contains invalid chars!");
             }
-            object value = SqlStorage.QueryValue("information_schema", "TABLES", "SELECT COUNT(*) FROM information_schema.TABLES WHERE table_schema LIKE " + SqlStorage.EscapeString(Name) + " AND table_name LIKE " + SqlStorage.EscapeString(table));
+            var value = SqlStorage.QueryValue("information_schema", "TABLES", "SELECT COUNT(*) FROM information_schema.TABLES WHERE table_schema LIKE " + SqlStorage.EscapeString(Name) + " AND table_name LIKE " + SqlStorage.EscapeString(table));
             return Convert.ToInt32(value) > 0;
         }
 
@@ -101,7 +111,7 @@ namespace Cave.Data.Mysql
         /// <returns></returns>
         public override ITable<T> CreateTable<T>(TableFlags flags, string table)
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(T), table, Storage);
+            var layout = RowLayout.CreateTyped(typeof(T), table, Storage);
             CreateTable(layout, flags);
             return OpenTable<T>(layout);
         }
@@ -123,11 +133,11 @@ namespace Cave.Data.Mysql
             {
                 throw new ArgumentException("Table name contains invalid chars!");
             }
-            string utf8Charset = ((MySqlStorage)Storage).CharacterSet;
+            var utf8Charset = ((MySqlStorage)Storage).CharacterSet;
             LogCreateTable(layout);
-            StringBuilder queryText = new StringBuilder();
+            var queryText = new StringBuilder();
             queryText.AppendFormat("CREATE TABLE {0} (", SqlStorage.FQTN(Name, layout.Name));
-            for (int i = 0; i < layout.FieldCount; i++)
+            for (var i = 0; i < layout.FieldCount; i++)
             {
                 FieldProperties fieldProperties = layout.GetProperties(i);
                 if (i > 0)
@@ -183,7 +193,7 @@ namespace Cave.Data.Mysql
                         }
                         break;
                     case DataType.TimeSpan:
-                        switch (fieldProperties.DateTimeType )
+                        switch (fieldProperties.DateTimeType)
                         {
                             case DateTimeType.Undefined:
                             case DateTimeType.Native:
@@ -250,9 +260,9 @@ namespace Cave.Data.Mysql
                     case DataType.Decimal:
                         if (fieldProperties.MaximumLength > 0)
                         {
-                            int l_PreDecimal = (int)fieldProperties.MaximumLength;
-                            float l_Temp = (fieldProperties.MaximumLength - l_PreDecimal) * 100;
-                            int l_Decimal = (int)l_Temp;
+                            var l_PreDecimal = (int)fieldProperties.MaximumLength;
+                            var l_Temp = (fieldProperties.MaximumLength - l_PreDecimal) * 100;
+                            var l_Decimal = (int)l_Temp;
                             if ((l_Decimal >= l_PreDecimal) || (l_Decimal != l_Temp))
                             {
                                 throw new ArgumentOutOfRangeException(string.Format("Field {0} has an invalid MaximumLength of {1},{2}. Correct values range from s,p = 1,0 to 65,30(default value) with 0 < s < p!", fieldProperties.Name, l_PreDecimal, l_Decimal));
@@ -316,7 +326,7 @@ namespace Cave.Data.Mysql
                 }
             }
             queryText.Append(")");
-            if (0 != (flags & TableFlags.InMemory))
+            if ((flags & TableFlags.InMemory) != 0)
             {
                 queryText.Append(" ENGINE = MEMORY");
             }
@@ -324,7 +334,7 @@ namespace Cave.Data.Mysql
             SqlStorage.Execute(Name, layout.Name, queryText.ToString());
             try
             {
-                for (int i = 0; i < layout.FieldCount; i++)
+                for (var i = 0; i < layout.FieldCount; i++)
                 {
                     FieldProperties fieldProperties = layout.GetProperties(i);
                     if ((fieldProperties.Flags & FieldFlags.ID) != 0)
@@ -340,15 +350,13 @@ namespace Cave.Data.Mysql
                             case DataType.Binary:
                             case DataType.String:
                             case DataType.User:
-                                int size = (int)fieldProperties.MaximumLength;
+                                var size = (int)fieldProperties.MaximumLength;
                                 if (size < 1)
                                 {
                                     size = 32;
                                 }
 
-                                command = string.Format("CREATE INDEX {0} ON {1} ({2} ({3}))",
-                                    "`idx_" + layout.Name + "_" + fieldProperties.Name + "`", SqlStorage.FQTN(Name, layout.Name),
-                                    SqlStorage.EscapeFieldName(fieldProperties), size);
+                                command = $"CREATE INDEX `idx_{layout.Name}_{fieldProperties.Name}` ON {SqlStorage.FQTN(Name, layout.Name)} ({SqlStorage.EscapeFieldName(fieldProperties)} ({size}))";
                                 break;
                             case DataType.Bool:
                             case DataType.Char:
@@ -366,11 +374,9 @@ namespace Cave.Data.Mysql
                             case DataType.UInt32:
                             case DataType.UInt64:
                             case DataType.UInt8:
-                                command = string.Format("CREATE INDEX {0} ON {1} ({2})",
-                                    "`idx_" + layout.Name + "_" + fieldProperties.Name + "`", SqlStorage.FQTN(Name, layout.Name),
-                                    SqlStorage.EscapeFieldName(fieldProperties));
+                                command = $"CREATE INDEX `idx_{layout.Name}_{fieldProperties.Name}` ON {SqlStorage.FQTN(Name, layout.Name)} ({SqlStorage.EscapeFieldName(fieldProperties)})";
                                 break;
-                            default: throw new NotSupportedException(string.Format("INDEX for datatype of field {0} is not supported!", fieldProperties));
+                            default: throw new NotSupportedException($"INDEX for datatype of field {fieldProperties} is not supported!");
                         }
                         SqlStorage.Execute(Name, layout.Name, command);
                     }

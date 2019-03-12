@@ -26,7 +26,7 @@ namespace Cave.Data
                 throw new ArgumentNullException("Table");
             }
 
-            CSVWriter writer = new CSVWriter(properties, fileName);
+            var writer = new CSVWriter(properties, fileName);
             try
             {
                 writer.SetLayout(table.Layout);
@@ -47,7 +47,7 @@ namespace Cave.Data
         public static void WriteAllRows<T>(IEnumerable<T> table, CSVProperties properties, string fileName)
             where T : struct
         {
-            CSVWriter writer = new CSVWriter(properties, fileName);
+            var writer = new CSVWriter(properties, fileName);
             try
             {
                 writer.SetLayout(typeof(T));
@@ -68,7 +68,7 @@ namespace Cave.Data
         public static void WriteAlienTable<T>(IEnumerable<T> table, CSVProperties properties, string fileName)
             where T : struct
         {
-            CSVWriter writer = new CSVWriter(properties, fileName);
+            var writer = new CSVWriter(properties, fileName);
             try
             {
                 writer.SetLayout(RowLayout.CreateAlien(typeof(T), false));
@@ -80,18 +80,18 @@ namespace Cave.Data
             }
         }
 
-        DataWriter m_Writer;
+        DataWriter writer;
 
-        string m_RowToString(Row row)
+        string RowToString(Row row)
         {
             if (Layout == null)
             {
                 throw new InvalidOperationException("Use SetLayout first!");
             }
 
-            StringBuilder result = new StringBuilder();
-            object[] values = row.GetValues();
-            for (int i = 0; i < Layout.FieldCount; i++)
+            var result = new StringBuilder();
+            var values = row.GetValues();
+            for (var i = 0; i < Layout.FieldCount; i++)
             {
                 if (i > 0)
                 {
@@ -100,11 +100,12 @@ namespace Cave.Data
 
                 if ((values != null) && (values[i] != null))
                 {
-                    switch (Layout.GetProperties(i).DataType)
+                    var field = Layout.GetProperties(i);
+                    switch (field.DataType)
                     {
                         case DataType.Binary:
                         {
-                            string str = Base64.NoPadding.Encode((byte[])values[i]);
+                            var str = Base64.NoPadding.Encode((byte[])values[i]);
                             result.Append(str);
                             break;
                         }
@@ -118,94 +119,103 @@ namespace Cave.Data
                         case DataType.UInt32:
                         case DataType.UInt64:
                         {
-                            if (!Properties.SaveDefaultValues && (values[i].Equals(0)))
+                            if (!Properties.SaveDefaultValues && values[i].Equals(0))
                             {
                                 break;
                             }
 
-                            string str = values[i].ToString();
+                            var str = values[i].ToString();
                             result.Append(str);
                             break;
                         }
                         case DataType.Char:
                         {
-                            if (!Properties.SaveDefaultValues && (values[i].Equals((char)0)))
+                            if (!Properties.SaveDefaultValues && values[i].Equals((char)0))
                             {
                                 break;
                             }
 
-                            string str = values[i].ToString();
+                            var str = values[i].ToString();
                             result.Append(str);
                             break;
                         }
                         case DataType.Decimal:
                         {
-                            if (!Properties.SaveDefaultValues && (values[i].Equals(0m)))
+                            if (!Properties.SaveDefaultValues && values[i].Equals(0m))
                             {
                                 break;
                             }
 
-                            decimal value = (decimal)values[i];
+                            var value = (decimal)values[i];
                             result.Append(value.ToString(Properties.Culture));
                             break;
                         }
                         case DataType.Single:
                         {
-                            if (!Properties.SaveDefaultValues && (values[i].Equals(0f)))
+                            if (!Properties.SaveDefaultValues && values[i].Equals(0f))
                             {
                                 break;
                             }
 
-                            float value = (float)values[i];
+                            var value = (float)values[i];
                             result.Append(value.ToString("R", Properties.Culture));
                             break;
                         }
                         case DataType.Double:
                         {
-                            if (!Properties.SaveDefaultValues && (values[i].Equals(0d)))
+                            if (!Properties.SaveDefaultValues && values[i].Equals(0d))
                             {
                                 break;
                             }
 
-                            double value = (double)values[i];
+                            var value = (double)values[i];
                             result.Append(value.ToString("R", Properties.Culture));
                             break;
                         }
                         case DataType.TimeSpan:
                         {
-                            if (!Properties.SaveDefaultValues && (values[i].Equals(TimeSpan.Zero)))
+                            if (!Properties.SaveDefaultValues && values[i].Equals(TimeSpan.Zero))
                             {
                                 break;
                             }
 
-                            string str = values[i].ToString();
+                            var str = field.GetString(values[i], $"{Properties.StringMarker}", false, Properties.Culture);
+                            //var str = values[i].ToString();
                             result.Append(str);
                             break;
                         }
                         case DataType.DateTime:
                         {
-                            if (!Properties.SaveDefaultValues && (values[i].Equals(new DateTime(0))))
+                            if (!Properties.SaveDefaultValues && values[i].Equals(new DateTime(0)))
                             {
                                 break;
                             }
 
-                            string str = ((DateTime)values[i]).ToString(Properties.DateTimeFormat, Properties.Culture);
+                            string str;
+                            if (Properties.DateTimeFormat != null)
+                            {
+                                str = ((DateTime)values[i]).ToString(Properties.DateTimeFormat, Properties.Culture);
+                            }
+                            else
+                            {
+                                str = field.GetString(values[i], $"{Properties.StringMarker}", false, Properties.Culture);
+                            }
                             result.Append(str);
                             break;
                         }
                         case DataType.User:
                         case DataType.String:
                         {
-                            if (!Properties.SaveDefaultValues && (values[i].Equals(string.Empty)))
+                            if (!Properties.SaveDefaultValues && values[i].Equals(string.Empty))
                             {
                                 break;
                             }
 
-                            string str = (values[i] == null) ? "" : values[i].ToString();
+                            var str = (values[i] == null) ? string.Empty : values[i].ToString();
                             str = str.Replace("\r", @"\r").Replace("\n", @"\n");
                             if (Properties.StringMarker.HasValue)
                             {
-                                str = str.Replace("" + Properties.StringMarker, "" + Properties.StringMarker + Properties.StringMarker);
+                                str = str.Replace($"{Properties.StringMarker}", $"{Properties.StringMarker}{Properties.StringMarker}");
                                 result.Append(Properties.StringMarker);
                             }
                             if (str.Length == 0)
@@ -240,12 +250,12 @@ namespace Cave.Data
                         }
                         case DataType.Enum:
                         {
-                            if (!Properties.SaveDefaultValues && (Convert.ToInt32(values[i]).Equals(0)))
+                            if (!Properties.SaveDefaultValues && Convert.ToInt32(values[i]).Equals(0))
                             {
                                 break;
                             }
 
-                            string str = values[i].ToString();
+                            var str = values[i].ToString();
                             result.Append(str);
                             break;
                         }
@@ -254,12 +264,11 @@ namespace Cave.Data
                     }
                 }
             }
-            result.Append("\r\n");
             return result.ToString();
         }
 
         /// <summary>
-        /// Creates a new csv file writer with default properties.
+        /// Initializes a new instance of the <see cref="CSVWriter"/> class.
         /// </summary>
         /// <param name="fileName"></param>
         public CSVWriter(string fileName)
@@ -269,7 +278,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a new csv file writer with the specified properties.
+        /// Initializes a new instance of the <see cref="CSVWriter"/> class.
         /// </summary>
         /// <param name="properties"></param>
         /// <param name="fileName"></param>
@@ -279,7 +288,9 @@ namespace Cave.Data
             CloseBaseStream = true;
         }
 
-        /// <summary>Creates a new csv file writer with default properties.</summary>
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CSVWriter"/> class.
+        /// </summary>
         /// <param name="stream">The stream.</param>
         /// <param name="closeBaseStream">if set to <c>true</c> [close base stream].</param>
         public CSVWriter(Stream stream, bool closeBaseStream = false)
@@ -287,7 +298,9 @@ namespace Cave.Data
         {
         }
 
-        /// <summary>Creates a new csv file writer with the specified properties.</summary>
+        /// <summary>
+        /// Initializes a new instance of the <see cref="CSVWriter"/> class.
+        /// </summary>
         /// <param name="properties">The properties.</param>
         /// <param name="stream">The stream.</param>
         /// <param name="closeBaseStream">if set to <c>true</c> [close base stream on close].</param>
@@ -324,16 +337,16 @@ namespace Cave.Data
                 default: throw new InvalidDataException(string.Format("Unknown Compression {0}", Properties.Compression));
             }
 
-            m_Writer = new DataWriter(stream, Properties.Encoding, Properties.NewLineMode);
+            writer = new DataWriter(stream, Properties.Encoding, Properties.NewLineMode);
         }
 
         /// <summary>
-        /// Obtains the <see cref="CSVProperties"/>.
+        /// Gets the <see cref="CSVProperties"/>.
         /// </summary>
         public readonly CSVProperties Properties;
 
         /// <summary>
-        /// Obtains the row layout.
+        /// Gets the row layout.
         /// </summary>
         public RowLayout Layout { get; private set; }
 
@@ -368,26 +381,26 @@ namespace Cave.Data
             }
 
             // write header
-            for (int i = 0; i < Layout.FieldCount; i++)
+            for (var i = 0; i < Layout.FieldCount; i++)
             {
                 if (i > 0)
                 {
-                    m_Writer.Write(Properties.Separator);
+                    writer.Write(Properties.Separator);
                 }
 
                 if (Properties.StringMarker.HasValue)
                 {
-                    m_Writer.Write(Properties.StringMarker.Value);
+                    writer.Write(Properties.StringMarker.Value);
                 }
 
-                m_Writer.Write(Layout.GetProperties(i).NameAtDatabase);
+                writer.Write(Layout.GetProperties(i).NameAtDatabase);
                 if (Properties.StringMarker.HasValue)
                 {
-                    m_Writer.Write(Properties.StringMarker.Value);
+                    writer.Write(Properties.StringMarker.Value);
                 }
             }
-            m_Writer.Write("\r\n");
-            m_Writer.Flush();
+            writer.WriteLine();
+            writer.Flush();
         }
 
         /// <summary>
@@ -411,7 +424,7 @@ namespace Cave.Data
         /// <param name="row"></param>
         public void WriteRow(Row row)
         {
-            m_Writer.Write(m_RowToString(row));
+            writer.WriteLine(RowToString(row));
         }
 
         /// <summary>
@@ -473,10 +486,10 @@ namespace Cave.Data
         {
             if (CloseBaseStream)
             {
-                m_Writer?.Close();
+                writer?.Close();
             }
 
-            m_Writer = null;
+            writer = null;
         }
 
         #region IDisposable Support
@@ -489,12 +502,12 @@ namespace Cave.Data
             {
                 if (CloseBaseStream)
                 {
-                    if (m_Writer != null)
+                    if (writer != null)
                     {
-                        m_Writer.BaseStream.Dispose();
+                        writer.BaseStream.Dispose();
                     }
                 }
-                m_Writer = null;
+                writer = null;
             }
         }
 

@@ -9,7 +9,7 @@ namespace Cave.Data.Sql
     /// </summary>
     public sealed class SqlConnection : IDbConnection
     {
-        IDbConnection m_Connection;
+        IDbConnection connection;
 
         /// <summary>
         /// Gets/sets the last use datetime (local).
@@ -21,7 +21,7 @@ namespace Cave.Data.Sql
         /// <param name="connection">The connection object.</param>
         public SqlConnection(string databaseName, IDbConnection connection)
         {
-            m_Connection = connection;
+            this.connection = connection;
             Database = databaseName;
             LastUsed = DateTime.UtcNow;
         }
@@ -33,13 +33,13 @@ namespace Cave.Data.Sql
         /// <returns>An object representing the new transaction.</returns>
         public IDbTransaction BeginTransaction(IsolationLevel il)
         {
-            if (m_Connection == null)
+            if (connection == null)
             {
                 throw new ObjectDisposedException("SqlConnection");
             }
 
             LastUsed = DateTime.UtcNow;
-            return m_Connection.BeginTransaction(il);
+            return connection.BeginTransaction(il);
         }
 
         /// <summary>
@@ -48,13 +48,13 @@ namespace Cave.Data.Sql
         /// <returns>An object representing the new transaction.</returns>
         public IDbTransaction BeginTransaction()
         {
-            if (m_Connection == null)
+            if (connection == null)
             {
                 throw new ObjectDisposedException("SqlConnection");
             }
 
             LastUsed = DateTime.UtcNow;
-            return m_Connection.BeginTransaction();
+            return connection.BeginTransaction();
         }
 
         /// <summary>
@@ -63,12 +63,12 @@ namespace Cave.Data.Sql
         /// <param name="databaseName">The name of the database to use in place of the current database. </param>
         public void ChangeDatabase(string databaseName)
         {
-            if (m_Connection == null)
+            if (connection == null)
             {
                 throw new ObjectDisposedException("SqlConnection");
             }
 
-            m_Connection.ChangeDatabase(databaseName);
+            connection.ChangeDatabase(databaseName);
             Database = databaseName;
             LastUsed = DateTime.UtcNow;
         }
@@ -80,44 +80,50 @@ namespace Cave.Data.Sql
         {
             lock (this)
             {
-                if (m_Connection != null)
+                if (connection != null)
                 {
-                    try { m_Connection.Dispose(); } catch { }
-                    m_Connection = null;
+                    try
+                    {
+                        connection.Dispose();
+                    }
+                    catch
+                    {
+                    }
+                    connection = null;
                 }
             }
         }
 
         /// <summary>
-        /// Obtains the connection string used to open the connection. Setting this value is not supported!.
+        /// Gets the connection string used to open the connection. Setting this value is not supported!.
         /// </summary>
         public string ConnectionString
         {
             get
             {
-                if (m_Connection == null)
+                if (connection == null)
                 {
                     throw new ObjectDisposedException("SqlConnection");
                 }
 
-                return m_Connection.ConnectionString;
+                return connection.ConnectionString;
             }
             set => throw new NotSupportedException();
         }
 
         /// <summary>
-        /// Obtains the connection timeout in milliseconds.
+        /// Gets the connection timeout in milliseconds.
         /// </summary>
         public int ConnectionTimeout
         {
             get
             {
-                if (m_Connection == null)
+                if (connection == null)
                 {
                     throw new ObjectDisposedException("SqlConnection");
                 }
 
-                return m_Connection.ConnectionTimeout;
+                return connection.ConnectionTimeout;
             }
         }
 
@@ -127,17 +133,17 @@ namespace Cave.Data.Sql
         /// <returns></returns>
         public IDbCommand CreateCommand()
         {
-            if (m_Connection == null)
+            if (connection == null)
             {
                 throw new ObjectDisposedException("SqlConnection");
             }
 
             LastUsed = DateTime.UtcNow;
-            return m_Connection.CreateCommand();
+            return connection.CreateCommand();
         }
 
         /// <summary>
-        /// Obtains the name of the database this instance is connected to.
+        /// Gets the name of the database this instance is connected to.
         /// </summary>
         public string Database { get; private set; }
 
@@ -146,23 +152,23 @@ namespace Cave.Data.Sql
         /// </summary>
         public void Open()
         {
-            if (m_Connection == null)
+            if (connection == null)
             {
                 throw new ObjectDisposedException("SqlConnection");
             }
 
-            m_Connection.Open();
+            connection.Open();
             LastUsed = DateTime.UtcNow;
         }
 
         /// <summary>
-        /// Obtains the current <see cref="ConnectionState"/>.
+        /// Gets the current <see cref="ConnectionState"/>.
         /// </summary>
         public ConnectionState State
         {
             get
             {
-                return m_Connection == null ? ConnectionState.Closed : m_Connection.State;
+                return connection == null ? ConnectionState.Closed : connection.State;
             }
         }
 
@@ -170,7 +176,7 @@ namespace Cave.Data.Sql
         /// <returns>A <see cref="string" /> that represents this instance.</returns>
         public override string ToString()
         {
-            return m_Connection == null
+            return connection == null
                 ? "SqlConnection Disposed"
                 : string.Format("SqlConnection Database:'{0}' State:{1}", Database, State);
         }

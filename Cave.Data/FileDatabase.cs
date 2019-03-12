@@ -8,7 +8,6 @@ namespace Cave.Data
     /// </summary>
     public abstract class FileDatabase : Database, IDisposable
     {
-
         /// <summary>
         /// Checks whether the instance was already closed.
         /// </summary>
@@ -49,7 +48,7 @@ namespace Cave.Data
         #endregion
 
         /// <summary>
-        /// Obtains the name of the database.
+        /// Gets the name of the database.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -58,6 +57,7 @@ namespace Cave.Data
         }
 
         #region IDisposable Support
+
         /// <summary>Releases unmanaged and - optionally - managed resources.</summary>
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)

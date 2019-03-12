@@ -18,12 +18,12 @@ namespace Cave.Data
         bool SupportsNativeTransactions { get; }
 
         /// <summary>
-        /// Obtains the connection string used to connect to the storage engine.
+        /// Gets the connection string used to connect to the storage engine.
         /// </summary>
         ConnectionString ConnectionString { get; }
 
         /// <summary>
-        /// Obtains whether the storage was already closed or not.
+        /// Gets whether the storage was already closed or not.
         /// </summary>
         bool Closed { get; }
 
@@ -49,19 +49,19 @@ namespace Cave.Data
         bool UseDelayedWrites { get; set; }
 
         /// <summary>
-        /// Obtains all available database names.
+        /// Gets all available database names.
         /// </summary>
         string[] DatabaseNames { get; }
 
         /// <summary>
-        /// Obtains the database with the specified name.
+        /// Gets the database with the specified name.
         /// </summary>
         /// <param name="database">The name of the database.</param>
         /// <returns></returns>
         IDatabase GetDatabase(string database);
 
         /// <summary>
-        /// Obtains the database with the specified name.
+        /// Gets the database with the specified name.
         /// </summary>
         /// <param name="database">The name of the database.</param>
         /// <param name="createIfNotExists">Create the database if its not already present.</param>
@@ -82,36 +82,37 @@ namespace Cave.Data
         void DeleteDatabase(string database);
 
         /// <summary>
-        /// Obtains FieldProperties for the Database based on requested FieldProperties.
+        /// Gets FieldProperties for the Database based on requested FieldProperties.
         /// </summary>
         /// <param name="field"></param>
         /// <returns></returns>
         FieldProperties GetDatabaseFieldProperties(FieldProperties field);
 
         #region precision members
+
         /// <summary>
-        /// Obtains the maximum <see cref="float"/> precision at the value of 1.0f of this storage engine.
+        /// Gets the maximum <see cref="float"/> precision at the value of 1.0f of this storage engine.
         /// </summary>
         float FloatPrecision { get; }
 
         /// <summary>
-        /// Obtains the maximum <see cref="double"/> precision at the value of 1.0d of this storage engine.
+        /// Gets the maximum <see cref="double"/> precision at the value of 1.0d of this storage engine.
         /// </summary>
         double DoublePrecision { get; }
 
         /// <summary>
-        /// Obtains the maximum <see cref="decimal"/> value precision (absolute) for the specified field length.
+        /// Gets the maximum <see cref="decimal"/> value precision (absolute) for the specified field length.
         /// </summary>
         /// <param name="count">The length (0 = default).</param>
         decimal GetDecimalPrecision(float count);
 
         /// <summary>
-        /// Obtains the maximum <see cref="DateTime"/> value precision (absolute) of this storage engine.
+        /// Gets the maximum <see cref="DateTime"/> value precision (absolute) of this storage engine.
         /// </summary>
         TimeSpan DateTimePrecision { get; }
 
         /// <summary>
-        /// Obtains the maximum <see cref="TimeSpan"/> value precision (absolute) of this storage engine.
+        /// Gets the maximum <see cref="TimeSpan"/> value precision (absolute) of this storage engine.
         /// </summary>
         TimeSpan TimeSpanPrecision { get; }
 

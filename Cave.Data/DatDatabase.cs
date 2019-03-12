@@ -26,7 +26,7 @@ namespace Cave.Data
         #region IDatabase Member
 
         /// <summary>
-        /// Obtains a list with all tablenames.
+        /// Gets a list with all tablenames.
         /// </summary>
         public override string[] TableNames
         {
@@ -37,17 +37,17 @@ namespace Cave.Data
                     throw new ObjectDisposedException(Name);
                 }
 
-                List<string> result = new List<string>();
-                foreach (string directory in Directory.GetFiles(Folder, "*.dat", SearchOption.TopDirectoryOnly))
+                var result = new List<string>();
+                foreach (var directory in Directory.GetFiles(Folder, "*.dat", SearchOption.TopDirectoryOnly))
                 {
-                    result.Add(Path.ChangeExtension(directory, ""));
+                    result.Add(Path.ChangeExtension(directory, string.Empty));
                 }
                 return result.ToArray();
             }
         }
 
         /// <summary>
-        /// Obtains whether the specified table exists or not.
+        /// Gets whether the specified table exists or not.
         /// </summary>
         /// <param name="table">The name of the table.</param>
         /// <returns></returns>
@@ -87,7 +87,6 @@ namespace Cave.Data
             return new DatTable(this, Path.Combine(Folder, table + ".dat"));
         }
 
-
         /// <summary>Adds a new table with the specified name.</summary>
         /// <param name="layout">Layout of the table.</param>
         /// <param name="flags">The table creation flags.</param>
@@ -101,13 +100,13 @@ namespace Cave.Data
                 throw new ArgumentNullException("Layout");
             }
 
-            if (0 != (flags & TableFlags.InMemory))
+            if ((flags & TableFlags.InMemory) != 0)
             {
                 throw new NotSupportedException(string.Format("Table '{0}' does not support TableFlags.{1}", layout.Name, TableFlags.InMemory));
             }
             if (HasTable(layout.Name))
             {
-                if (0 == (flags & TableFlags.CreateNew))
+                if ((flags & TableFlags.CreateNew) == 0)
                 {
                     throw new InvalidOperationException(string.Format("Table '{0}' already exists!", layout.Name));
                 }
@@ -128,16 +127,16 @@ namespace Cave.Data
         /// <param name="table">Tablename to create (optional, use this to overwrite the default table name).</param>
         public override ITable<T> CreateTable<T>(TableFlags flags, string table)
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(T), table, Storage);
+            var layout = RowLayout.CreateTyped(typeof(T), table, Storage);
             LogCreateTable(layout);
-            if (0 != (flags & TableFlags.InMemory))
+            if ((flags & TableFlags.InMemory) != 0)
             {
                 throw new NotSupportedException(string.Format("{0} does not support TableFlags.{1}", "DatDatabase", TableFlags.InMemory));
             }
 
             if (HasTable(layout.Name))
             {
-                if (0 == (flags & TableFlags.CreateNew))
+                if ((flags & TableFlags.CreateNew) == 0)
                 {
                     throw new InvalidOperationException(string.Format("Table '{0}' already exists!", layout.Name));
                 }
@@ -161,7 +160,7 @@ namespace Cave.Data
             }
 
             File.Delete(Path.Combine(Folder, table + ".dat"));
-            string indexFile = Path.Combine(Folder, table + ".dat.idx");
+            var indexFile = Path.Combine(Folder, table + ".dat.idx");
             if (File.Exists(indexFile))
             {
                 File.Delete(indexFile);

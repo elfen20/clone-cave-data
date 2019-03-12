@@ -22,27 +22,27 @@ namespace Cave.Data.SQLite
         public SQLiteDatabase(SQLiteStorage storage, string name)
             : base(storage, name)
         {
-            List<FieldProperties> fields = new List<FieldProperties>
+            var fields = new List<FieldProperties>
             {
                 new FieldProperties(name, FieldFlags.None, DataType.String, "type"),
                 new FieldProperties(name, FieldFlags.None, DataType.String, "name"),
                 new FieldProperties(name, FieldFlags.None, DataType.String, "tbname"),
                 new FieldProperties(name, FieldFlags.None, DataType.Int64, "rootpage"),
-                new FieldProperties(name, FieldFlags.None, DataType.String, "sql")
+                new FieldProperties(name, FieldFlags.None, DataType.String, "sql"),
             };
-            RowLayout l_Expected = RowLayout.CreateUntyped(name, fields.ToArray());
+            var l_Expected = RowLayout.CreateUntyped(name, fields.ToArray());
             RowLayout schema = SqlStorage.QuerySchema(Name, "sqlite_master");
             SqlStorage.CheckLayout(name, schema, l_Expected);
         }
 
         /// <summary>
-        /// Obtains the available table names.
+        /// Gets the available table names.
         /// </summary>
         public override string[] TableNames
         {
             get
             {
-                List<string> result = new List<string>();
+                var result = new List<string>();
                 List<Row> rows = SqlStorage.Query(null, Name, "sqlite_master", "SELECT name, type FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
                 foreach (Row row in rows)
                 {
@@ -53,7 +53,7 @@ namespace Cave.Data.SQLite
         }
 
         /// <summary>
-        /// Obtains whether the specified table exists or not.
+        /// Gets whether the specified table exists or not.
         /// </summary>
         /// <param name="table">The name of the table.</param>
         /// <returns></returns>
@@ -63,7 +63,7 @@ namespace Cave.Data.SQLite
             {
                 throw new ArgumentException("Table name contains invalid chars!");
             }
-            object value = SqlStorage.QueryValue(Name, "sqlite_master", "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=" + SqlStorage.EscapeString(table));
+            var value = SqlStorage.QueryValue(Name, "sqlite_master", "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=" + SqlStorage.EscapeString(table));
             return Convert.ToInt32(value) > 0;
         }
 
@@ -102,15 +102,15 @@ namespace Cave.Data.SQLite
         /// <returns></returns>
         public override ITable<T> CreateTable<T>(TableFlags flags, string table)
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(T), null, Storage);
-            if (0 != (flags & TableFlags.InMemory))
+            var layout = RowLayout.CreateTyped(typeof(T), null, Storage);
+            if ((flags & TableFlags.InMemory) != 0)
             {
                 throw new NotSupportedException(string.Format("Table '{0}' does not support TableFlags.{1}", layout.Name, flags));
             }
             LogCreateTable(layout);
-            StringBuilder queryText = new StringBuilder();
+            var queryText = new StringBuilder();
             queryText.AppendFormat("CREATE TABLE {0} (", SqlStorage.FQTN(Name, layout.Name));
-            for (int i = 0; i < layout.FieldCount; i++)
+            for (var i = 0; i < layout.FieldCount; i++)
             {
                 FieldProperties fieldProperties = layout.GetProperties(i);
                 if (i > 0)
@@ -156,7 +156,7 @@ namespace Cave.Data.SQLite
             }
             queryText.Append(")");
             SqlStorage.Execute(Name, layout.Name, queryText.ToString());
-            for (int i = 0; i < layout.FieldCount; i++)
+            for (var i = 0; i < layout.FieldCount; i++)
             {
                 FieldProperties fieldProperties = layout.GetProperties(i);
                 if ((fieldProperties.Flags & FieldFlags.ID) != 0)
@@ -166,7 +166,7 @@ namespace Cave.Data.SQLite
 
                 if ((fieldProperties.Flags & FieldFlags.Index) != 0)
                 {
-                    string command = string.Format("CREATE INDEX {0} ON {1} ({2})", "idx_" + layout.Name + "_" + fieldProperties.Name, layout.Name, fieldProperties.Name);
+                    var command = string.Format("CREATE INDEX {0} ON {1} ({2})", "idx_" + layout.Name + "_" + fieldProperties.Name, layout.Name, fieldProperties.Name);
                     SqlStorage.Execute(Name, layout.Name, command);
                 }
             }
@@ -186,7 +186,7 @@ namespace Cave.Data.SQLite
                 throw new ArgumentNullException("Layout");
             }
 
-            if (0 != (flags & TableFlags.InMemory))
+            if ((flags & TableFlags.InMemory) != 0)
             {
                 throw new NotSupportedException(string.Format("Table '{0}' does not support TableFlags.{1}", layout.Name, flags));
             }
@@ -194,9 +194,9 @@ namespace Cave.Data.SQLite
             {
                 throw new ArgumentException("Table name contains invalid chars!");
             }
-            StringBuilder l_QueryText = new StringBuilder();
+            var l_QueryText = new StringBuilder();
             l_QueryText.AppendFormat("CREATE TABLE {0} (", SqlStorage.FQTN(Name, layout.Name));
-            for (int i = 0; i < layout.FieldCount; i++)
+            for (var i = 0; i < layout.FieldCount; i++)
             {
                 FieldProperties fieldProperties = layout.GetProperties(i);
                 if (i > 0)
@@ -242,7 +242,7 @@ namespace Cave.Data.SQLite
             }
             l_QueryText.Append(")");
             SqlStorage.Execute(Name, layout.Name, l_QueryText.ToString());
-            for (int i = 0; i < layout.FieldCount; i++)
+            for (var i = 0; i < layout.FieldCount; i++)
             {
                 FieldProperties fieldProperties = layout.GetProperties(i);
                 if ((fieldProperties.Flags & FieldFlags.ID) != 0)
@@ -252,7 +252,7 @@ namespace Cave.Data.SQLite
 
                 if ((fieldProperties.Flags & FieldFlags.Index) != 0)
                 {
-                    string command = string.Format("CREATE INDEX {0} ON {1} ({2})", "idx_" + layout.Name + "_" + fieldProperties.Name, layout.Name, fieldProperties.Name);
+                    var command = string.Format("CREATE INDEX {0} ON {1} ({2})", "idx_" + layout.Name + "_" + fieldProperties.Name, layout.Name, fieldProperties.Name);
                     SqlStorage.Execute(Name, layout.Name, command);
                 }
             }

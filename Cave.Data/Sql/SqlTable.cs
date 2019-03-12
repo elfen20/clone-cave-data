@@ -15,7 +15,7 @@ namespace Cave.Data.Sql
     public abstract class SqlTable : Table
     {
         /// <summary>
-        /// Obtains the command to retrieve the last inserted row.
+        /// Gets the command to retrieve the last inserted row.
         /// </summary>
         /// <param name="row">The row to be inserted.</param>
         /// <returns></returns>
@@ -25,14 +25,14 @@ namespace Cave.Data.Sql
             {
                 throw new NotSupportedException(string.Format("The default GetLastInsertedIDCommand is not available for databases not supporting named parameters!"));
             }
-            StringBuilder commandBuilder = new StringBuilder();
+            var commandBuilder = new StringBuilder();
             commandBuilder.Append("SELECT ");
             commandBuilder.Append(SqlStorage.EscapeFieldName(Layout.IDField));
             commandBuilder.Append(" FROM ");
             commandBuilder.Append(FQTN);
             commandBuilder.Append(" WHERE ");
-            int n = 0;
-            for (int i = 0; i < FieldCount; i++)
+            var n = 0;
+            for (var i = 0; i < FieldCount; i++)
             {
                 FieldProperties fieldProperties = Layout.GetProperties(i);
                 if ((fieldProperties.Flags & FieldFlags.ID) != 0)
@@ -60,7 +60,7 @@ namespace Cave.Data.Sql
         #region public properties
 
         /// <summary>
-        /// Obtains the full qualified table name.
+        /// Gets the full qualified table name.
         /// </summary>
         public readonly string FQTN;
 
@@ -84,7 +84,7 @@ namespace Cave.Data.Sql
                 throw new ArgumentNullException("Database");
             }
 
-            SqlStorage storage = database.Storage as SqlStorage;
+            var storage = database.Storage as SqlStorage;
             if (storage == null)
             {
                 throw new InvalidOperationException(string.Format("Database has to be a SqlDatabase!"));
@@ -134,14 +134,14 @@ namespace Cave.Data.Sql
         /// <param name="value">The value.</param>
         public override void SetValue(string field, object value)
         {
-            string command = "UPDATE " + FQTN + " SET " + SqlStorage.EscapeFieldName(Layout.GetProperties(field));
+            var command = "UPDATE " + FQTN + " SET " + SqlStorage.EscapeFieldName(Layout.GetProperties(field));
             if (value == null)
             {
                 SqlStorage.Execute(Database.Name, Name, command + "=NULL");
             }
             else
             {
-                DatabaseParameter parameter = new DatabaseParameter(field, value);
+                var parameter = new DatabaseParameter(field, value);
                 if (SqlStorage.SupportsNamedParameters)
                 {
                     SqlStorage.Execute(Database.Name, Name, command + "=" + SqlStorage.ParameterPrefix + parameter.Name + ";", parameter);
@@ -155,7 +155,7 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Obtains a row from the table.
+        /// Gets a row from the table.
         /// </summary>
         /// <param name="id">The ID of the row to be fetched.</param>
         /// <returns>Returns the row.</returns>
@@ -165,31 +165,31 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Obtains an array with all rows.
+        /// Gets an array with all rows.
         /// </summary>
         /// <returns></returns>
-        public override List<Row> GetRows()
+        public override IList<Row> GetRows()
         {
             return SqlStorage.Query(Layout, Database.Name, Name, "SELECT * FROM " + FQTN);
         }
 
         /// <summary>
-        /// Obtains the rows with the given ids.
+        /// Gets the rows with the given ids.
         /// </summary>
         /// <param name="ids">IDs of the rows to fetch from the table.</param>
         /// <returns>Returns the rows.</returns>
-        public override List<Row> GetRows(IEnumerable<long> ids)
+        public override IList<Row> GetRows(IEnumerable<long> ids)
         {
             if (ids == null)
             {
                 throw new ArgumentNullException("IDs");
             }
 
-            StringBuilder command = new StringBuilder();
+            var command = new StringBuilder();
             command.AppendLine($"SELECT * FROM {FQTN} WHERE");
-            bool first = true;
-            string idFieldName = Layout.IDField.NameAtDatabase;
-            foreach (long id in ids.AsSet())
+            var first = true;
+            var idFieldName = Layout.IDField.NameAtDatabase;
+            foreach (var id in ids.AsSet())
             {
                 if (first)
                 {
@@ -212,8 +212,8 @@ namespace Cave.Data.Sql
         /// <returns></returns>
         public override IItemSet<T> GetValues<T>(string field, bool includeNull = false, IEnumerable<long> ids = null)
         {
-            string fieldName = SqlStorage.EscapeFieldName(Layout.GetProperties(field));
-            RowLayout layout = RowLayout.CreateUntyped("Layout", new FieldProperties(Name, FieldFlags.None, DataType.String, field));
+            var fieldName = SqlStorage.EscapeFieldName(Layout.GetProperties(field));
+            var layout = RowLayout.CreateUntyped("Layout", new FieldProperties(Name, FieldFlags.None, DataType.String, field));
             string query;
             if (ids == null)
             {
@@ -224,10 +224,10 @@ namespace Cave.Data.Sql
                 query = $"SELECT {fieldName} FROM {FQTN} WHERE {Layout.IDField.Name} IN ({StringExtensions.Join(ids, ",")}) GROUP BY {fieldName}";
             }
             List<Row> rows = SqlStorage.Query(layout, Database.Name, Name, query);
-            Set<T> result = new Set<T>();
+            var result = new Set<T>();
             foreach (Row row in rows)
             {
-                T value = (T)Fields.ConvertValue(typeof(T), row.GetValue(0), CultureInfo.InvariantCulture);
+                var value = (T)Fields.ConvertValue(typeof(T), row.GetValue(0), CultureInfo.InvariantCulture);
                 if (includeNull || (value != null))
                 {
                     result.Include(value);
@@ -244,14 +244,14 @@ namespace Cave.Data.Sql
         {
             search = search ?? Search.None;
             SqlSearch s = search.ToSql(Layout, SqlStorage);
-            StringBuilder command = new StringBuilder();
+            var command = new StringBuilder();
             command.Append("SELECT SUM(");
             command.Append(SqlStorage.EscapeFieldName(Layout.GetProperties(fieldName)));
             command.Append(") FROM ");
             command.Append(FQTN);
             command.Append(" WHERE ");
             command.Append(s.ToString());
-            double result = Convert.ToDouble(SqlStorage.QueryValue(Database.Name, Name, command.ToString(), s.Parameters.ToArray()));
+            var result = Convert.ToDouble(SqlStorage.QueryValue(Database.Name, Name, command.ToString(), s.Parameters.ToArray()));
             FieldProperties field = Layout.GetProperties(fieldName);
             switch (field.DataType)
             {
@@ -275,11 +275,12 @@ namespace Cave.Data.Sql
         /// <returns>Returns whether the dataset exists or not.</returns>
         public override bool Exist(long id)
         {
-            object value = SqlStorage.QueryValue(Database.Name, Name, "SELECT COUNT(*) FROM " + FQTN + " WHERE " + SqlStorage.EscapeFieldName(Layout.IDField) + "=" + id.ToString());
+            var value = SqlStorage.QueryValue(Database.Name, Name, "SELECT COUNT(*) FROM " + FQTN + " WHERE " + SqlStorage.EscapeFieldName(Layout.IDField) + "=" + id.ToString());
             return int.Parse(value.ToString()) > 0;
         }
 
         #region sql92 commands
+
         /// <summary>Creates the insert command.</summary>
         /// <param name="commandBuilder">The command builder.</param>
         /// <param name="row">The row.</param>
@@ -289,19 +290,19 @@ namespace Cave.Data.Sql
             commandBuilder.Append("INSERT INTO ");
             commandBuilder.Append(FQTN);
             commandBuilder.Append(" (");
-            StringBuilder parameterBuilder = new StringBuilder();
-            bool firstCommand = true;
-            bool autoSetID = false;
-            bool autoIncrementID = false;
+            var parameterBuilder = new StringBuilder();
+            var firstCommand = true;
+            var autoSetID = false;
+            var autoIncrementID = false;
 
             // autoset id ?
-            long id = Layout.GetID(row);
+            var id = Layout.GetID(row);
             if (id <= 0)
             {
                 autoSetID = true;
 
                 // yes, autoinc ?
-                autoIncrementID = ((Layout.IDField.Flags & FieldFlags.AutoIncrement) != 0);
+                autoIncrementID = (Layout.IDField.Flags & FieldFlags.AutoIncrement) != 0;
             }
 
             // prepare ID field
@@ -313,7 +314,7 @@ namespace Cave.Data.Sql
                 firstCommand = false;
             }
 
-            for (int i = 0; i < FieldCount; i++)
+            for (var i = 0; i < FieldCount; i++)
             {
                 if (autoSetID && (i == Layout.IDFieldIndex))
                 {
@@ -334,7 +335,7 @@ namespace Cave.Data.Sql
 
                 commandBuilder.Append(SqlStorage.EscapeFieldName(fieldProperties));
 
-                object value = SqlStorage.GetDatabaseValue(fieldProperties, row.GetValue(i));
+                var value = SqlStorage.GetDatabaseValue(fieldProperties, row.GetValue(i));
                 if (value == null)
                 {
                     parameterBuilder.Append("NULL");
@@ -345,7 +346,7 @@ namespace Cave.Data.Sql
                 }
                 else
                 {
-                    DatabaseParameter parameter = new DatabaseParameter(fieldProperties.NameAtDatabase, value);
+                    var parameter = new DatabaseParameter(fieldProperties.NameAtDatabase, value);
                     commandBuilder.AddParameter(parameter);
                     parameterBuilder.Append(SqlStorage.ParameterPrefix);
                     if (SqlStorage.SupportsNamedParameters)
@@ -371,7 +372,7 @@ namespace Cave.Data.Sql
             commandBuilder.Append("UPDATE ");
             commandBuilder.Append(FQTN);
             commandBuilder.Append(" SET ");
-            for (int i = 0; i < Layout.FieldCount; i++)
+            for (var i = 0; i < Layout.FieldCount; i++)
             {
                 if (i > 0)
                 {
@@ -380,7 +381,7 @@ namespace Cave.Data.Sql
 
                 FieldProperties fieldProperties = Layout.GetProperties(i);
                 commandBuilder.Append(SqlStorage.EscapeFieldName(fieldProperties));
-                object value = row.GetValue(i);
+                var value = row.GetValue(i);
                 if (value == null)
                 {
                     commandBuilder.Append("=NULL");
@@ -414,14 +415,14 @@ namespace Cave.Data.Sql
             cb.Append("REPLACE INTO ");
             cb.Append(FQTN);
             cb.Append(" VALUES (");
-            for (int i = 0; i < Layout.FieldCount; i++)
+            for (var i = 0; i < Layout.FieldCount; i++)
             {
                 if (i > 0)
                 {
                     cb.Append(",");
                 }
 
-                object value = row.GetValue(i);
+                var value = row.GetValue(i);
                 if (value == null)
                 {
                     cb.Append("NULL");
@@ -444,6 +445,7 @@ namespace Cave.Data.Sql
         #endregion
 
         #region sql92 insert
+
         /// <summary>
         /// Inserts a row to the table. If an ID <![CDATA[<]]> 0 is given an automatically generated ID will be used to add the dataset.
         /// </summary>
@@ -451,8 +453,8 @@ namespace Cave.Data.Sql
         /// <returns>Returns the ID of the inserted dataset.</returns>
         public override long Insert(Row row)
         {
-            SqlCommandBuilder commandBuilder = new SqlCommandBuilder(Database);
-            long id = CreateInsert(commandBuilder, row);
+            var commandBuilder = new SqlCommandBuilder(Database);
+            var id = CreateInsert(commandBuilder, row);
             if (id <= 0)
             {
                 commandBuilder.Append(GetLastInsertedIDCommand(row));
@@ -469,19 +471,20 @@ namespace Cave.Data.Sql
         #endregion
 
         #region replace (available at most databases via replace alias)
+
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
         /// </summary>
         /// <param name="row">The row to replace (valid ID needed).</param>
         public override void Replace(Row row)
         {
-            long id = Layout.GetID(row);
+            var id = Layout.GetID(row);
             if (id <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(row), "Row ID is invalid!");
             }
 
-            SqlCommandBuilder commandBuilder = new SqlCommandBuilder(Database);
+            var commandBuilder = new SqlCommandBuilder(Database);
             CreateReplace(commandBuilder, row);
             commandBuilder.Execute();
             IncreaseSequenceNumber();
@@ -490,19 +493,20 @@ namespace Cave.Data.Sql
         #endregion
 
         #region sql92 update
+
         /// <summary>
         /// Updates a row to the table. The row must exist already!.
         /// </summary>
         /// <param name="row">The row to update.</param>
         public override void Update(Row row)
         {
-            long id = Layout.GetID(row);
+            var id = Layout.GetID(row);
             if (id <= 0)
             {
                 throw new ArgumentOutOfRangeException(nameof(row), "Row ID is invalid!");
             }
 
-            SqlCommandBuilder commandBuilder = new SqlCommandBuilder(Database);
+            var commandBuilder = new SqlCommandBuilder(Database);
             CreateUpdate(commandBuilder, row);
             commandBuilder.Execute();
             IncreaseSequenceNumber();
@@ -510,13 +514,14 @@ namespace Cave.Data.Sql
         #endregion
 
         #region sql92 delete
+
         /// <summary>
         /// Removes a row from the table.
         /// </summary>
         /// <param name="id">The dataset ID to remove.</param>
         public override void Delete(long id)
         {
-            StringBuilder commandBuilder = new StringBuilder();
+            var commandBuilder = new StringBuilder();
             commandBuilder.Append("DELETE FROM ");
             commandBuilder.Append(FQTN);
             commandBuilder.Append(" WHERE ");
@@ -538,8 +543,8 @@ namespace Cave.Data.Sql
             }
 
             SqlSearch s = search.ToSql(Layout, SqlStorage);
-            string command = "DELETE FROM " + FQTN + " WHERE " + s.ToString();
-            int result = SqlStorage.Execute(Database.Name, Name, command, s.Parameters.ToArray());
+            var command = "DELETE FROM " + FQTN + " WHERE " + s.ToString();
+            var result = SqlStorage.Execute(Database.Name, Name, command, s.Parameters.ToArray());
             IncreaseSequenceNumber();
             return result;
         }
@@ -592,18 +597,18 @@ namespace Cave.Data.Sql
             }
 
             SqlSearch s = search.ToSql(Layout, SqlStorage);
-            string query = "SELECT DISTINCT 1 FROM " + FQTN + " WHERE " + s.ToString();
+            var query = "SELECT DISTINCT 1 FROM " + FQTN + " WHERE " + s.ToString();
             return SqlStorage.Query(null, Database.Name, Name, query, s.Parameters.ToArray()).Count > 0;
         }
 
         /// <summary>
-        /// Obtains the RowCount.
+        /// Gets the RowCount.
         /// </summary>
         public override long RowCount
         {
             get
             {
-                object value = SqlStorage.QueryValue(Database.Name, Name, "SELECT COUNT(*) FROM " + FQTN);
+                var value = SqlStorage.QueryValue(Database.Name, Name, "SELECT COUNT(*) FROM " + FQTN);
                 return Convert.ToInt64(value);
             }
         }
@@ -611,6 +616,7 @@ namespace Cave.Data.Sql
         #region FindRow(s) amd FindGroup implementation
 
         #region sql92 protected find functions
+
         /// <summary>
         /// Searches for grouped datasets and returns the id of the first occurence (sql handles this differently).
         /// </summary>
@@ -620,7 +626,7 @@ namespace Cave.Data.Sql
         protected internal virtual List<Row> SqlGetGroupRows(SqlSearch search, ResultOption option)
         {
             RowLayout layout;
-            StringBuilder command = new StringBuilder();
+            var command = new StringBuilder();
             command.Append("SELECT ");
             if (SqlStorage.SupportsAllFieldsGroupBy)
             {
@@ -630,8 +636,8 @@ namespace Cave.Data.Sql
             else
             {
                 layout = null;
-                int fieldNumber = 0;
-                foreach (string fieldName in search.FieldNames)
+                var fieldNumber = 0;
+                foreach (var fieldName in search.FieldNames)
                 {
                     if (fieldNumber++ > 0)
                     {
@@ -647,7 +653,7 @@ namespace Cave.Data.Sql
 
             command.Append(search.ToString());
 
-            int groupCount = 0;
+            var groupCount = 0;
             foreach (ResultOption o in option.ToArray(ResultOptionMode.Group))
             {
                 if (groupCount++ == 0)
@@ -673,7 +679,7 @@ namespace Cave.Data.Sql
         protected internal virtual List<long> SqlFindGroupIDs(SqlSearch search, ResultOption option)
         {
             List<Row> rows = SqlGetGroupRows(search, option);
-            List<long> result = new List<long>(rows.Count);
+            var result = new List<long>(rows.Count);
             if (SqlStorage.SupportsAllFieldsGroupBy)
             {
                 foreach (Row row in rows)
@@ -686,7 +692,7 @@ namespace Cave.Data.Sql
                 foreach (Row row in rows)
                 {
                     Search singleSearch = Search.None;
-                    for (int i = 0; i < Layout.FieldCount; i++)
+                    for (var i = 0; i < Layout.FieldCount; i++)
                     {
                         if (i == Layout.IDFieldIndex)
                         {
@@ -713,14 +719,14 @@ namespace Cave.Data.Sql
             {
                 return SqlFindGroupIDs(search, option);
             }
-            StringBuilder command = new StringBuilder();
+            var command = new StringBuilder();
             command.Append("SELECT ");
             if (Layout.IDField != null)
             {
                 command.Append(SqlStorage.EscapeFieldName(Layout.IDField));
             }
 
-            foreach (string fieldName in search.FieldNames)
+            foreach (var fieldName in search.FieldNames)
             {
                 if (fieldName == Layout.IDField.Name)
                 {
@@ -742,7 +748,7 @@ namespace Cave.Data.Sql
 
             command.Append(search.ToString());
 
-            int orderCount = 0;
+            var orderCount = 0;
             foreach (ResultOption o in option.ToArray(ResultOptionMode.SortAsc, ResultOptionMode.SortDesc))
             {
                 if (orderCount++ == 0)
@@ -769,7 +775,7 @@ namespace Cave.Data.Sql
                 throw new InvalidOperationException(string.Format("Cannot use Option.Group and Option.Sort at once!"));
             }
 
-            int limit = 0;
+            var limit = 0;
             foreach (ResultOption o in option.ToArray(ResultOptionMode.Limit))
             {
                 if (limit++ > 0)
@@ -779,7 +785,7 @@ namespace Cave.Data.Sql
 
                 command.Append(" LIMIT " + o.Parameter);
             }
-            int offset = 0;
+            var offset = 0;
             foreach (ResultOption o in option.ToArray(ResultOptionMode.Offset))
             {
                 if (offset++ > 0)
@@ -796,7 +802,7 @@ namespace Cave.Data.Sql
             }
 
             List<Row> rows = SqlStorage.Query(null, Database.Name, Name, command.ToString(), search.Parameters.ToArray());
-            List<long> result = new List<long>();
+            var result = new List<long>();
             foreach (Row row in rows)
             {
                 result.Add(Convert.ToInt64(row.GetValue(0)));
@@ -812,7 +818,7 @@ namespace Cave.Data.Sql
         /// <returns></returns>
         protected internal virtual long SqlCountGroupIDs(SqlSearch search, ResultOption option)
         {
-            StringBuilder command = new StringBuilder();
+            var command = new StringBuilder();
             command.Append("SELECT COUNT(");
             if (SqlStorage.SupportsAllFieldsGroupBy)
             {
@@ -820,8 +826,8 @@ namespace Cave.Data.Sql
             }
             else
             {
-                int fieldNumber = 0;
-                foreach (string fieldName in search.FieldNames)
+                var fieldNumber = 0;
+                foreach (var fieldName in search.FieldNames)
                 {
                     if (fieldNumber++ > 0)
                     {
@@ -842,7 +848,7 @@ namespace Cave.Data.Sql
                 throw new InvalidOperationException(string.Format("Cannot use Option.Group and Option.Limit/Offset at once!"));
             }
 
-            int groupCount = 0;
+            var groupCount = 0;
             foreach (ResultOption o in option.ToArray(ResultOptionMode.Group))
             {
                 if (groupCount++ == 0)
@@ -871,7 +877,7 @@ namespace Cave.Data.Sql
             {
                 return SqlCountGroupIDs(search, option);
             }
-            StringBuilder command = new StringBuilder();
+            var command = new StringBuilder();
             command.Append("SELECT COUNT(*) FROM ");
             command.Append(FQTN);
             command.Append(" WHERE ");
@@ -903,14 +909,14 @@ namespace Cave.Data.Sql
             {
                 return SqlGetGroupRows(search, option);
             }
-            StringBuilder command = new StringBuilder();
+            var command = new StringBuilder();
             command.Append("SELECT * FROM ");
             command.Append(FQTN);
             command.Append(" WHERE ");
 
             command.Append(search.ToString());
 
-            int orderCount = 0;
+            var orderCount = 0;
             foreach (ResultOption o in option.ToArray(ResultOptionMode.SortAsc, ResultOptionMode.SortDesc))
             {
                 if (orderCount++ == 0)
@@ -932,7 +938,7 @@ namespace Cave.Data.Sql
                 }
             }
 
-            int limit = 0;
+            var limit = 0;
             foreach (ResultOption o in option.ToArray(ResultOptionMode.Limit))
             {
                 if (limit++ > 0)
@@ -942,7 +948,7 @@ namespace Cave.Data.Sql
 
                 command.Append(" LIMIT " + o.Parameter);
             }
-            int offset = 0;
+            var offset = 0;
             foreach (ResultOption o in option.ToArray(ResultOptionMode.Offset))
             {
                 if (offset++ > 0)
@@ -963,7 +969,7 @@ namespace Cave.Data.Sql
         /// <param name="search">The search to run.</param>
         /// <param name="resultOption">Options for the search and the result set.</param>
         /// <returns>Returns the ID of the row found or -1.</returns>
-        public override List<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
+        public override IList<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             if (search == null)
             {
@@ -986,7 +992,7 @@ namespace Cave.Data.Sql
         /// <param name="search">The search to run.</param>
         /// <param name="resultOption">Options for the search and the result set.</param>
         /// <returns>Returns the rows found.</returns>
-        public override List<Row> GetRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
+        public override IList<Row> GetRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
             if (search == null)
             {
@@ -1008,30 +1014,30 @@ namespace Cave.Data.Sql
         #region free / used id lookup
 
         /// <summary>
-        /// Obtains the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!).
+        /// Gets the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!).
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         public override long GetNextUsedID(long id)
         {
-            object obj = SqlStorage.QueryValue(Database.Name, Name, "SELECT MIN(" + SqlStorage.EscapeFieldName(Layout.IDField) + ") FROM " + FQTN +
-                " WHERE " + SqlStorage.EscapeFieldName(Layout.IDField) + " > " + id);
+            var cmd = $"SELECT MIN({SqlStorage.EscapeFieldName(Layout.IDField)}) FROM {FQTN} WHERE {SqlStorage.EscapeFieldName(Layout.IDField)} > {id}";
+            var obj = SqlStorage.QueryValue(Database.Name, Name, cmd);
             return obj == null ? -1 : Convert.ToInt64(obj);
         }
 
         /// <summary>
-        /// Obtains the next free ID at the table.
+        /// Gets the next free ID at the table.
         /// </summary>
         /// <returns></returns>
         public override long GetNextFreeID()
         {
-            long count = Convert.ToInt64(SqlStorage.QueryValue(Database.Name, Name, "SELECT COUNT(*) FROM " + FQTN));
+            var count = Convert.ToInt64(SqlStorage.QueryValue(Database.Name, Name, $"SELECT COUNT(*) FROM {FQTN}"));
             if (count == 0)
             {
                 return 1L;
             }
 
-            long value = Convert.ToInt64(SqlStorage.QueryValue(Database.Name, Name, "SELECT MAX(" + SqlStorage.EscapeFieldName(Layout.IDField) + ") FROM " + FQTN));
+            var value = Convert.ToInt64(SqlStorage.QueryValue(Database.Name, Name, $"SELECT MAX({SqlStorage.EscapeFieldName(Layout.IDField)}) FROM {FQTN}"));
             return Math.Max(1L, 1L + value);
         }
 
@@ -1054,7 +1060,7 @@ namespace Cave.Data.Sql
 
         void InternalCommit(Transaction[] transactions)
         {
-            SqlCommandBuilder commandBuilder = new SqlCommandBuilder(Database);
+            var commandBuilder = new SqlCommandBuilder(Database);
             commandBuilder.AppendLine("START TRANSACTION;");
             foreach (Transaction transaction in transactions)
             {
@@ -1135,12 +1141,12 @@ namespace Cave.Data.Sql
             }
             catch
             {
-                if (0 != (flags & TransactionFlags.AllowRequeue))
+                if ((flags & TransactionFlags.AllowRequeue) != 0)
                 {
                     transactionLog.Requeue(true, transactions);
                 }
 
-                if (0 != (flags & TransactionFlags.ThrowExceptions))
+                if ((flags & TransactionFlags.ThrowExceptions) != 0)
                 {
                     throw;
                 }
@@ -1165,384 +1171,5 @@ namespace Cave.Data.Sql
         {
             return Database + "." + Name;
         }
-    }
-
-    /// <summary>
-    /// Provides a table implementation for generic sql92 databases.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public abstract class SqlTable<T> : SqlTable, ITable<T>
-        where T : struct
-    {
-        /// <summary>Creates a new SqlTable instance.</summary>
-        /// <param name="database">The database this table belongs to.</param>
-        /// <param name="layout">The layout of the table.</param>
-        protected SqlTable(IDatabase database, RowLayout layout)
-            : base(database, CheckTypedLayout(typeof(T), database, layout))
-        {
-        }
-
-        #region sql92 protected find functions
-
-        /// <summary>Runs a sql group function and returns the result as structures.</summary>
-        /// <param name="search">The search.</param>
-        /// <param name="options">The options.</param>
-        /// <returns>Returns a list of structures.</returns>
-        protected internal virtual List<T> SqlGetGroupStructs(SqlSearch search, ResultOption options)
-        {
-            List<Row> rows = SqlGetGroupRows(search, options);
-            List<T> result = new List<T>(rows.Count);
-            if (SqlStorage.SupportsAllFieldsGroupBy)
-            {
-                foreach (Row row in rows)
-                {
-                    result.Add(row.GetStruct<T>(Layout));
-                }
-            }
-            else
-            {
-                foreach (Row row in rows)
-                {
-                    Search singleSearch = Search.None;
-                    for (int i = 0; i < Layout.FieldCount; i++)
-                    {
-                        if (i == Layout.IDFieldIndex)
-                        {
-                            continue;
-                        }
-
-                        singleSearch &= Search.FieldEquals(Layout.GetProperties(i).Name, row.GetValue(i));
-                    }
-                    result.Add(GetStruct(singleSearch, ResultOption.Limit(1) + ResultOption.SortDescending(SqlStorage.EscapeFieldName(Layout.IDField))));
-                }
-            }
-            return result;
-        }
-
-        /// <summary>
-        /// Searches the table for rows with given field value combinations.
-        /// </summary>
-        /// <param name="search">The search to run.</param>
-        /// <param name="options">Options for the search and the result set.</param>
-        /// <returns>Returns the ID of the row found or -1.</returns>
-        protected internal virtual List<T> SqlGetStructs(SqlSearch search, ResultOption options)
-        {
-            if (options.Contains(ResultOptionMode.Group))
-            {
-                return SqlGetGroupStructs(search, options);
-            }
-            StringBuilder command = new StringBuilder();
-            command.Append("SELECT * FROM ");
-            command.Append(FQTN);
-            command.Append(" WHERE ");
-
-            command.Append(search.ToString());
-
-            int orderCount = 0;
-            foreach (ResultOption o in options.ToArray(ResultOptionMode.SortAsc, ResultOptionMode.SortDesc))
-            {
-                if (orderCount++ == 0)
-                {
-                    command.Append(" ORDER BY ");
-                }
-                else
-                {
-                    command.Append(",");
-                }
-                command.Append(SqlStorage.EscapeFieldName(Layout.GetProperties(o.Parameter)));
-                if (o.Mode == ResultOptionMode.SortAsc)
-                {
-                    command.Append(" ASC");
-                }
-                else
-                {
-                    command.Append(" DESC");
-                }
-            }
-
-            int limit = 0;
-            foreach (ResultOption o in options.ToArray(ResultOptionMode.Limit))
-            {
-                if (limit++ > 0)
-                {
-                    throw new InvalidOperationException(string.Format("Cannot set two different limits!"));
-                }
-
-                command.Append(" LIMIT " + o.Parameter);
-            }
-            int offset = 0;
-            foreach (ResultOption o in options.ToArray(ResultOptionMode.Offset))
-            {
-                if (offset++ > 0)
-                {
-                    throw new InvalidOperationException(string.Format("Cannot set two different offsets!"));
-                }
-
-                command.Append(" OFFSET " + o.Parameter);
-            }
-
-            return SqlStorage.Query<T>(Database.Name, Name, command.ToString(), search.Parameters.ToArray());
-        }
-        #endregion
-
-        #region implemented functionality
-
-        #region non virtual
-
-        /// <summary>
-        /// Obtains the row struct with the given index.
-        /// This allows a memorytable to be used as virtual list for listviews, ...
-        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
-        /// </summary>
-        /// <param name="index">The rows index (0..RowCount-1).</param>
-        /// <returns></returns>
-        /// <exception cref="IndexOutOfRangeException"></exception>
-        public T GetStructAt(int index)
-        {
-            return GetRowAt(index).GetStruct<T>(Layout);
-        }
-
-        /// <summary>
-        /// Obtains the rows with the given ids.
-        /// </summary>
-        /// <param name="ids">IDs of the rows to fetch from the table.</param>
-        /// <returns>Returns the rows.</returns>
-        public List<T> GetStructs(IEnumerable<long> ids)
-        {
-            if (ids == null)
-            {
-                throw new ArgumentNullException("IDs");
-            }
-
-            StringBuilder command = new StringBuilder();
-            command.AppendLine($"SELECT * FROM {FQTN} WHERE");
-            bool first = true;
-            string idFieldName = Layout.IDField.NameAtDatabase;
-            foreach (long id in ids.AsSet())
-            {
-                if (first)
-                {
-                    first = false;
-                    command.AppendLine($"({idFieldName}={id})");
-                }
-                else
-                {
-                    command.AppendLine($"OR({idFieldName}={id})");
-                }
-            }
-            return first ? new List<T>() : SqlStorage.Query<T>(Database.Name, Name, command.ToString());
-        }
-
-        /// <summary>
-        /// Inserts rows into the table using a transaction.
-        /// </summary>
-        /// <param name="rows">The rows to insert.</param>
-        public void Insert(IEnumerable<T> rows)
-        {
-            if (rows == null)
-            {
-                throw new ArgumentNullException("Rows");
-            }
-
-            TransactionLog<T> l = new TransactionLog<T>();
-            foreach (T r in rows) { l.AddInserted(r); }
-            Commit(l);
-        }
-
-        /// <summary>
-        /// Updates rows at the table. The rows must exist already!.
-        /// </summary>
-        /// <param name="rows">The rows to update.</param>
-        public void Update(IEnumerable<T> rows)
-        {
-            if (rows == null)
-            {
-                throw new ArgumentNullException("Rows");
-            }
-
-            TransactionLog<T> l = new TransactionLog<T>();
-            foreach (T r in rows) { l.AddUpdated(r); }
-            Commit(l);
-        }
-
-        /// <summary>
-        /// Replaces rows at the table. This inserts (if the row does not exist) or updates (if it exists) each row.
-        /// </summary>
-        /// <param name="rows">The rows to replace (valid ID needed).</param>
-        public void Replace(IEnumerable<T> rows)
-        {
-            if (rows == null)
-            {
-                throw new ArgumentNullException("Rows");
-            }
-
-            TransactionLog<T> l = new TransactionLog<T>();
-            foreach (T i in rows) { l.AddReplaced(i); }
-            Commit(l);
-        }
-
-        /// <summary>Tries to get the (unique) row with the given fieldvalue.</summary>
-        /// <param name="search">The search.</param>
-        /// <param name="row">The row.</param>
-        /// <returns>Returns true on success, false otherwise.</returns>
-        public bool TryGetStruct(Search search, out T row)
-        {
-            long id = FindRow(search);
-            if (id > -1)
-            {
-                row = GetStruct(id);
-                return true;
-            }
-            row = new T();
-            return false;
-        }
-        #endregion
-
-        #region virtual
-        /// <summary>
-        /// Obtains a row from the table.
-        /// </summary>
-        /// <param name="id">The ID of the row to be fetched.</param>
-        /// <returns>Returns the row.</returns>
-        public virtual T GetStruct(long id)
-        {
-            return SqlStorage.QueryRow<T>(Database.Name, Name, "SELECT * FROM " + FQTN + " WHERE " + SqlStorage.EscapeFieldName(Layout.IDField) + "=" + id.ToString());
-        }
-
-        /// <summary>
-        /// Searches the table for a single row with given search.
-        /// </summary>
-        /// <param name="search">The search to run.</param>
-        /// <param name="resultOption">Options for the search and the result set.</param>
-        /// <returns>Returns the row found.</returns>
-        public virtual T GetStruct(Search search = default(Search), ResultOption resultOption = default(ResultOption))
-        {
-            if (search == null)
-            {
-                search = Search.None;
-            }
-
-            if (resultOption == null)
-            {
-                resultOption = ResultOption.None;
-            }
-
-            SqlSearch s = search.ToSql(Layout, SqlStorage);
-            s.CheckFieldsPresent(resultOption);
-            List<T> rows = SqlGetStructs(s, resultOption);
-            if (rows.Count == 0)
-            {
-                throw new ArgumentException(string.Format("Dataset could not be found!"));
-            }
-
-            if (rows.Count > 1)
-            {
-                throw new InvalidDataException("Dataset not unique!");
-            }
-
-            return rows[0];
-        }
-
-        /// <summary>
-        /// Searches the table for rows with given field value combinations.
-        /// </summary>
-        /// <param name="search">The search to run.</param>
-        /// <param name="resultOption">Options for the search and the result set.</param>
-        /// <returns>Returns the rows found.</returns>
-        public virtual List<T> GetStructs(Search search = default(Search), ResultOption resultOption = default(ResultOption))
-        {
-            if (search == null)
-            {
-                search = Search.None;
-            }
-
-            if (resultOption == null)
-            {
-                resultOption = ResultOption.None;
-            }
-
-            SqlSearch s = search.ToSql(Layout, SqlStorage);
-            s.CheckFieldsPresent(resultOption);
-            return SqlGetStructs(s, resultOption);
-        }
-
-        /// <summary>
-        /// Inserts a row to the table. If an ID <![CDATA[<=]]> 0 is given an automatically generated ID will be used to add the dataset.
-        /// </summary>
-        /// <param name="row">The row to insert.</param>
-        /// <returns>Returns the ID of the inserted dataset.</returns>
-        public virtual long Insert(T row)
-        {
-            return Insert(Row.Create(Layout, row));
-        }
-
-        /// <summary>
-        /// Updates a row to the table. The row must exist already!.
-        /// </summary>
-        /// <param name="row">The row to update.</param>
-        public virtual void Update(T row)
-        {
-            Update(Row.Create(Layout, row));
-        }
-
-        /// <summary>
-        /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
-        /// </summary>
-        /// <param name="row">The row to replace (valid ID needed).</param>
-        public virtual void Replace(T row)
-        {
-            Replace(Row.Create(Layout, row));
-        }
-
-        /// <summary>
-        /// Checks whether a row is present unchanged at the database and removes it.
-        /// (Use Delete(ID) to delete a DataSet without any checks).
-        /// </summary>
-        /// <param name="row"></param>
-        public virtual void Delete(T row)
-        {
-            long id = Layout.GetID(row);
-            T data = GetStruct(id);
-            if (!data.Equals(row))
-            {
-                throw new DataException(string.Format("Row does not match row at database!"));
-            }
-
-            Delete(id);
-        }
-
-        /// <summary>
-        /// Provides access to the row with the specified ID.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public virtual T this[long id]
-        {
-            get => GetStruct(id);
-            set
-            {
-                long i = Layout.GetID(value);
-                if (i != id)
-                {
-                    throw new InvalidDataException(string.Format("ID mismatch!"));
-                }
-
-                Replace(value);
-            }
-        }
-
-        /// <summary>
-        /// Copies all rows to a given array.
-        /// </summary>
-        /// <param name="rowArray"></param>
-        /// <param name="startIndex"></param>
-        public void CopyTo(T[] rowArray, int startIndex)
-        {
-            GetStructs().CopyTo(rowArray, startIndex);
-        }
-
-        #endregion
-
-        #endregion
     }
 }

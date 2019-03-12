@@ -15,17 +15,17 @@ namespace Cave.Data
         IStorage Storage { get; }
 
         /// <summary>
-        /// Obtains the name of the database.
+        /// Gets the name of the database.
         /// </summary>
         string Name { get; }
 
         /// <summary>
-        /// Obtains the available table names.
+        /// Gets the available table names.
         /// </summary>
         string[] TableNames { get; }
 
         /// <summary>
-        /// Obtains whether the specified table exists or not.
+        /// Gets whether the specified table exists or not.
         /// </summary>
         /// <param name="table">The name of the table.</param>
         /// <returns></returns>
@@ -94,6 +94,7 @@ namespace Cave.Data
         #endregion
 
         #region CreateTable functions
+
         /// <summary>
         /// Adds a new table with the specified layout.
         /// </summary>
@@ -182,7 +183,7 @@ namespace Cave.Data
         void Close();
 
         /// <summary>
-        /// Obtains whether the database was already closed or not.
+        /// Gets whether the database was already closed or not.
         /// </summary>
         bool Closed { get; }
     }

@@ -7,11 +7,11 @@ namespace Cave.Data
     /// </summary>
     public class DatabaseParameter : IDatabaseParameter
     {
-        object m_Value;
-        string m_Name;
+        object value;
+        string name;
 
         /// <summary>
-        /// Creates a new parameter with the specified name and value.
+        /// Initializes a new instance of the <see cref="DatabaseParameter"/> class.
         /// </summary>
         /// <param name="name"></param>
         /// <param name="value"></param>
@@ -22,19 +22,19 @@ namespace Cave.Data
                 throw new ArgumentNullException("Name");
             }
 
-            m_Name = name.ReplaceInvalidChars(ASCII.Strings.Letters + ASCII.Strings.Digits, "_");
-            m_Value = value;
+            this.name = name.ReplaceInvalidChars(ASCII.Strings.Letters + ASCII.Strings.Digits, "_");
+            this.value = value;
         }
 
         /// <summary>
         /// Gets/sets the name of the <see cref="DatabaseParameter"/>.
         /// </summary>
-        public virtual string Name => m_Name;
+        public virtual string Name => name;
 
         /// <summary>
         /// Gets/sets the value of the <see cref="DatabaseParameter"/>.
         /// </summary>
-        public virtual object Value => m_Value;
+        public virtual object Value => value;
 
         /// <summary>
         /// Provides name and value of the parameter.
@@ -42,12 +42,12 @@ namespace Cave.Data
         /// <returns></returns>
         public override string ToString()
         {
-            string value = m_Value == null ? "<null>" : m_Value.ToString();
+            var value = this.value == null ? "<null>" : this.value.ToString();
             return Name + " = " + value;
         }
 
         /// <summary>
-        /// Obtains the hascode for this parameter.
+        /// Gets the hascode for this parameter.
         /// </summary>
         /// <returns></returns>
         public override int GetHashCode()

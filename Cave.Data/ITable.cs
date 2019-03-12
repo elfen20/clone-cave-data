@@ -18,22 +18,22 @@ namespace Cave.Data
         IStorage Storage { get; }
 
         /// <summary>
-        /// Obtains the database the table belongs to.
+        /// Gets the database the table belongs to.
         /// </summary>
         IDatabase Database { get; }
 
         /// <summary>
-        /// Obtains the name of the table.
+        /// Gets the name of the table.
         /// </summary>
         string Name { get; }
 
         /// <summary>
-        /// Obtains the RowLayout of the table.
+        /// Gets the RowLayout of the table.
         /// </summary>
         RowLayout Layout { get; }
 
         /// <summary>
-        /// Obtains the RowCount.
+        /// Gets the RowCount.
         /// </summary>
         long RowCount { get; }
 
@@ -51,7 +51,7 @@ namespace Cave.Data
         void Clear();
 
         /// <summary>
-        /// Obtains a row from the table.
+        /// Gets a row from the table.
         /// </summary>
         /// <param name="id">The ID of the row to be fetched.</param>
         /// <returns>Returns the row.</returns>
@@ -126,7 +126,7 @@ namespace Cave.Data
         /// Removes all rows from the table matching the specified search.
         /// </summary>
         /// <param name="search">The Search used to identify rows for removal.</param>
-		/// <returns>Returns the number of dataset deleted.</returns>
+        /// <returns>Returns the number of dataset deleted.</returns>
         int TryDelete(Search search);
 
         /// <summary>
@@ -155,7 +155,7 @@ namespace Cave.Data
         /// <param name="search">The search to run.</param>
         /// <param name="resultOption">Options for the search and the result set.</param>
         /// <returns>Returns the IDs of the rows found.</returns>
-        List<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption));
+        IList<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption));
 
         /// <summary>
         /// Searches the table for a single row with given search.
@@ -171,20 +171,20 @@ namespace Cave.Data
         /// <param name="search">The search to run.</param>
         /// <param name="resultOption">Options for the search and the result set.</param>
         /// <returns>Returns the rows found.</returns>
-        List<Row> GetRows(Search search = default(Search), ResultOption resultOption = default(ResultOption));
+        IList<Row> GetRows(Search search = default(Search), ResultOption resultOption = default(ResultOption));
 
         /// <summary>
-        /// Obtains the rows with the given ids.
+        /// Gets the rows with the given ids.
         /// </summary>
         /// <param name="ids">IDs of the rows to fetch from the table.</param>
         /// <returns>Returns the rows.</returns>
-        List<Row> GetRows(IEnumerable<long> ids);
+        IList<Row> GetRows(IEnumerable<long> ids);
 
         /// <summary>
-        /// Obtains an array with all rows.
+        /// Gets an array with all rows.
         /// </summary>
         /// <returns></returns>
-        List<Row> GetRows();
+        IList<Row> GetRows();
 
         /// <summary>Calculates the sum of the specified field name for all matching rows.</summary>
         /// <param name="fieldName">Name of the field.</param>
@@ -194,17 +194,21 @@ namespace Cave.Data
 
         /// <summary>Gets all currently used IDs.</summary>
         /// <value>The IDs.</value>
-        List<long> IDs { get; }
+        IList<long> IDs { get; }
+
+        /// <summary>Gets all currently used IDs in ascending order.</summary>
+        /// <value>The IDs in ascending order.</value>
+        IList<long> SortedIDs { get; }
 
         /// <summary>
-        /// Obtains the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!).
+        /// Gets the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!).
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         long GetNextUsedID(long id);
 
         /// <summary>
-        /// Obtains the next free ID at the table.
+        /// Gets the next free ID at the table.
         /// </summary>
         /// <returns></returns>
         long GetNextFreeID();
@@ -223,96 +227,5 @@ namespace Cave.Data
         /// <param name="count">Number of transactions to combine at one write.</param>
         /// <returns>Returns the number of transactions done or -1 if unknown.</returns>
         int Commit(TransactionLog transactions, TransactionFlags flags = TransactionFlags.Default, int count = -1);
-    }
-
-    /// <summary>
-    /// Provides an interface for a table of structs (rows).
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public interface ITable<T> : ITable
-        where T : struct
-    {
-        /// <summary>
-        /// Obtains a row from the table.
-        /// </summary>
-        /// <param name="id">The ID of the row to be fetched.</param>
-        /// <returns>Returns the row.</returns>
-        T GetStruct(long id);
-
-        /// <summary>
-        /// Inserts a row into the table. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.
-        /// </summary>
-        /// <param name="row">The row to insert. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.</param>
-        /// <returns>Returns the ID of the inserted dataset.</returns>
-        long Insert(T row);
-
-        /// <summary>
-        /// Inserts rows into the table using a transaction.
-        /// </summary>
-        /// <param name="rows">The rows to insert.</param>
-        void Insert(IEnumerable<T> rows);
-
-        /// <summary>
-        /// Updates a row at the table. The row must exist already!.
-        /// </summary>
-        /// <param name="row">The row to update.</param>
-        void Update(T row);
-
-        /// <summary>
-        /// Updates rows at the table. The rows must exist already!.
-        /// </summary>
-        /// <param name="rows">The rows to update.</param>
-        void Update(IEnumerable<T> rows);
-
-        /// <summary>
-        /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
-        /// </summary>
-        /// <param name="row">The row to replace (valid ID needed).</param>
-        void Replace(T row);
-
-        /// <summary>
-        /// Replaces rows at the table. This inserts (if the row does not exist) or updates (if it exists) each row.
-        /// </summary>
-        /// <param name="rows">The rows to replace (valid ID needed).</param>
-        void Replace(IEnumerable<T> rows);
-
-        /// <summary>
-        /// Searches the table for a single row with given search.
-        /// </summary>
-        /// <param name="search">The search to run.</param>
-        /// <param name="resultOption">Options for the search and the result set.</param>
-        /// <returns>Returns the row found.</returns>
-        T GetStruct(Search search = default(Search), ResultOption resultOption = default(ResultOption));
-
-        /// <summary>
-        /// Searches the table for rows with given search.
-        /// </summary>
-        /// <param name="search">The search to run.</param>
-        /// <param name="resultOption">Options for the search and the result set.</param>
-        /// <returns>Returns the rows found.</returns>
-        List<T> GetStructs(Search search = default(Search), ResultOption resultOption = default(ResultOption));
-
-        /// <summary>
-        /// Obtains the rows with the given ids.
-        /// </summary>
-        /// <param name="ids">IDs of the rows to fetch from the table.</param>
-        /// <returns>Returns the rows.</returns>
-        List<T> GetStructs(IEnumerable<long> ids);
-
-        /// <summary>
-        /// Obtains the row struct with the given index.
-        /// This allows a memorytable to be used as virtual list for listviews, ...
-        /// Note that indices will change on each update, insert, delete and sorting is not garanteed!.
-        /// </summary>
-        /// <param name="index">The rows index (0..RowCount-1).</param>
-        /// <returns></returns>
-        T GetStructAt(int index);
-
-        /// <summary>
-        /// Obtains the row with the specified ID.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        T this[long id] { get; }
     }
 }

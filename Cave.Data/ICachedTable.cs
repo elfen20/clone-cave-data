@@ -18,11 +18,4 @@ namespace Cave.Data
         /// <summary>Closes this instance after flushing all data.</summary>
         void Close();
     }
-
-    /// <summary>
-    /// Provides an interface for tables caching data.
-    /// </summary>
-    public interface ICachedTable<T> : IMemoryTable<T>, ICachedTable
-        where T : struct
-    { }
 }

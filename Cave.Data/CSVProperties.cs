@@ -11,14 +11,14 @@ namespace Cave.Data
     public struct CSVProperties : IEquatable<CSVProperties>
     {
         /// <summary>
-        /// Obtains <see cref="CSVProperties"/> with default settings:
+        /// Gets <see cref="CSVProperties"/> with default settings:
         /// Encoding=UTF8, Compression=None, Separator=';', StringMarker='"'.
         /// </summary>
         public static CSVProperties Default
         {
             get
             {
-                CSVProperties result = new CSVProperties
+                var result = new CSVProperties
                 {
                     Culture = CultureInfo.InvariantCulture,
                     Compression = CompressionType.None,
@@ -27,21 +27,21 @@ namespace Cave.Data
                     Separator = ';',
                     StringMarker = '"',
                     DateTimeFormat = StringExtensions.InterOpDateTimeFormat,
-                    AllowFieldMatching = false
+                    AllowFieldMatching = false,
                 };
                 return result;
             }
         }
 
         /// <summary>
-        /// Obtains <see cref="CSVProperties"/> with default settings for Microsoft Excel:
+        /// Gets <see cref="CSVProperties"/> with default settings for Microsoft Excel:
         /// Encoding=Current System Default, Compression=None, Separator='Tab', StringMarker='"'.
         /// </summary>
         public static CSVProperties Excel
         {
             get
             {
-                CSVProperties result = new CSVProperties
+                var result = new CSVProperties
                 {
                     SaveDefaultValues = true,
                     Culture = CultureInfo.CurrentUICulture,
@@ -51,7 +51,7 @@ namespace Cave.Data
                     Separator = '\t',
                     StringMarker = '"',
                     DateTimeFormat = "yyyy-MM-dd HH:mm:ss" + CultureInfo.CurrentUICulture.NumberFormat.NumberDecimalSeparator + "fff",
-                    AllowFieldMatching = false
+                    AllowFieldMatching = false,
                 };
                 return result;
             }
@@ -141,7 +141,7 @@ namespace Cave.Data
         public string TrueValue;
 
         /// <summary>
-        /// Obtains whether the properties are all set or not.
+        /// Gets whether the properties are all set or not.
         /// </summary>
         public bool Valid => Enum.IsDefined(typeof(CompressionType), Compression) &&
                     Enum.IsDefined(typeof(StringEncoding), Encoding) &&

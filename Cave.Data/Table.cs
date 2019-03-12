@@ -22,11 +22,11 @@ namespace Cave.Data
         /// <returns>Returns a field index array or null.</returns>
         public static FieldIndex[] CreateIndex(RowLayout layout, MemoryTableOptions options = 0)
         {
-            if (0 == (options & MemoryTableOptions.DisableIndex))
+            if ((options & MemoryTableOptions.DisableIndex) == 0)
             {
-                int indexCount = 0;
-                FieldIndex[] indices = new FieldIndex[layout.FieldCount];
-                for (int i = 0; i < indices.Length; i++)
+                var indexCount = 0;
+                var indices = new FieldIndex[layout.FieldCount];
+                for (var i = 0; i < indices.Length; i++)
                 {
                     if (i == layout.IDFieldIndex)
                     {
@@ -68,7 +68,7 @@ namespace Cave.Data
         public static List<T> ToStructs<T>(RowLayout layout, int count, IEnumerable<Row> rows)
             where T : struct
         {
-            List<T> result = new List<T>(count);
+            var result = new List<T>(count);
             foreach (Row row in rows)
             {
                 result.Add(row.GetStruct<T>(layout));
@@ -82,7 +82,7 @@ namespace Cave.Data
         /// <returns>Returns a new <see cref="List{ID}"/>.</returns>
         public static List<long> ToIDs(RowLayout layout, List<Row> rows)
         {
-            List<long> ids = new List<long>(rows.Count);
+            var ids = new List<long>(rows.Count);
             foreach (Row row in rows)
             {
                 ids.Add(layout.GetID(row));
@@ -119,40 +119,10 @@ namespace Cave.Data
             throw new ArgumentException("Layout is not typed!", "Layout");
         }
 
-        internal sealed class Sorter : IComparer<long>
-        {
-            readonly bool m_Descending;
-            readonly int m_FieldNumber;
-            readonly IDictionary<long, Row> m_Table;
-
-            public Sorter(IDictionary<long, Row> table, int fieldNumber, ResultOptionMode mode)
-            {
-                if (fieldNumber < 0)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(fieldNumber));
-                }
-
-                m_Table = table ?? throw new ArgumentNullException("Table");
-                switch (mode)
-                {
-                    case ResultOptionMode.SortAsc: m_Descending = false; break;
-                    case ResultOptionMode.SortDesc: m_Descending = true; break;
-                    default: throw new ArgumentOutOfRangeException(nameof(mode));
-                }
-                m_FieldNumber = fieldNumber;
-            }
-
-            public int Compare(long x, long y)
-            {
-                object val1 = m_Table[x].GetValue(m_FieldNumber);
-                object val2 = m_Table[y].GetValue(m_FieldNumber);
-                return m_Descending ? Comparer.Default.Compare(val2, val1) : Comparer.Default.Compare(val1, val2);
-            }
-        }
-
         #region constructor
+
         /// <summary>
-        /// Creates a new Table instance.
+        /// Initializes a new instance of the <see cref="Table"/> class.
         /// </summary>
         /// <param name="database">The database the. </param>
         /// <param name="layout">The layout of the table.</param>
@@ -167,7 +137,10 @@ namespace Cave.Data
         int sequenceNumber;
 
         /// <summary>Increases the sequence number.</summary>
-        public void IncreaseSequenceNumber() { Interlocked.Increment(ref sequenceNumber); }
+        public void IncreaseSequenceNumber()
+        {
+            Interlocked.Increment(ref sequenceNumber);
+        }
 
         /// <summary>Gets the sequence number (counting write commands on this table).</summary>
         /// <value>The sequence number.</value>
@@ -179,7 +152,7 @@ namespace Cave.Data
         #region abstract storage functionality
 
         /// <summary>
-        /// Obtains the RowCount.
+        /// Gets the RowCount.
         /// </summary>
         public abstract long RowCount { get; }
 
@@ -197,7 +170,7 @@ namespace Cave.Data
         public abstract Row GetRowAt(int index);
 
         /// <summary>
-        /// Obtains a row from the table.
+        /// Gets a row from the table.
         /// </summary>
         /// <param name="id">The ID of the row to be fetched.</param>
         /// <returns>Returns the row.</returns>
@@ -235,14 +208,14 @@ namespace Cave.Data
         public abstract int TryDelete(Search search);
 
         /// <summary>
-        /// Obtains the next used ID at the table.
+        /// Gets the next used ID at the table.
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         public abstract long GetNextUsedID(long id);
 
         /// <summary>
-        /// Obtains the next free ID at the table.
+        /// Gets the next free ID at the table.
         /// </summary>
         /// <returns></returns>
         public abstract long GetNextFreeID();
@@ -253,14 +226,14 @@ namespace Cave.Data
         /// <param name="search">The search to run.</param>
         /// <param name="resultOption">Options for the search and the result set.</param>
         /// <returns>Returns the ID of the row found or -1.</returns>
-        public abstract List<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption));
+        public abstract IList<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption));
 
         /// <summary>
-        /// Obtains the rows with the given ids.
+        /// Gets the rows with the given ids.
         /// </summary>
         /// <param name="ids">IDs of the rows to fetch from the table.</param>
         /// <returns>Returns the rows.</returns>
-        public abstract List<Row> GetRows(IEnumerable<long> ids);
+        public abstract IList<Row> GetRows(IEnumerable<long> ids);
 
         /// <summary>
         /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
@@ -269,17 +242,23 @@ namespace Cave.Data
         public abstract void Replace(Row row);
 
         /// <summary>
-        /// Obtains an array with all rows.
+        /// Gets an array with all rows.
         /// </summary>
         /// <returns></returns>
-        public abstract List<Row> GetRows();
+        public abstract IList<Row> GetRows();
         #endregion
 
         #region implemented functionality
 
-        /// <summary>Gets all currently used IDs.</summary>
-        /// <value>The IDs.</value>
-        public virtual List<long> IDs => FindRows(Search.None);
+        #region IDs
+
+        /// <inheritdoc/>
+        public virtual IList<long> IDs => FindRows(Search.None, ResultOption.SortAscending(Layout.IDField.Name));
+
+        /// <inheritdoc/>
+        public virtual IList<long> SortedIDs => FindRows();
+
+        #endregion
 
         /// <summary>
         /// Counts the results of a given search.
@@ -301,6 +280,7 @@ namespace Cave.Data
         }
 
         #region Sum
+
         /// <summary>Calculates the sum of the specified field name for all matching rows.</summary>
         /// <param name="fieldName">Name of the field.</param>
         /// <param name="search">The search.</param>
@@ -309,7 +289,7 @@ namespace Cave.Data
         {
             double sum = 0;
             search = search ?? Search.None;
-            int fieldNumber = Layout.GetFieldIndex(fieldName);
+            var fieldNumber = Layout.GetFieldIndex(fieldName);
             if (fieldNumber < 0)
             {
                 throw new ArgumentException("Could not find specified field!");
@@ -342,22 +322,22 @@ namespace Cave.Data
         #endregion
 
         /// <summary>
-        /// Obtains the underlying storage engine.
+        /// Gets the underlying storage engine.
         /// </summary>
         public IStorage Storage => Database.Storage;
 
         /// <summary>
-        /// Obtains the database instance with table belongs to.
+        /// Gets the database instance with table belongs to.
         /// </summary>
         public IDatabase Database { get; }
 
         /// <summary>
-        /// Obtains the name of the table.
+        /// Gets the name of the table.
         /// </summary>
         public string Name => Layout.Name;
 
         /// <summary>
-        /// Obtains the RowLayout of the table.
+        /// Gets the RowLayout of the table.
         /// </summary>
         public RowLayout Layout { get; }
 
@@ -386,7 +366,7 @@ namespace Cave.Data
         /// <returns>Returns the row found.</returns>
         public virtual Row GetRow(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
-            long id = FindRow(search, resultOption);
+            var id = FindRow(search, resultOption);
             if (id <= 0)
             {
                 throw new DataException(string.Format("Dataset could not be found!"));
@@ -401,9 +381,9 @@ namespace Cave.Data
         /// <param name="search">The search to run.</param>
         /// <param name="resultOption">Options for the search and the result set.</param>
         /// <returns>Returns the rows found.</returns>
-        public virtual List<Row> GetRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
+        public virtual IList<Row> GetRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
         {
-            List<long> ids = FindRows(search, resultOption);
+            var ids = FindRows(search, resultOption);
             return GetRows(ids);
         }
 
@@ -415,15 +395,15 @@ namespace Cave.Data
         /// <returns></returns>
         public virtual IItemSet<T> GetValues<T>(string field, bool includeNull = false, IEnumerable<long> ids = null)
         {
-            int i = Layout.GetFieldIndex(field);
+            var i = Layout.GetFieldIndex(field);
             if (ids == null)
             {
                 ids = FindRows(Search.None, ResultOption.Group(field));
             }
-            Set<T> result = new Set<T>();
-            foreach (long id in ids)
+            var result = new Set<T>();
+            foreach (var id in ids)
             {
-                T value = (T)Fields.ConvertValue(typeof(T), GetRow(id).GetValue(i), CultureInfo.InvariantCulture);
+                var value = (T)Fields.ConvertValue(typeof(T), GetRow(id).GetValue(i), CultureInfo.InvariantCulture);
                 if (includeNull || (value != null))
                 {
                     result.Add(value);
@@ -433,7 +413,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the field count.
+        /// Gets the field count.
         /// </summary>
         public int FieldCount => Layout.FieldCount;
 
@@ -444,7 +424,7 @@ namespace Cave.Data
         /// <param name="value">The value to set.</param>
         public virtual void SetValue(string field, object value)
         {
-            int index = Layout.GetFieldIndex(field);
+            var index = Layout.GetFieldIndex(field);
             if (index == Layout.IDFieldIndex)
             {
                 throw new ArgumentException(string.Format("FieldName may not be the ID fieldname!"));
@@ -452,7 +432,7 @@ namespace Cave.Data
 
             foreach (Row row in GetRows())
             {
-                object[] r = row.GetValues();
+                var r = row.GetValues();
                 r[index] = value;
                 Update(new Row(r));
             }
@@ -486,7 +466,7 @@ namespace Cave.Data
                 throw new ArgumentNullException("TransactionLog");
             }
 
-            int i = 0;
+            var i = 0;
             count = (count > 0) ? Math.Min(transactions.Count, count) : 1000;
             Trace.TraceInformation("Commiting transaction with {0} rows", count);
             while (true)
@@ -511,12 +491,12 @@ namespace Cave.Data
                 catch (Exception ex)
                 {
                     Trace.TraceWarning("Error committing transaction to table <red>{0}.{1}\n{2}", Database.Name, Name, ex);
-                    if (0 != (flags & TransactionFlags.AllowRequeue))
+                    if ((flags & TransactionFlags.AllowRequeue) != 0)
                     {
                         transactions.Requeue(true, transaction);
                     }
 
-                    if (0 != (flags & TransactionFlags.ThrowExceptions))
+                    if ((flags & TransactionFlags.ThrowExceptions) != 0)
                     {
                         throw;
                     }
@@ -535,7 +515,10 @@ namespace Cave.Data
         {
             if (!Storage.SupportsNativeTransactions)
             {
-                foreach (Row r in rows) { Insert(r); }
+                foreach (Row r in rows)
+                {
+                    Insert(r);
+                }
             }
             else
             {
@@ -544,10 +527,10 @@ namespace Cave.Data
                     throw new ArgumentNullException("Rows");
                 }
 
-                TransactionLog l = new TransactionLog(Layout);
+                var l = new TransactionLog(Layout);
                 foreach (Row r in rows)
                 {
-                    long id = Layout.GetID(r);
+                    var id = Layout.GetID(r);
                     l.AddInserted(id, r);
                 }
                 Commit(l);
@@ -562,7 +545,10 @@ namespace Cave.Data
         {
             if (!Storage.SupportsNativeTransactions)
             {
-                foreach (Row r in rows) { Update(r); }
+                foreach (Row r in rows)
+                {
+                    Update(r);
+                }
             }
             else
             {
@@ -571,10 +557,10 @@ namespace Cave.Data
                     throw new ArgumentNullException("Rows");
                 }
 
-                TransactionLog log = new TransactionLog(Layout);
+                var log = new TransactionLog(Layout);
                 foreach (Row row in rows)
                 {
-                    long id = Layout.GetID(row);
+                    var id = Layout.GetID(row);
                     log.AddUpdated(id, row);
                 }
                 Commit(log);
@@ -589,7 +575,10 @@ namespace Cave.Data
         {
             if (!Storage.SupportsNativeTransactions)
             {
-                foreach (Row r in rows) { Replace(r); }
+                foreach (Row r in rows)
+                {
+                    Replace(r);
+                }
             }
             else
             {
@@ -598,10 +587,10 @@ namespace Cave.Data
                     throw new ArgumentNullException("Rows");
                 }
 
-                TransactionLog log = new TransactionLog(Layout);
+                var log = new TransactionLog(Layout);
                 foreach (Row row in rows)
                 {
-                    long id = Layout.GetID(row);
+                    var id = Layout.GetID(row);
                     log.AddReplaced(id, row);
                 }
                 Commit(log);
@@ -615,7 +604,10 @@ namespace Cave.Data
         {
             if (!Storage.SupportsNativeTransactions)
             {
-                foreach (long id in ids) { Delete(id); }
+                foreach (var id in ids)
+                {
+                    Delete(id);
+                }
             }
             else
             {
@@ -624,8 +616,11 @@ namespace Cave.Data
                     throw new ArgumentNullException("ids");
                 }
 
-                TransactionLog l = new TransactionLog(Layout);
-                foreach (long id in ids) { l.AddDeleted(id); }
+                var l = new TransactionLog(Layout);
+                foreach (var id in ids)
+                {
+                    l.AddDeleted(id);
+                }
                 Commit(l);
             }
         }
@@ -633,226 +628,13 @@ namespace Cave.Data
         #endregion
 
         #region ToString and eXtended Text
+
         /// <summary>Returns a <see cref="string" /> that represents this instance.</summary>
         /// <returns>A <see cref="string" /> that represents this instance.</returns>
         public override string ToString()
         {
             return $"Table {Database.Name}.{Name}";
         }
-        #endregion
-
-        #endregion
-    }
-
-    /// <summary>
-    /// Provides a base class implementing the <see cref="ITable{T}"/> interface.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public abstract class Table<T> : Table, ITable<T>
-        where T : struct
-    {
-        #region constructor
-        /// <summary>
-        /// Creates a new Table instance.
-        /// </summary>
-        /// <param name="database">The database the. </param>
-        /// <param name="layout">Layout and name of the table (optional, will use the typed layout and name if not set).</param>
-        protected Table(IDatabase database, RowLayout layout)
-            : base(database, CheckTypedLayout(typeof(T), database, layout))
-        {
-        }
-        #endregion
-
-        #region ITable<T> Member
-
-        #region implemented non virtual
-
-        /// <summary>Inserts rows into the table using a transaction.</summary>
-        /// <param name="rows">The rows to insert.</param>
-        /// <exception cref="ArgumentNullException">Rows.</exception>
-        public void Insert(IEnumerable<T> rows)
-        {
-            if (!Storage.SupportsNativeTransactions)
-            {
-                foreach (T r in rows) { Insert(r); }
-            }
-            else
-            {
-                if (rows == null)
-                {
-                    throw new ArgumentNullException("Rows");
-                }
-
-                TransactionLog<T> l = new TransactionLog<T>();
-                foreach (T r in rows) { l.AddInserted(r); }
-                Commit(l);
-            }
-        }
-
-        /// <summary>Updates rows at the table. The rows must exist already!.</summary>
-        /// <param name="rows">The rows to update.</param>
-        /// <exception cref="ArgumentNullException">Rows.</exception>
-        public void Update(IEnumerable<T> rows)
-        {
-            if (!Storage.SupportsNativeTransactions)
-            {
-                foreach (T r in rows) { Update(r); }
-            }
-            else
-            {
-                if (rows == null)
-                {
-                    throw new ArgumentNullException("Rows");
-                }
-
-                TransactionLog<T> l = new TransactionLog<T>();
-                foreach (T r in rows) { l.AddUpdated(r); }
-                Commit(l);
-            }
-        }
-
-        /// <summary>
-        /// Replaces rows at the table. This inserts (if the row does not exist) or updates (if it exists) each row.
-        /// </summary>
-        /// <param name="rows">The rows to replace (valid ID needed).</param>
-        /// <exception cref="ArgumentNullException">Rows.</exception>
-        public void Replace(IEnumerable<T> rows)
-        {
-            if (!Storage.SupportsNativeTransactions)
-            {
-                foreach (T r in rows) { Replace(r); }
-            }
-            else
-            {
-                if (rows == null)
-                {
-                    throw new ArgumentNullException("Rows");
-                }
-
-                TransactionLog<T> l = new TransactionLog<T>();
-                foreach (T i in rows) { l.AddReplaced(i); }
-                Commit(l);
-            }
-        }
-        #endregion
-
-        #region implemented virtual
-        /// <summary>
-        /// Obtains a row from the table.
-        /// </summary>
-        /// <param name="id">The ID of the row to be fetched.</param>
-        /// <returns>Returns the row.</returns>
-        public abstract T GetStruct(long id);
-
-        /// <summary>
-        /// Searches the table for a single row with given search.
-        /// </summary>
-        /// <param name="search">The search to run.</param>
-        /// <param name="resultOption">Options for the search and the result set.</param>
-        /// <returns>Returns the row found.</returns>
-        public virtual T GetStruct(Search search = default(Search), ResultOption resultOption = default(ResultOption))
-        {
-            long id = FindRow(search, resultOption);
-            if (id <= 0)
-            {
-                throw new DataException(string.Format("Dataset could not be found!"));
-            }
-
-            return GetStruct(id);
-        }
-
-        /// <summary>
-        /// Obtains the row struct with the given index.
-        /// This allows a memorytable to be used as virtual list for listviews, ...
-        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
-        /// </summary>
-        /// <param name="index">The rows index (0..RowCount-1).</param>
-        /// <returns></returns>
-        /// <exception cref="IndexOutOfRangeException"></exception>
-        public abstract T GetStructAt(int index);
-
-        /// <summary>
-        /// Searches the table for rows with given field value combinations.
-        /// </summary>
-        /// <param name="search">The search to run.</param>
-        /// <param name="resultOption">Options for the search and the result set.</param>
-        /// <returns>Returns the rows found.</returns>
-        public virtual List<T> GetStructs(Search search = default(Search), ResultOption resultOption = default(ResultOption))
-        {
-            List<long> ids = FindRows(search, resultOption);
-            return GetStructs(ids);
-        }
-
-        /// <summary>
-        /// Obtains the rows with the given ids.
-        /// </summary>
-        /// <param name="ids">IDs of the rows to fetch from the table.</param>
-        /// <returns>Returns the rows.</returns>
-        public abstract List<T> GetStructs(IEnumerable<long> ids);
-
-        /// <summary>
-        /// Inserts a row to the table. If an ID <![CDATA[<=]]> 0 is given an automatically generated ID will be used to add the dataset.
-        /// </summary>
-        /// <param name="row">The row to insert.</param>
-        /// <returns>Returns the ID of the inserted dataset.</returns>
-        public virtual long Insert(T row)
-        {
-            return Insert(Row.Create(Layout, row));
-        }
-
-        /// <summary>
-        /// Updates a row to the table. The row must exist already!.
-        /// </summary>
-        /// <param name="row">The row to update.</param>
-        public virtual void Update(T row)
-        {
-            Update(Row.Create(Layout, row));
-        }
-
-        /// <summary>
-        /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
-        /// </summary>
-        /// <param name="row">The row to replace (valid ID needed).</param>
-        public virtual void Replace(T row)
-        {
-            Replace(Row.Create(Layout, row));
-        }
-
-        /// <summary>
-        /// Checks whether a row is present unchanged at the database and removes it.
-        /// (Use Delete(ID) to delete a DataSet without any checks).
-        /// </summary>
-        /// <param name="row"></param>
-        public virtual void Delete(T row)
-        {
-            long id = Layout.GetID(row);
-            T data = GetStruct(id);
-            if (!data.Equals(row))
-            {
-                throw new DataException(string.Format("Dataset could not be found!"));
-            }
-
-            Delete(id);
-        }
-
-        /// <summary>
-        /// Provides access to the row with the specified ID.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public virtual T this[long id] => GetStruct(id);
-
-        /// <summary>
-        /// Copies all rows to a given array.
-        /// </summary>
-        /// <param name="rowArray"></param>
-        /// <param name="startIndex"></param>
-        public void CopyTo(T[] rowArray, int startIndex)
-        {
-            IList<T> items = GetStructs();
-            items.CopyTo(rowArray, startIndex);
-        }
-
         #endregion
 
         #endregion

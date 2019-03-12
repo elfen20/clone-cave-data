@@ -37,7 +37,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the database with the specified name.
+        /// Gets the database with the specified name.
         /// </summary>
         /// <param name="database">Name of the database.</param>
         /// <returns></returns>

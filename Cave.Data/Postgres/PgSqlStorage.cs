@@ -16,7 +16,7 @@ namespace Cave.Data.Postgres
         #region protected overrides
 
         /// <summary>
-        /// Obtains FieldProperties for the Database based on requested FieldProperties.
+        /// Gets FieldProperties for the Database based on requested FieldProperties.
         /// </summary>
         /// <param name="field"></param>
         /// <returns></returns>
@@ -55,13 +55,13 @@ namespace Cave.Data.Postgres
         }
 
         /// <summary>
-        /// Obtains a reusable connection or creates a new one.
+        /// Gets a reusable connection or creates a new one.
         /// </summary>
         /// <param name="database">The database to connect to.</param>
         /// <returns></returns>
         protected override string GetConnectionString(string database)
         {
-            bool requireSSL = !AllowUnsafeConnections;
+            var requireSSL = !AllowUnsafeConnections;
             if (requireSSL)
             {
                 if (ConnectionString.Server == "127.0.0.1" || ConnectionString.Server == "::1" || ConnectionString.Server == "localhost")
@@ -81,7 +81,6 @@ namespace Cave.Data.Postgres
         /// <summary>Creates a new database connection.</summary>
         /// <param name="databaseName">The name of the database.</param>
         /// <returns></returns>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2100:SQL-Abfragen auf Sicherheitsrisiken überprüfen")]
         public override IDbConnection CreateNewConnection(string databaseName)
         {
             IDbConnection connection = base.CreateNewConnection(databaseName);
@@ -103,12 +102,12 @@ namespace Cave.Data.Postgres
         #endregion
 
         /// <summary>
-        /// Obtains the mysql storage version.
+        /// Gets the mysql storage version.
         /// </summary>
         public readonly string VersionString;
 
         /// <summary>
-        /// Obtains the mysql storage version.
+        /// Gets the mysql storage version.
         /// </summary>
         public readonly Version Version;
 
@@ -119,7 +118,7 @@ namespace Cave.Data.Postgres
             : base(connectionString, options)
         {
             VersionString = (string)QueryValue(null, null, "SELECT VERSION()");
-            string[] parts = VersionString.Split(' ');
+            var parts = VersionString.Split(' ');
             Version = new Version(parts[1]);
             Trace.TraceInformation(string.Format("pgsql version {0}", Version));
         }
@@ -127,14 +126,14 @@ namespace Cave.Data.Postgres
         /// <summary>Escapes a field name for direct use in a query.</summary>
         /// <param name="field">The field.</param>
         /// <returns></returns>
-        /// <exception cref="System.ArgumentException">FieldName is invalid!.</exception>
+        /// <exception cref="ArgumentException">FieldName is invalid!.</exception>
         public override string EscapeFieldName(FieldProperties field)
         {
             return "\"" + field.NameAtDatabase + "\"";
         }
 
         /// <summary>
-        /// Obtains a full qualified table name.
+        /// Gets a full qualified table name.
         /// </summary>
         /// <param name="database"></param>
         /// <param name="table"></param>
@@ -159,13 +158,13 @@ namespace Cave.Data.Postgres
         }
 
         /// <summary>
-        /// Obtains all available database names.
+        /// Gets all available database names.
         /// </summary>
         public override string[] DatabaseNames
         {
             get
             {
-                List<string> result = new List<string>();
+                var result = new List<string>();
                 List<Row> rows = Query(null, null, "SCHEMATA", "SELECT datname FROM pg_database;");
                 foreach (Row row in rows)
                 {
@@ -182,12 +181,12 @@ namespace Cave.Data.Postgres
         /// <returns></returns>
         public override bool HasDatabase(string database)
         {
-            object value = QueryValue(null, "SCHEMATA", "SELECT COUNT(*) FROM pg_database WHERE datname LIKE " + EscapeString(GetObjectName(database)) + ";");
+            var value = QueryValue(null, "SCHEMATA", "SELECT COUNT(*) FROM pg_database WHERE datname LIKE " + EscapeString(GetObjectName(database)) + ";");
             return Convert.ToInt32(value) > 0;
         }
 
         /// <summary>
-        /// Obtains the database with the specified name.
+        /// Gets the database with the specified name.
         /// </summary>
         /// <param name="database">The name of the database.</param>
         /// <returns></returns>
@@ -212,8 +211,8 @@ namespace Cave.Data.Postgres
             {
                 throw new ArgumentException("Database name contains invalid chars!");
             }
-            Execute(null, null, "CREATE DATABASE " + GetObjectName(database) + " WITH OWNER = " +
-                EscapeString(ConnectionString.UserName) + " ENCODING 'UTF8' CONNECTION LIMIT = -1;");
+            var cmd = $"CREATE DATABASE {GetObjectName(database)} WITH OWNER = {EscapeString(ConnectionString.UserName)} ENCODING 'UTF8' CONNECTION LIMIT = -1;";
+            Execute(null, null, cmd);
             return GetDatabase(database);
         }
 
@@ -227,11 +226,11 @@ namespace Cave.Data.Postgres
             {
                 throw new ArgumentException("Database name contains invalid chars!");
             }
-            Execute(null, null, "DROP DATABASE " + GetObjectName(database) + ";");
+            Execute(null, null, $"DROP DATABASE {GetObjectName(database)};");
         }
 
         /// <summary>
-        /// Obtains whether the db connections can change the database with the Sql92 "USE Database" command.
+        /// Gets whether the db connections can change the database with the Sql92 "USE Database" command.
         /// </summary>
         protected override bool DBConnectionCanChangeDataBase => true;
 
@@ -244,7 +243,7 @@ namespace Cave.Data.Postgres
         {
             dbConnectionType = AppDom.FindType("Npgsql.NpgsqlConnection", AppDom.LoadMode.LoadAssemblies);
             dbAdapterAssembly = dbConnectionType.Assembly;
-            IDbConnection connection = (IDbConnection)Activator.CreateInstance(dbConnectionType);
+            var connection = (IDbConnection)Activator.CreateInstance(dbConnectionType);
             connection.Dispose();
         }
 
@@ -254,12 +253,12 @@ namespace Cave.Data.Postgres
         public override bool SupportsNamedParameters => true;
 
         /// <summary>
-        /// Obtains wether the connection supports select * groupby.
+        /// Gets wether the connection supports select * groupby.
         /// </summary>
         public override bool SupportsAllFieldsGroupBy => true;
 
         /// <summary>
-        /// Obtains the parameter prefix char (?).
+        /// Gets the parameter prefix char (?).
         /// </summary>
         public override string ParameterPrefix => "@_";
 
@@ -272,23 +271,24 @@ namespace Cave.Data.Postgres
         public override bool SupportsNativeTransactions { get; } = true;
 
         #region precision members
+
         /// <summary>
-        /// Obtains the maximum <see cref="float"/> precision at the value of 1.0f of this storage engine.
+        /// Gets the maximum <see cref="float"/> precision at the value of 1.0f of this storage engine.
         /// </summary>
         public override float FloatPrecision => 0.00001f;
 
         /// <summary>
-        /// Obtains the maximum <see cref="DateTime"/> value precision of this storage engine.
+        /// Gets the maximum <see cref="DateTime"/> value precision of this storage engine.
         /// </summary>
         public override TimeSpan DateTimePrecision => TimeSpan.FromSeconds(1);
 
         /// <summary>
-        /// Obtains the maximum <see cref="TimeSpan"/> value precision of this storage engine.
+        /// Gets the maximum <see cref="TimeSpan"/> value precision of this storage engine.
         /// </summary>
         public override TimeSpan TimeSpanPrecision => TimeSpan.FromMilliseconds(1);
 
         /// <summary>
-        /// Obtains the maximum <see cref="decimal"/> value precision of this storage engine.
+        /// Gets the maximum <see cref="decimal"/> value precision of this storage engine.
         /// </summary>
         public override decimal GetDecimalPrecision(float count)
         {

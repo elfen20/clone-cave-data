@@ -41,23 +41,24 @@ namespace Cave.Data
         public IStorage Storage { get; private set; }
 
         /// <summary>
-        /// Obtains the name of the database.
+        /// Gets the name of the database.
         /// </summary>
         public string Name { get; private set; }
 
         /// <summary>
-        /// Obtains the available table names.
+        /// Gets the available table names.
         /// </summary>
         public abstract string[] TableNames { get; }
 
         /// <summary>
-        /// Obtains whether the specified table exists or not.
+        /// Gets whether the specified table exists or not.
         /// </summary>
         /// <param name="table">The name of the table.</param>
         /// <returns></returns>
         public abstract bool HasTable(string table);
 
         #region GetTable functions
+
         /// <summary>
         /// Opens the table with the specified type.
         /// </summary>
@@ -79,7 +80,9 @@ namespace Cave.Data
         /// <returns>Returns an <see cref="ITable{T}"/> instance for the specified table.</returns>
         public ITable<T> GetTable<T>()
             where T : struct
-        { return GetTable<T>(0, null); }
+        {
+            return GetTable<T>(0, null);
+        }
 
         /// <summary>
         /// Opens or creates the table with the specified type.
@@ -89,7 +92,9 @@ namespace Cave.Data
         /// <returns>Returns an <see cref="ITable{T}"/> instance for the specified table.</returns>
         public ITable<T> GetTable<T>(TableFlags flags)
             where T : struct
-        { return GetTable<T>(flags, null); }
+        {
+            return GetTable<T>(flags, null);
+        }
 
         /// <summary>
         /// Opens or creates the table with the specified type.
@@ -99,7 +104,9 @@ namespace Cave.Data
         /// <returns>Returns an <see cref="ITable{T}"/> instance for the specified table.</returns>
         public ITable<T> GetTable<T>(string table)
             where T : struct
-        { return GetTable<T>(TableFlags.None, table); }
+        {
+            return GetTable<T>(TableFlags.None, table);
+        }
 
         /// <summary>
         /// Opens or creates the table with the specified type.
@@ -111,8 +118,8 @@ namespace Cave.Data
         public ITable<T> GetTable<T>(TableFlags flags, string tableName)
             where T : struct
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(T), tableName, Storage);
-            if (0 != (flags & TableFlags.CreateNew))
+            var layout = RowLayout.CreateTyped(typeof(T), tableName, Storage);
+            if ((flags & TableFlags.CreateNew) != 0)
             {
                 if (HasTable(layout.Name))
                 {
@@ -126,7 +133,7 @@ namespace Cave.Data
                 ITable<T> table = OpenTable<T>(layout);
                 return table;
             }
-            if (0 == (flags & TableFlags.AllowCreate))
+            if ((flags & TableFlags.AllowCreate) == 0)
             {
                 throw new InvalidOperationException(string.Format("Table '{0}' does not exist!", layout.Name));
             }
@@ -139,7 +146,10 @@ namespace Cave.Data
         /// </summary>
         /// <param name="layout">Layout of the table.</param>
         /// <returns>Returns an <see cref="ITable"/> instance for the specified table.</returns>
-        public ITable GetTable(RowLayout layout) { return GetTable(layout, TableFlags.None); }
+        public ITable GetTable(RowLayout layout)
+        {
+            return GetTable(layout, TableFlags.None);
+        }
 
         /// <summary>
         /// Opens or creates the table with the specified name.
@@ -154,7 +164,7 @@ namespace Cave.Data
                 throw new ArgumentNullException("Layout");
             }
 
-            if (0 != (flags & TableFlags.CreateNew))
+            if ((flags & TableFlags.CreateNew) != 0)
             {
                 if (HasTable(layout.Name))
                 {
@@ -169,7 +179,7 @@ namespace Cave.Data
                 Storage.CheckLayout(layout, table.Layout);
                 return table;
             }
-            if (0 == (flags & TableFlags.AllowCreate))
+            if ((flags & TableFlags.AllowCreate) == 0)
             {
                 throw new InvalidOperationException(string.Format("Table '{0}' does not exist!", layout.Name));
             }
@@ -188,7 +198,7 @@ namespace Cave.Data
             Trace.TraceInformation("Creating table <cyan>{0}.{1}<default> with <cyan>{2}<default> fields.", Name, layout.Name, layout.FieldCount);
             if (Storage.LogVerboseMessages)
             {
-                for (int i = 0; i < layout.FieldCount; i++)
+                for (var i = 0; i < layout.FieldCount; i++)
                 {
                     Trace.TraceInformation(layout.GetProperties(i).ToString());
                 }
@@ -200,7 +210,10 @@ namespace Cave.Data
         /// </summary>
         /// <param name="layout">Layout of the table.</param>
         /// <returns>Returns an <see cref="ITable"/> instance for the specified table.</returns>
-        public ITable CreateTable(RowLayout layout) { return CreateTable(layout, 0); }
+        public ITable CreateTable(RowLayout layout)
+        {
+            return CreateTable(layout, 0);
+        }
 
         /// <summary>
         /// Adds a new table with the specified layout.
@@ -217,7 +230,9 @@ namespace Cave.Data
         /// <returns>Returns an <see cref="ITable{T}"/> instance for the specified table.</returns>
         public ITable<T> CreateTable<T>()
             where T : struct
-        { return CreateTable<T>(0, null); }
+        {
+            return CreateTable<T>(0, null);
+        }
 
         /// <summary>
         /// Adds a new table with the specified type.
@@ -227,7 +242,9 @@ namespace Cave.Data
         /// <returns>Returns an <see cref="ITable{T}"/> instance for the specified table.</returns>
         public ITable<T> CreateTable<T>(TableFlags flags)
             where T : struct
-        { return CreateTable<T>(flags, null); }
+        {
+            return CreateTable<T>(flags, null);
+        }
 
         /// <summary>
         /// Adds a new table with the specified type.
@@ -237,7 +254,9 @@ namespace Cave.Data
         /// <returns>Returns an <see cref="ITable{T}"/> instance for the specified table.</returns>
         public ITable<T> CreateTable<T>(string table)
             where T : struct
-        { return CreateTable<T>(TableFlags.None, table); }
+        {
+            return CreateTable<T>(TableFlags.None, table);
+        }
 
         /// <summary>
         /// Adds a new table with the specified type.
@@ -268,7 +287,9 @@ namespace Cave.Data
         /// <returns>Returns a new <see cref="MemoryTable{T}"/> instance containing all row of the table.</returns>
         public MemoryTable<T> Load<T>()
             where T : struct
-        { return Load<T>(null); }
+        {
+            return Load<T>(null);
+        }
 
         /// <summary>
         /// Loads a whole table into memory.
@@ -294,7 +315,7 @@ namespace Cave.Data
         public abstract void Close();
 
         /// <summary>
-        /// Obtains whether the database was already closed or not.
+        /// Gets whether the database was already closed or not.
         /// </summary>
         public abstract bool Closed { get; }
         #endregion

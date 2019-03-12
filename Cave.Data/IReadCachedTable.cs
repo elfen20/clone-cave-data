@@ -9,7 +9,7 @@ namespace Cave.Data
     public interface IReadCachedTable : ITable
     {
         /// <summary>
-        /// Obtains the current cache generation (this will increase on each update).
+        /// Gets the current cache generation (this will increase on each update).
         /// </summary>
         int Generation { get; }
 
@@ -21,15 +21,5 @@ namespace Cave.Data
         /// <summary>Gets the last update date and time.</summary>
         /// <value>The last update date and time.</value>
         DateTime LastUpdate { get; }
-    }
-
-    /// <summary>
-    /// Provides an interface for read table cache.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <seealso cref="ITable" />
-    public interface IReadCachedTable<T> : ITable<T>, IReadCachedTable
-        where T : struct
-    {
     }
 }

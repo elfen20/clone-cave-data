@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace Cave.Data
 {
-    class FakeSortedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
+    class FakeSortedDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>
     {
         IDictionary<TKey, TValue> unsorted;
         TKey[] sortedKeys;
@@ -30,7 +30,9 @@ namespace Cave.Data
             }
         }
 
-        public ICollection<TKey> Keys
+        public ICollection<TKey> UnsortedKeys => unsorted.Keys;
+
+        public IList<TKey> SortedKeys
         {
             get
             {
@@ -44,11 +46,11 @@ namespace Cave.Data
             }
         }
 
-        public ICollection<TValue> Values
+        public IList<TValue> Values
         {
             get
             {
-                return Keys.Select(k => unsorted[k]).ToList();
+                return SortedKeys.Select(k => unsorted[k]).ToList();
             }
         }
 
@@ -110,8 +112,8 @@ namespace Cave.Data
         {
             var count = unsorted.Count;
             var result = new KeyValuePair<TKey, TValue>[count];
-            int i = 0;
-            foreach (var key in Keys)
+            var i = 0;
+            foreach (var key in SortedKeys)
             {
                 result[i++] = new KeyValuePair<TKey, TValue>(key, unsorted[key]);
             }

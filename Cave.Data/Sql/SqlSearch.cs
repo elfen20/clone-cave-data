@@ -9,7 +9,7 @@ namespace Cave.Data.Sql
     /// </summary>
     public sealed class SqlSearch
     {
-        string m_Text;
+        string text;
 
         /// <summary>
         /// Creates a new instance for the specified <see cref="SqlStorage"/>.
@@ -26,7 +26,7 @@ namespace Cave.Data.Sql
         /// <param name="option"></param>
         public void CheckFieldsPresent(ResultOption option)
         {
-            foreach (string fieldName in option.FieldNames)
+            foreach (var fieldName in option.FieldNames)
             {
                 if (!FieldNames.Contains(fieldName))
                 {
@@ -76,21 +76,21 @@ namespace Cave.Data.Sql
         /// <param name="text"></param>
         public void SetText(string text)
         {
-            if (m_Text != null)
+            if (this.text != null)
             {
                 throw new InvalidOperationException();
             }
 
-            m_Text = text;
+            this.text = text;
         }
 
         /// <summary>
-        /// Obtains the query text as string.
+        /// Gets the query text as string.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
         {
-            return m_Text;
+            return text;
         }
     }
 }

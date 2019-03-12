@@ -8,19 +8,24 @@ namespace Cave
     /// </summary>
     public static class CaveSystemData
     {
-        static int _TransactionRowCount = 5000;
+        /// <summary>
+        /// Provides the date time format for big int date time values.
+        /// </summary>
+        public const string BigIntDateTimeFormat = "yyyyMMddHHmmssfff";
+
+        static int currentTransactionRowCount = 5000;
 
         /// <summary>Gets the type.</summary>
         /// <value>The type.</value>
         public static Type Type => typeof(CaveSystemData);
 
         /// <summary>
-        /// Obtains the assembly.
+        /// Gets the assembly.
         /// </summary>
         public static Assembly Assembly => Type.Assembly;
 
         /// <summary>
-        /// Obtains the <see cref="AssemblyVersionInfo"/> for the <see cref="Assembly"/>.
+        /// Gets the <see cref="AssemblyVersionInfo"/> for the <see cref="Assembly"/>.
         /// </summary>
         public static AssemblyVersionInfo VersionInfo => AssemblyVersionInfo.FromAssembly(Assembly);
 
@@ -29,14 +34,9 @@ namespace Cave
         /// </summary>
         public static int TransactionRowCount
         {
-            get => _TransactionRowCount;
-            set => _TransactionRowCount = Math.Max(1, value);
+            get => currentTransactionRowCount;
+            set => currentTransactionRowCount = Math.Max(1, value);
         }
-
-        /// <summary>
-        /// Provides the date time format for big int date time values.
-        /// </summary>
-        public const string BigIntDateTimeFormat = "yyyyMMddHHmmssfff";
 
         /// <summary>
         /// Calculates a database id based on crc64.
