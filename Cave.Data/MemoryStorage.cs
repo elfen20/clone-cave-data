@@ -15,12 +15,15 @@ namespace Cave.Data
         /// <value>The default memory storage.</value>
         public static MemoryStorage Default { get; } = new MemoryStorage();
 
-        readonly Dictionary<string, IDatabase> m_Databases = new Dictionary<string, IDatabase>();
+        readonly Dictionary<string, IDatabase> databases = new Dictionary<string, IDatabase>();
 
         /// <summary>
-        /// Creates a new memory storage.
+        /// Initializes a new instance of the <see cref="MemoryStorage"/> class.
         /// </summary>
-        public MemoryStorage(DbConnectionOptions options = DbConnectionOptions.None) : base("memory://", options) { }
+        public MemoryStorage(DbConnectionOptions options = DbConnectionOptions.None)
+            : base("memory://", options)
+        {
+        }
 
         /// <summary>
         /// Gets a value indicating whether the storage engine supports native transactions with faster execution than single commands.
@@ -38,14 +41,14 @@ namespace Cave.Data
         /// <param name="fileName"></param>
         public void Save(string fileName)
         {
-            using (TarWriter file = TarWriter.CreateTGZ(fileName))
+            using (var file = TarWriter.CreateTGZ(fileName))
             {
                 file.AddFile("# MemoryDataBase 1.0.0.0 #", new byte[0]);
-                foreach (MemoryDatabase database in m_Databases.Values)
+                foreach (MemoryDatabase database in databases.Values)
                 {
-                    foreach (string tableName in database.TableNames)
+                    foreach (var tableName in database.TableNames)
                     {
-                        MemoryTable table = (MemoryTable)database.GetTable(tableName);
+                        var table = (MemoryTable)database.GetTable(tableName);
                         table.SaveTo(file);
                     }
                 }
@@ -58,9 +61,9 @@ namespace Cave.Data
         /// <param name="fileName"></param>
         public void Load(string fileName)
         {
-            using (TarReader file = TarReader.ReadTGZ(fileName))
+            using (var file = TarReader.ReadTGZ(fileName))
             {
-                file.ReadNext(out TarEntry entry, out byte[] data);
+                file.ReadNext(out TarEntry entry, out var data);
                 if (entry.FileName != "# MemoryDataBase 1.0.0.0 #")
                 {
                     throw new FormatException();
@@ -69,13 +72,13 @@ namespace Cave.Data
                 IDatabase database = null;
                 while (file.ReadNext(out entry, out data))
                 {
-                    string databaseName = Path.GetDirectoryName(entry.FileName);
-                    string tableName = Path.GetFileName(entry.FileName);
+                    var databaseName = Path.GetDirectoryName(entry.FileName);
+                    var tableName = Path.GetFileName(entry.FileName);
 
                     using (Stream stream = new MemoryStream(data))
                     {
-                        DatReader reader = new DatReader(stream);
-                        IMemoryTable table = (IMemoryTable)database.GetTable(reader.Layout, TableFlags.CreateNew);
+                        var reader = new DatReader(stream);
+                        var table = (IMemoryTable)database.GetTable(reader.Layout, TableFlags.CreateNew);
                         reader.ReadTable(table);
                     }
                 }
@@ -89,11 +92,11 @@ namespace Cave.Data
         /// <returns></returns>
         public override bool HasDatabase(string database)
         {
-            return m_Databases.ContainsKey(database);
+            return databases.ContainsKey(database);
         }
 
         /// <summary>
-        /// Obtains all available database names.
+        /// Gets all available database names.
         /// </summary>
         public override string[] DatabaseNames
         {
@@ -104,12 +107,12 @@ namespace Cave.Data
                     throw new ObjectDisposedException(ToString());
                 }
 
-                return m_Databases.Keys.ToArray();
+                return databases.Keys.ToArray();
             }
         }
 
         /// <summary>
-        /// Obtains the database with the specified name.
+        /// Gets the database with the specified name.
         /// </summary>
         /// <param name="database">The name of the database.</param>
         /// <returns></returns>
@@ -125,7 +128,7 @@ namespace Cave.Data
                 throw new ArgumentException(string.Format("The requested database '{0}' was not found!", database));
             }
 
-            return m_Databases[database];
+            return databases[database];
         }
 
         /// <summary>
@@ -146,7 +149,7 @@ namespace Cave.Data
             }
 
             IDatabase database = new MemoryDatabase(this, databaseName);
-            m_Databases.Add(databaseName, database);
+            databases.Add(databaseName, database);
             return database;
         }
 
@@ -161,7 +164,7 @@ namespace Cave.Data
                 throw new ObjectDisposedException(ToString());
             }
 
-            if (!m_Databases.Remove(database))
+            if (!databases.Remove(database))
             {
                 throw new ArgumentException(string.Format("The requested database '{0}' was not found!", database));
             }

@@ -18,6 +18,6 @@ namespace Cave.Data.SQLite
         /// <summary>
         /// Directory entry
         /// </summary>
-        Directory
+        Directory,
     }
 }

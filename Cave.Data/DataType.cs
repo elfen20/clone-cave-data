@@ -112,6 +112,7 @@ namespace Cave
         Binary = 0x27,
 
         #region DataTypes that need value type informations
+
         /// <summary>
         /// Mask to check if value type informations are needed to deserialize the type
         /// </summary>

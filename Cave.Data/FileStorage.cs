@@ -10,7 +10,7 @@ namespace Cave.Data
     public abstract class FileStorage : Storage, IDisposable
     {
         /// <summary>
-        /// Obtains the base path used for the file storage.
+        /// Gets the base path used for the file storage.
         /// </summary>
         public string Folder { get; private set; }
 
@@ -83,11 +83,11 @@ namespace Cave.Data
                 throw new ObjectDisposedException(ToString());
             }
 
-            return (Directory.Exists(Path.Combine(Folder, database)));
+            return Directory.Exists(Path.Combine(Folder, database));
         }
 
         /// <summary>
-        /// Obtains all available database names.
+        /// Gets all available database names.
         /// </summary>
         /// <exception cref="ObjectDisposedException"></exception>
         public override string[] DatabaseNames
@@ -99,8 +99,8 @@ namespace Cave.Data
                     throw new ObjectDisposedException(ToString());
                 }
 
-                List<string> result = new List<string>();
-                foreach (string directory in Directory.GetDirectories(Folder.ToString(), "*", SearchOption.TopDirectoryOnly))
+                var result = new List<string>();
+                foreach (var directory in Directory.GetDirectories(Folder.ToString(), "*", SearchOption.TopDirectoryOnly))
                 {
                     result.Add(Path.GetFileName(directory));
                 }
@@ -150,7 +150,7 @@ namespace Cave.Data
         #endregion
 
         /// <summary>
-        /// Obtains "FileStorage[Path]".
+        /// Gets "FileStorage[Path]".
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -159,6 +159,7 @@ namespace Cave.Data
         }
 
         #region IDisposable Member
+
         /// <summary>
         /// Frees all used resources.
         /// </summary>

@@ -44,7 +44,7 @@ namespace Test.Cave
     {
         public static TestStructBug Create(int i)
         {
-            TestStructBug t = new TestStructBug()
+            var t = new TestStructBug()
             {
                 IDField = (ulong)(i * i),
                 AutoIncUniqueIndexedField = i * i * i,
@@ -100,11 +100,11 @@ namespace Test.Cave
     }
 
     [Table("TestStructClean")]
-    public struct TestStructClean 
+    public struct TestStructClean
     {
         public static TestStructClean Create(int i)
         {
-            TestStructClean t = new TestStructClean()
+            var t = new TestStructClean()
             {
                 Arr = BitConverterLE.Instance.GetBytes((long)i),
                 B = (byte)(i & 0xFF),
@@ -119,7 +119,7 @@ namespace Test.Cave
                 S = (short)(i - 500),
                 UI = (uint)i,
                 Text = i.ToString(),
-                Dec = (0.005m * (i - 500)),
+                Dec = 0.005m * (i - 500),
                 Uri = new Uri("http://localhost/" + i.ToString()),
                 ConStr = "http://localhost/" + i.ToString(),
             };
@@ -180,7 +180,7 @@ namespace Test.Cave
         public override bool Equals(object obj)
         {
             if (!(obj is TestStructClean)) return false;
-            TestStructClean other = (TestStructClean)obj;
+            var other = (TestStructClean)obj;
             return
                 DefaultComparer.Equals(this.Arr, other.Arr) &&
                 Equals(this.B, other.B) &&

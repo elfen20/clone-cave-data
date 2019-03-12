@@ -54,7 +54,7 @@ namespace Cave.Data.Sql
         /// <returns>Returns the name of the created parameter.</returns>
         public void CreateAndAddParameter(object value)
         {
-            string name = (parameters.Count + 1).ToString();
+            var name = (parameters.Count + 1).ToString();
             parameters.Add(new DatabaseParameter(name, value));
             text.Append(storage.ParameterPrefix);
             if (storage.SupportsNamedParameters)
@@ -64,17 +64,17 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Obtains the full command text.
+        /// Gets the full command text.
         /// </summary>
         public string Text => text.ToString();
 
         /// <summary>
-        /// Obtains all parameters present.
+        /// Gets all parameters present.
         /// </summary>
         public DatabaseParameter[] Parameters => parameters.ToArray();
 
         /// <summary>
-        /// Obtains the length of the command text.
+        /// Gets the length of the command text.
         /// </summary>
         public int Length => text.Length;
 
@@ -82,7 +82,7 @@ namespace Cave.Data.Sql
         internal void Execute()
         {
             SqlConnection sqlConnection = storage.GetConnection(database.Name);
-            bool error = false;
+            var error = false;
             try
             {
                 using (IDbCommand dbCommand = sqlConnection.CreateCommand())
@@ -106,11 +106,18 @@ namespace Cave.Data.Sql
                     }
                     dbCommand.ExecuteNonQuery();
                     dbCommand.Parameters.Clear();
-                    dbCommand.CommandText = "";
+                    dbCommand.CommandText = string.Empty;
                 }
             }
-            catch { error = true; throw; }
-            finally { storage.ReturnConnection(ref sqlConnection, error); }
+            catch
+            {
+                error = true;
+                throw;
+            }
+            finally
+            {
+                storage.ReturnConnection(ref sqlConnection, error);
+            }
         }
     }
 }

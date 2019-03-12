@@ -25,13 +25,16 @@ namespace Cave.Data
 
             try
             {
-                using (DatReader reader = new DatReader(fileName))
+                using (var reader = new DatReader(fileName))
                 {
                     reader.ReadTable(table);
                 }
                 return true;
             }
-            catch { return false; }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>
@@ -42,7 +45,7 @@ namespace Cave.Data
         public static void ReadTable<T>(ITable<T> table, string fileName)
             where T : struct
         {
-            using (DatReader reader = new DatReader(fileName))
+            using (var reader = new DatReader(fileName))
             {
                 reader.ReadTable(table);
             }
@@ -55,7 +58,7 @@ namespace Cave.Data
         /// <param name="fileName">File name of the dat file.</param>
         public static void ReadTable(ITable table, string fileName)
         {
-            using (DatReader reader = new DatReader(fileName))
+            using (var reader = new DatReader(fileName))
             {
                 reader.ReadTable(table);
             }
@@ -68,7 +71,7 @@ namespace Cave.Data
         public static void ReadTable<T>(ITable<T> table, Stream stream)
             where T : struct
         {
-            using (DatReader reader = new DatReader(stream))
+            using (var reader = new DatReader(stream))
             {
                 reader.ReadTable(table);
             }
@@ -79,13 +82,13 @@ namespace Cave.Data
         /// <param name="stream">The stream.</param>
         public static void ReadTable(ITable table, Stream stream)
         {
-            using (DatReader reader = new DatReader(stream))
+            using (var reader = new DatReader(stream))
             {
                 reader.ReadTable(table);
             }
         }
 
-        DataReader m_Reader;
+        DataReader reader;
 
         void Load(Stream stream)
         {
@@ -94,8 +97,8 @@ namespace Cave.Data
                 throw new ArgumentNullException("Stream");
             }
 
-            m_Reader = new DataReader(stream);
-            Layout = DatTable.LoadFieldDefinition(m_Reader, out int version);
+            reader = new DataReader(stream);
+            Layout = DatTable.LoadFieldDefinition(reader, out var version);
             Version = version;
         }
 
@@ -106,8 +109,15 @@ namespace Cave.Data
         public DatReader(string fileName)
         {
             Stream stream = File.OpenRead(fileName);
-            try { Load(stream); }
-            catch { stream.Dispose(); throw; }
+            try
+            {
+                Load(stream);
+            }
+            catch
+            {
+                stream.Dispose();
+                throw;
+            }
         }
 
         /// <summary>
@@ -120,12 +130,12 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the layout of the table.
+        /// Gets the layout of the table.
         /// </summary>
         public RowLayout Layout { get; private set; }
 
         /// <summary>
-        /// Obtains the version the database was created with.
+        /// Gets the version the database was created with.
         /// </summary>
         public int Version { get; private set; }
 
@@ -138,7 +148,7 @@ namespace Cave.Data
         public bool ReadRow<T>(bool checkLayout, out T row)
             where T : struct
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(T));
+            var layout = RowLayout.CreateTyped(typeof(T));
             if (checkLayout)
             {
                 RowLayout.CheckLayout(Layout, layout);
@@ -149,16 +159,16 @@ namespace Cave.Data
                 Layout = layout;
             }
 
-            while (m_Reader.BaseStream.Position < m_Reader.BaseStream.Length)
+            while (reader.BaseStream.Position < reader.BaseStream.Length)
             {
-                Row currentRow = DatTable.ReadCurrentRow(m_Reader, Version, layout);
+                Row currentRow = DatTable.ReadCurrentRow(reader, Version, layout);
                 if (currentRow != null)
                 {
                     row = currentRow.GetStruct<T>(layout);
                     return true;
                 }
             }
-            row = new T();
+            row = default(T);
             return false;
         }
 
@@ -180,9 +190,9 @@ namespace Cave.Data
                 Layout = table.Layout;
             }
 
-            while (m_Reader.BaseStream.Position < m_Reader.BaseStream.Length)
+            while (reader.BaseStream.Position < reader.BaseStream.Length)
             {
-                Row row = DatTable.ReadCurrentRow(m_Reader, Version, Layout);
+                Row row = DatTable.ReadCurrentRow(reader, Version, Layout);
                 if (row != null)
                 {
                     table.Insert(row);
@@ -208,9 +218,9 @@ namespace Cave.Data
                 Layout = table.Layout;
             }
 
-            while (m_Reader.BaseStream.Position < m_Reader.BaseStream.Length)
+            while (reader.BaseStream.Position < reader.BaseStream.Length)
             {
-                Row row = DatTable.ReadCurrentRow(m_Reader, Version, Layout);
+                Row row = DatTable.ReadCurrentRow(reader, Version, Layout);
                 if (row != null)
                 {
                     table.Insert(row);
@@ -225,17 +235,17 @@ namespace Cave.Data
         public List<T> ReadList<T>()
             where T : struct
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(T));
+            var layout = RowLayout.CreateTyped(typeof(T));
             RowLayout.CheckLayout(Layout, layout);
             if (!Layout.IsTyped)
             {
                 Layout = layout;
             }
 
-            List<T> result = new List<T>();
-            while (m_Reader.BaseStream.Position < m_Reader.BaseStream.Length)
+            var result = new List<T>();
+            while (reader.BaseStream.Position < reader.BaseStream.Length)
             {
-                Row row = DatTable.ReadCurrentRow(m_Reader, Version, layout);
+                Row row = DatTable.ReadCurrentRow(reader, Version, layout);
                 if (row != null)
                 {
                     result.Add(row.GetStruct<T>(layout));
@@ -249,10 +259,10 @@ namespace Cave.Data
         /// </summary>
         public void Close()
         {
-            if (m_Reader != null)
+            if (reader != null)
             {
-                m_Reader.Close();
-                m_Reader = null;
+                reader.Close();
+                reader = null;
             }
         }
 

@@ -1,10 +1,10 @@
-using Cave.Collections.Generic;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Cave.Collections.Generic;
 
 namespace Cave.Data
 {
@@ -57,14 +57,16 @@ namespace Cave.Data
         /// <summary>
         /// resolves value to IDs
         /// </summary>
-        SortedDictionary<BoxedValue, Set<long>> m_Index;
+        SortedDictionary<BoxedValue, Set<long>> index;
 #else
         /// <summary>
         /// resolves value to IDs.
         /// </summary>
-        FakeSortedDictionary<object, Set<long>> m_Index;
+        FakeSortedDictionary<object, Set<long>> index;
 
-        readonly object Null = new BoxedValue(null);
+#pragma warning disable SA1214 // Readonly fields should appear before non-readonly fields
+        readonly object nullValue = new BoxedValue(null);
+#pragma warning restore SA1214 // Readonly fields should appear before non-readonly fields
 #endif
 
         /// <summary>Gets the id count.</summary>
@@ -75,9 +77,9 @@ namespace Cave.Data
         public FieldIndex()
         {
 #if USE_BOXING
-            m_Index = new FakeSortedDictionary<BoxedValue, Set<long>>();
+            index = new FakeSortedDictionary<BoxedValue, Set<long>>();
 #else
-            m_Index = new FakeSortedDictionary<object, Set<long>>();
+            index = new FakeSortedDictionary<object, Set<long>>();
 #endif
         }
 
@@ -91,19 +93,19 @@ namespace Cave.Data
 #if USE_BOXING
             BoxedValue obj = new BoxedValue(value);
 #else
-            object obj = value == null ? Null : value;
+            var obj = value == null ? nullValue : value;
 #endif
-            if (m_Index.ContainsKey(obj))
+            if (index.ContainsKey(obj))
             {
-                m_Index[obj].Add(id);
+                index[obj].Add(id);
             }
             else
             {
-                Set<long> list = new Set<long>
+                var list = new Set<long>
                 {
-                    id
+                    id,
                 };
-                m_Index[obj] = list;
+                index[obj] = list;
             }
             Count++;
         }
@@ -135,22 +137,13 @@ namespace Cave.Data
 #if USE_BOXING
             BoxedValue obj = new BoxedValue(value);
 #else
-            object obj = value == null ? Null : value;
+            var obj = value == null ? nullValue : value;
 #endif
 
             // remove ID from old hash
-            if (!m_Index.TryGetValue(obj, out Set<long> ids))
+            if (!index.TryGetValue(obj, out Set<long> ids))
             {
-                // TODO REMOVE ME
-                List<object> items = m_Index.Keys.Where(i => Equals(i, obj)).ToList();
-                foreach (object item in items)
-                {
-                    Trace.TraceWarning("Key {0} hash {1} != Key {2} hash {3} - Compare Result {4}", obj, obj.GetHashCode(), item, item.GetHashCode(), Comparer.Default.Compare(obj, item));
-                }
-                File.WriteAllText("temp.txt", m_Index.Keys.JoinNewLine());
-
-                // END REMOVE ME
-                throw new ArgumentException(string.Format("Object {0} is not present at index (equals check {1})!", obj, items.Join(",")));
+                throw new ArgumentException(string.Format("Object {0} is not present at index (equals check {1})!", obj, index.Join(",")));
             }
             if (!ids.Contains(id))
             {
@@ -163,7 +156,7 @@ namespace Cave.Data
             }
             else
             {
-                if (!m_Index.Remove(obj))
+                if (!index.Remove(obj))
                 {
                     throw new ArgumentException(string.Format("Could not remove id {0} object {1} could not be removed!", id, obj));
                 }
@@ -176,7 +169,7 @@ namespace Cave.Data
         /// </summary>
         internal void Clear()
         {
-            m_Index.Clear();
+            index.Clear();
             Count = 0;
         }
 
@@ -188,9 +181,9 @@ namespace Cave.Data
 #if USE_BOXING
             BoxedValue obj = new BoxedValue(value);
 #else
-            object obj = value == null ? Null : value;
+            var obj = value == null ? nullValue : value;
 #endif
-            return m_Index.ContainsKey(obj) ? new ReadOnlySet<long>(m_Index[obj]) : (IItemSet<long>)new Set<long>();
+            return index.ContainsKey(obj) ? new ReadOnlySet<long>(index[obj]) : (IItemSet<long>)new Set<long>();
         }
 
         /// <summary>Gets the sorted identifiers.</summary>
@@ -199,9 +192,8 @@ namespace Cave.Data
 #if USE_BOXING
                 return new FieldIndexEnumeration<BoxedValue>(m_Index);
 #else
-                new FieldIndexEnumeration<object>(m_Index);
+                new FieldIndexEnumeration<object>(index);
 #endif
-
 
         class FieldIndexEnumeration<T> : IEnumerable<long>
         {
@@ -254,7 +246,7 @@ namespace Cave.Data
                 }
                 while (outer.MoveNext())
                 {
-                    KeyValuePair<T, Set<long>> keyValuePair = (KeyValuePair<T, Set<long>>)outer.Current;
+                    var keyValuePair = (KeyValuePair<T, Set<long>>)outer.Current;
                     inner = keyValuePair.Value.GetEnumerator();
                     if (inner.MoveNext())
                     {

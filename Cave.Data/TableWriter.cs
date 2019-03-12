@@ -18,12 +18,12 @@ namespace Cave.Data
         /// <summary>logs verbose messages.</summary>
         public bool LogVerboseMessages { get; set; }
 
-        bool m_Flushing;
-        bool m_Disposed;
-        Task m_Task;
-        bool m_Exit;
-        long m_WrittenCount;
-        long? m_LastFlush;
+        bool flushing;
+        bool disposed;
+        Task task;
+        bool exit;
+        long writtenCount;
+        long? lastFlush;
         TimeSpan maxSeenDelay = new TimeSpan(TimeSpan.TicksPerMinute);
 
         /// <summary>The table this instance writes to.</summary>
@@ -37,7 +37,7 @@ namespace Cave.Data
         public TransactionFlags TransactionFlags { get; set; }
 
         /// <summary>
-        /// Obtains the RowLayout of the table.
+        /// Gets the RowLayout of the table.
         /// </summary>
         public RowLayout Layout => Table.Layout;
 
@@ -65,13 +65,13 @@ namespace Cave.Data
         public int FlushCount { get; set; } = 1000;
 
         /// <summary>
-        /// Obtains the (local) date time of the last flush.
+        /// Gets the (local) date time of the last flush.
         /// </summary>
-        public DateTime LastFlush => new DateTime((long)m_LastFlush);
+        public DateTime LastFlush => new DateTime((long)lastFlush);
 
         void UncatchedFlush()
         {
-            if (m_Disposed)
+            if (disposed)
             {
                 throw new ObjectDisposedException(LogSourceName);
             }
@@ -79,7 +79,7 @@ namespace Cave.Data
             long written = Table.Commit(TransactionLog, TransactionFlags, FlushCount);
             if (written > 0)
             {
-                Interlocked.Add(ref m_WrittenCount, written);
+                Interlocked.Add(ref writtenCount, written);
 
                 TimeSpan delay = TimeSpan.Zero;
                 Transaction t = TransactionLog.Peek();
@@ -107,7 +107,7 @@ namespace Cave.Data
             try
             {
                 UncatchedFlush();
-                m_LastFlush = DateTime.UtcNow.Ticks;
+                lastFlush = DateTime.UtcNow.Ticks;
                 return true;
             }
             catch (Exception ex)
@@ -119,7 +119,7 @@ namespace Cave.Data
 
         void CheckError()
         {
-            Task task = m_Task;
+            Task task = this.task;
             if (task != null && task.IsFaulted)
             {
                 throw task.Exception;
@@ -137,10 +137,10 @@ namespace Cave.Data
             long nextMessage = 0;
             DateTime nextMaxWaitTimeExceeded = DateTime.UtcNow.AddMilliseconds(CacheFlushMaxWaitTime);
 
-            while (!m_Exit)
+            while (!exit)
             {
                 // wait until at least one transaction is available
-                while (!m_Exit && TransactionLog.Count == 0)
+                while (!exit && TransactionLog.Count == 0)
                 {
                     nextMaxWaitTimeExceeded = DateTime.UtcNow.AddMilliseconds(CacheFlushMaxWaitTime);
                     if (LogVerboseMessages)
@@ -154,8 +154,8 @@ namespace Cave.Data
                     TransactionLog.Wait(1000);
                 }
 
-                int count = TransactionLog.Count;
-                if (!m_Flushing)
+                var count = TransactionLog.Count;
+                if (!flushing)
                 {
                     // obey min wait time
                     if (CacheFlushMinWaitTime > 0)
@@ -173,7 +173,7 @@ namespace Cave.Data
                     }
                 }
 
-                int flushCount = FlushCount;
+                var flushCount = FlushCount;
                 if (flushCount <= 0)
                 {
                     flushCount = 1000;
@@ -191,18 +191,18 @@ namespace Cave.Data
             CheckError();
             lock (this)
             {
-                m_Flushing = true;
-                if (m_Exit && !m_Task.IsCompleted)
+                flushing = true;
+                if (exit && !task.IsCompleted)
                 {
                     TransactionLog.Pulse();
-                    m_Task.Wait();
+                    task.Wait();
                 }
-                while (!m_Exit && TransactionLog.Count > 0)
+                while (!exit && TransactionLog.Count > 0)
                 {
                     TransactionLog.Pulse();
                     Thread.Sleep(10);
                 }
-                m_Flushing = false;
+                flushing = false;
             }
             while (TransactionLog.Count > 0)
             {
@@ -216,12 +216,12 @@ namespace Cave.Data
         {
             lock (this)
             {
-                if (m_Exit)
+                if (exit)
                 {
                     return;
                 }
 
-                m_Exit = true;
+                exit = true;
                 Flush();
                 Dispose();
             }
@@ -247,10 +247,13 @@ namespace Cave.Data
             Table = table;
             TransactionLog = log;
             TransactionFlags = TransactionFlags.AllowRequeue;
-            m_LastFlush = DateTime.Now.Ticks;
-            m_Task = Task.Factory.StartNew(() =>
+            lastFlush = DateTime.Now.Ticks;
+            task = Task.Factory.StartNew(() =>
             {
-                try { Worker(); }
+                try
+                {
+                    Worker();
+                }
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"Fatal error in table writer. This is unrecoverable!\n{ex}");
@@ -260,18 +263,18 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the number of items queued for writing.
+        /// Gets the number of items queued for writing.
         /// </summary>
         public int QueueCount => TransactionLog.Count;
 
         /// <summary>
-        /// Obtains the number of items written.
+        /// Gets the number of items written.
         /// </summary>
-        public long WrittenCount => Interlocked.Read(ref m_WrittenCount);
+        public long WrittenCount => Interlocked.Read(ref writtenCount);
 
         /// <summary>Gets the error.</summary>
         /// <value>The error.</value>
-        public Exception Error { get { Task task = m_Task; return task == null ? null : task.Exception; } }
+        public Exception Error => task?.Exception;
 
         /// <summary>
         /// Writes all transaction of the given TransactionLog to the table.
@@ -279,7 +282,7 @@ namespace Cave.Data
         /// <param name="log"></param>
         public void Commit(TransactionLog log)
         {
-            if (m_Disposed)
+            if (disposed)
             {
                 throw new ObjectDisposedException(LogSourceName);
             }
@@ -299,7 +302,7 @@ namespace Cave.Data
         /// <param name="transaction">Transaction to write.</param>
         public void Write(Transaction transaction)
         {
-            if (m_Disposed)
+            if (disposed)
             {
                 throw new ObjectDisposedException(LogSourceName);
             }
@@ -315,13 +318,13 @@ namespace Cave.Data
         /// <param name="row">Row data.</param>
         public void Write(TransactionType transactionType, Row row)
         {
-            if (m_Disposed)
+            if (disposed)
             {
                 throw new ObjectDisposedException(LogSourceName);
             }
 
             CheckError();
-            long id = Layout.GetID(row);
+            var id = Layout.GetID(row);
             switch (transactionType)
             {
                 case TransactionType.Inserted: Write(Transaction.Inserted(id, row)); break;
@@ -338,7 +341,7 @@ namespace Cave.Data
         /// <param name="row">Row data.</param>
         public void Insert(Row row)
         {
-            long id = Layout.GetID(row);
+            var id = Layout.GetID(row);
             Write(Transaction.Inserted(id, row));
         }
 
@@ -358,7 +361,7 @@ namespace Cave.Data
         /// <param name="row">Row data.</param>
         public void Replace(Row row)
         {
-            long id = Layout.GetID(row);
+            var id = Layout.GetID(row);
             Write(Transaction.Replaced(id, row));
         }
 
@@ -378,7 +381,7 @@ namespace Cave.Data
         /// <param name="row">Row data.</param>
         public void Update(Row row)
         {
-            long id = Layout.GetID(row);
+            var id = Layout.GetID(row);
             Write(Transaction.Updated(id, row));
         }
 
@@ -405,7 +408,7 @@ namespace Cave.Data
         /// <param name="ids">The ids.</param>
         public void Delete(params long[] ids)
         {
-            foreach (long id in ids)
+            foreach (var id in ids)
             {
                 Delete(id);
             }
@@ -415,7 +418,7 @@ namespace Cave.Data
         /// <param name="ids">The ids.</param>
         public void Delete(IEnumerable<long> ids)
         {
-            foreach (long id in ids)
+            foreach (var id in ids)
             {
                 Delete(id);
             }
@@ -431,22 +434,23 @@ namespace Cave.Data
         }
 
         #region IDisposable Support
+
         /// <summary>Releases unmanaged and - optionally - managed resources.</summary>
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
-            if (!m_Disposed)
+            if (!disposed)
             {
-                m_Exit = true;
-                m_Disposed = true;
+                exit = true;
+                disposed = true;
                 if (disposing)
                 {
-                    if (m_Task != null)
+                    if (task != null)
                     {
-                        m_Exit = true;
+                        exit = true;
                         TransactionLog.Pulse();
-                        Task t = m_Task;
-                        m_Task = null;
+                        Task t = task;
+                        task = null;
                         t.Wait();
                         t.Dispose();
                     }
@@ -469,99 +473,5 @@ namespace Cave.Data
             GC.SuppressFinalize(this);
         }
         #endregion
-    }
-
-    /// <summary>
-    /// Provides an asynchronous table writer.
-    /// </summary>
-    public class TableWriter<T> : TableWriter
-        where T : struct
-    {
-        /// <summary>
-        /// Creates a writer for the specified table.
-        /// </summary>
-        /// <param name="table">The underlying table.</param>
-        public TableWriter(ITable<T> table) : this(table, new TransactionLog<T>()) { }
-
-        /// <summary>
-        /// Creates a writer for the specified table.
-        /// </summary>
-        /// <param name="table">The underlying table.</param>
-        /// <param name="log">The TransactionLog to watch for updates.</param>
-        public TableWriter(ITable<T> table, TransactionLog<T> log)
-            : base(table, log)
-        {
-            Table = table;
-            TransactionLog = log;
-        }
-
-        /// <summary>
-        /// Inserts a new row at the table using a background transaction.
-        /// </summary>
-        /// <param name="item">Row data.</param>
-        public void Insert(T item)
-        {
-            Row row = Row.Create(Layout, item);
-            long id = Layout.GetID(row);
-            Write(Transaction.Inserted(id, row));
-        }
-
-        /// <summary>Inserts rows at the table using a background transaction.</summary>
-        /// <param name="items">The items.</param>
-        public void Insert(IEnumerable<T> items)
-        {
-            foreach (T item in items)
-            {
-                Insert(item);
-            }
-        }
-
-        /// <summary>
-        /// Replaces a row at the table using a background transaction.
-        /// </summary>
-        /// <param name="item">Row data.</param>
-        public void Replace(T item)
-        {
-            Row row = Row.Create(Layout, item);
-            long id = Layout.GetID(row);
-            Write(Transaction.Replaced(id, row));
-        }
-
-        /// <summary>Replaces rows at the table using a background transaction.</summary>
-        /// <param name="items">The items.</param>
-        public void Replace(IEnumerable<T> items)
-        {
-            foreach (T item in items)
-            {
-                Replace(item);
-            }
-        }
-
-        /// <summary>
-        /// Updates a row at the table using a background transaction.
-        /// </summary>
-        /// <param name="item">Row data.</param>
-        public void Update(T item)
-        {
-            Row row = Row.Create(Layout, item);
-            long id = Layout.GetID(row);
-            Write(Transaction.Updated(id, row));
-        }
-
-        /// <summary>Updates rows at the table using a background transaction.</summary>
-        /// <param name="items">The items.</param>
-        public void Update(IEnumerable<T> items)
-        {
-            foreach (T item in items)
-            {
-                Update(item);
-            }
-        }
-
-        /// <summary>The table this instance writes to.</summary>
-        public new ITable<T> Table { get; private set; }
-
-        /// <summary>The transaction log.</summary>
-        public new TransactionLog<T> TransactionLog { get; private set; }
     }
 }

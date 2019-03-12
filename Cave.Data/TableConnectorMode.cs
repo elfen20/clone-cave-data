@@ -20,5 +20,4 @@ namespace Cave.Data
         /// <summary>read cache table connection</summary>
         ReadCache,
     }
-
 }

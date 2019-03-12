@@ -9,15 +9,15 @@ namespace Cave.Data
     /// </summary>
     public abstract class Storage : IStorage
     {
-        ConnectionString m_ConnectionString;
-        bool m_Closed;
+        ConnectionString connectionString;
+        bool closed;
 
         /// <summary>Creates a new storage instance with the specified <see cref="ConnectionString" />.</summary>
         /// <param name="connectionString">ConnectionString of the storage.</param>
         /// <param name="options">The options.</param>
         protected Storage(ConnectionString connectionString, DbConnectionOptions options)
         {
-            m_ConnectionString = connectionString;
+            this.connectionString = connectionString;
             LogVerboseMessages = options.HasFlag(DbConnectionOptions.VerboseLogging);
             if (LogVerboseMessages)
             {
@@ -35,12 +35,12 @@ namespace Cave.Data
         public abstract bool HasDatabase(string database);
 
         /// <summary>
-        /// Obtains all available database names.
+        /// Gets all available database names.
         /// </summary>
         public abstract string[] DatabaseNames { get; }
 
         /// <summary>
-        /// Obtains the database with the specified name.
+        /// Gets the database with the specified name.
         /// </summary>
         /// <param name="database">The name of the database.</param>
         /// <returns></returns>
@@ -69,7 +69,7 @@ namespace Cave.Data
         public bool UseDelayedWrites { get; set; }
 
         /// <summary>
-        /// Obtains FieldProperties for the Database based on requested FieldProperties.
+        /// Gets FieldProperties for the Database based on requested FieldProperties.
         /// </summary>
         /// <param name="field"></param>
         /// <returns></returns>
@@ -81,23 +81,23 @@ namespace Cave.Data
         /// <summary>
         /// Gets/sets the <see cref="ConnectionString"/> used to connect to the database server.
         /// </summary>
-        public virtual ConnectionString ConnectionString => m_ConnectionString;
+        public virtual ConnectionString ConnectionString => connectionString;
 
         /// <summary>
-        /// Obtains wether the storage was already closed or not.
+        /// Gets wether the storage was already closed or not.
         /// </summary>
-        public virtual bool Closed => m_Closed;
+        public virtual bool Closed => closed;
 
         /// <summary>
         /// closes the connection to the storage engine.
         /// </summary>
         public virtual void Close()
         {
-            m_Closed = true;
+            closed = true;
         }
 
         /// <summary>
-        /// Obtains the database with the specified name.
+        /// Gets the database with the specified name.
         /// </summary>
         /// <param name="database">The name of the database.</param>
         /// <param name="createIfNotExists">Create the database if its not already present.</param>
@@ -138,7 +138,7 @@ namespace Cave.Data
             {
                 throw new InvalidDataException(string.Format("Fieldcount of table {0} differs (found {1} expected {2})!", current.Name, current.FieldCount, expected.FieldCount));
             }
-            for (int i = 0; i < expected.FieldCount; i++)
+            for (var i = 0; i < expected.FieldCount; i++)
             {
                 FieldProperties expectedField = GetDatabaseFieldProperties(expected.GetProperties(i));
                 FieldProperties currentField = GetDatabaseFieldProperties(current.GetProperties(i));
@@ -152,28 +152,29 @@ namespace Cave.Data
         #endregion
 
         #region precision members
+
         /// <summary>
-        /// Obtains the maximum <see cref="float"/> precision at the value of 1.0f of this storage engine.
+        /// Gets the maximum <see cref="float"/> precision at the value of 1.0f of this storage engine.
         /// </summary>
         public virtual float FloatPrecision => 0;
 
         /// <summary>
-        /// Obtains the maximum <see cref="double"/> precision at the value of 1.0d of this storage engine.
+        /// Gets the maximum <see cref="double"/> precision at the value of 1.0d of this storage engine.
         /// </summary>
         public virtual double DoublePrecision => 0;
 
         /// <summary>
-        /// Obtains the maximum <see cref="DateTime"/> value precision of this storage engine.
+        /// Gets the maximum <see cref="DateTime"/> value precision of this storage engine.
         /// </summary>
         public virtual TimeSpan DateTimePrecision => TimeSpan.FromMilliseconds(0);
 
         /// <summary>
-        /// Obtains the maximum <see cref="TimeSpan"/> value precision of this storage engine.
+        /// Gets the maximum <see cref="TimeSpan"/> value precision of this storage engine.
         /// </summary>
         public virtual TimeSpan TimeSpanPrecision => new TimeSpan(0);
 
         /// <summary>
-        /// Obtains the maximum <see cref="decimal"/> value precision of this storage engine.
+        /// Gets the maximum <see cref="decimal"/> value precision of this storage engine.
         /// </summary>
         public virtual decimal GetDecimalPrecision(float count)
         {
@@ -182,8 +183,8 @@ namespace Cave.Data
                 return 0;
             }
 
-            double l_PreDecimal = Math.Truncate(count);
-            int l_Decimal = (int)Math.Round((count - l_PreDecimal) * 100);
+            var l_PreDecimal = Math.Truncate(count);
+            var l_Decimal = (int)Math.Round((count - l_PreDecimal) * 100);
             decimal result = 1;
             while (l_Decimal-- > 0)
             {
@@ -199,7 +200,7 @@ namespace Cave.Data
 
         /// <summary>Gets the name of the log source.</summary>
         /// <value>The name of the log source.</value>
-        public string LogSourceName => m_ConnectionString.ToString(ConnectionStringPart.NoCredentials);
+        public string LogSourceName => connectionString.ToString(ConnectionStringPart.NoCredentials);
 
         /// <summary>
         /// Gets a value indicating whether the storage engine supports native transactions with faster execution than single commands.

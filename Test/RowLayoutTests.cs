@@ -16,8 +16,8 @@ namespace Test.Cave.Data
         [Test]
         public void CheckLayout()
         {
-            RowLayout layoutA = RowLayout.CreateTyped(typeof(TestStructBug));
-            List<FieldProperties> fields = new List<FieldProperties>();
+            var layoutA = RowLayout.CreateTyped(typeof(TestStructBug));
+            var fields = new List<FieldProperties>();
             fields.Add(new FieldProperties("TestStructBug", FieldFlags.ID, DataType.UInt64, "IDField"));
             fields.Add(new FieldProperties("TestStructBug", FieldFlags.Index, DataType.UInt32, "IndexedField"));
             fields.Add(new FieldProperties("TestStructBug", FieldFlags.Unique, DataType.Int16, "UniqueField"));
@@ -28,14 +28,14 @@ namespace Test.Cave.Data
             fields.Add(new FieldProperties("TestStructBug", FieldFlags.None, DataType.Enum, typeof(PlatformType), "SomeEnum"));
             fields.Add(new FieldProperties("TestStructBug", FieldFlags.None, DataType.String, "BuggyField"));
 
-            RowLayout layoutB = RowLayout.CreateUntyped("TestStruct", fields.ToArray());
+            var layoutB = RowLayout.CreateUntyped("TestStruct", fields.ToArray());
             RowLayout.CheckLayout(layoutB, layoutA);
         }
 
         [Test]
         public void TypedCheck()
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
+            var layout = RowLayout.CreateTyped(typeof(TestStructClean));
             Assert.AreEqual(layout.IDField.Name, layout.IDField.NameAtDatabase);
             Assert.AreEqual(layout.IDFieldIndex, 0);
         }

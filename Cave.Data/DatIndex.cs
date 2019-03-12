@@ -27,7 +27,9 @@ namespace Cave.Data
 
             object IEnumerator.Current => Current;
 
-            public void Dispose() { }
+            public void Dispose()
+            {
+            }
 
             public bool MoveNext()
             {
@@ -49,30 +51,31 @@ namespace Cave.Data
         }
 
         #region private implementation
-        DataWriter Writer;
-        DataReader Reader;
-        Stream Stream;
-        long LastUsedID;
+        DataWriter writer;
+        DataReader reader;
+        Stream stream;
+        long lastUsedID;
 
         // long StartPosition;
         #endregion
 
         #region constructor
+
         /// <summary>
         /// Creates a new empty <see cref="DatIndex"/>.
         /// </summary>
         public DatIndex(string fileName)
         {
-            Stream = File.Open(fileName, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
-            Writer = new DataWriter(Stream);
-            Reader = new DataReader(Stream);
-            if (Stream.Length < 4)
+            stream = File.Open(fileName, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+            writer = new DataWriter(stream);
+            reader = new DataReader(stream);
+            if (stream.Length < 4)
             {
-                Writer.Write("IDX ");
+                writer.Write("IDX ");
             }
             else
             {
-                if (Reader.ReadString(4) != "IDX ")
+                if (reader.ReadString(4) != "IDX ")
                 {
                     throw new InvalidDataException();
                 }
@@ -80,9 +83,9 @@ namespace Cave.Data
 
             foreach (DatEntry entry in this)
             {
-                if (entry.ID > LastUsedID)
+                if (entry.ID > lastUsedID)
                 {
-                    LastUsedID = entry.ID;
+                    lastUsedID = entry.ID;
                 }
 
                 if (entry.ID <= 0)
@@ -98,22 +101,22 @@ namespace Cave.Data
         #region public implementation
 
         /// <summary>
-        /// Obtains the next free (unused) ID.
+        /// Gets the next free (unused) ID.
         /// </summary>
         /// <returns>Returns an unused ID.</returns>
         public long GetNextFreeID()
         {
-            return Math.Max(1, LastUsedID + 1);
+            return Math.Max(1, lastUsedID + 1);
         }
 
         /// <summary>
-        /// Obtains the next used ID.
+        /// Gets the next used ID.
         /// </summary>
         /// <param name="id">The (previous) ID to start search at.</param>
         /// <returns>Returns an ID or -1.</returns>
         public long GetNextUsedID(long id)
         {
-            long best = long.MaxValue;
+            var best = long.MaxValue;
             foreach (DatEntry e in this)
             {
                 if (e.ID > id && e.ID < best)
@@ -126,7 +129,7 @@ namespace Cave.Data
 
         void SaveAtCurrentPosition(DatEntry entry)
         {
-            entry.Save(Writer);
+            entry.Save(writer);
         }
 
         /// <summary>
@@ -140,9 +143,9 @@ namespace Cave.Data
                 throw new ArgumentException(string.Format("Invalid ID!"));
             }
 
-            if (entry.ID > LastUsedID)
+            if (entry.ID > lastUsedID)
             {
-                LastUsedID = entry.ID;
+                lastUsedID = entry.ID;
             }
 
             // find
@@ -153,7 +156,7 @@ namespace Cave.Data
                     if (e.ID <= 0)
                     {
                         FreeItemCount--;
-                        Stream.Position -= e.Length;
+                        stream.Position -= e.Length;
                         SaveAtCurrentPosition(entry);
                         return;
                     }
@@ -161,18 +164,18 @@ namespace Cave.Data
             }
 
             // append at end
-            Stream.Position = Stream.Length;
+            stream.Position = stream.Length;
             SaveAtCurrentPosition(entry);
             Count++;
         }
 
         /// <summary>
-        /// Obtains the number of IDs (entries) currently present at the index.
+        /// Gets the number of IDs (entries) currently present at the index.
         /// </summary>
         public long Count { get; private set; }
 
         /// <summary>
-        /// Obtains the number of free (entries) currently present at the index.
+        /// Gets the number of free (entries) currently present at the index.
         /// </summary>
         public long FreeItemCount { get; private set; }
 
@@ -182,14 +185,14 @@ namespace Cave.Data
         /// <param name="source">The source <see cref="DatEntry"/> to remove.</param>
         public void Free(DatEntry source)
         {
-            DatEntry entry = new DatEntry(0, source.BucketPosition, source.BucketLength);
-            lock (Stream)
+            var entry = new DatEntry(0, source.BucketPosition, source.BucketLength);
+            lock (stream)
             {
                 foreach (DatEntry e in this)
                 {
                     if (e.ID == source.ID)
                     {
-                        Stream.Position -= e.Length;
+                        stream.Position -= e.Length;
                         SaveAtCurrentPosition(entry);
                         FreeItemCount++;
                         return;
@@ -200,7 +203,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains a free entry from the index for reuse.
+        /// Gets a free entry from the index for reuse.
         /// </summary>
         /// <param name="id">The ID of the dataset to be written.</param>
         /// <param name="count">The length the entry should have.</param>
@@ -218,8 +221,8 @@ namespace Cave.Data
 
                     if (entry.BucketLength >= count)
                     {
-                        Stream.Position -= entry.Length;
-                        DatEntry result = new DatEntry(id, entry.BucketPosition, entry.BucketLength);
+                        stream.Position -= entry.Length;
+                        var result = new DatEntry(id, entry.BucketPosition, entry.BucketLength);
                         SaveAtCurrentPosition(result);
                         FreeItemCount--;
                         return result;
@@ -261,18 +264,18 @@ namespace Cave.Data
 
         public IEnumerator<DatEntry> GetEnumerator()
         {
-            return new DatEntryEnumerator(Reader);
+            return new DatEntryEnumerator(reader);
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return new DatEntryEnumerator(Reader);
+            return new DatEntryEnumerator(reader);
         }
 
         public void Dispose()
         {
-            Stream?.Close();
-            Stream = null;
+            stream?.Close();
+            stream = null;
         }
     }
 }

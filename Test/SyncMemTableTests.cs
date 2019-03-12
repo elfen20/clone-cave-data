@@ -17,8 +17,8 @@ namespace Test.Cave.Data
         {
             {
                 // Create SynchronizeMemoryTable from Layout
-                RowLayout layoutA = RowLayout.CreateTyped(typeof(TestStructClean));
-                SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(layoutA);
+                var layoutA = RowLayout.CreateTyped(typeof(TestStructClean));
+                var l_Syn = new SynchronizedMemoryTable(layoutA);
                 RowLayout.CheckLayout(l_Syn.Layout, layoutA);
                 Assert.AreEqual(l_Syn.Name, "TestStructClean");
                 Assert.AreNotEqual(l_Syn.Storage, null);
@@ -26,35 +26,35 @@ namespace Test.Cave.Data
             }
             {
                 // Create SynchronizeMemoryTable from MemoryTable.
-                MemoryTable<TestStructClean> l_Memory = new MemoryTable<TestStructClean>();
-                SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(l_Memory);
+                var l_Memory = new MemoryTable<TestStructClean>();
+                var l_Syn = new SynchronizedMemoryTable(l_Memory);
                 RowLayout.CheckLayout(l_Syn.Layout, l_Memory.Layout);
             }
             {
                 // Create SynchronizeMemoryTable from ITable
                 ITable l_Memory = new MemoryTable<TestStructClean>();
-                SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(l_Memory);
+                var l_Syn = new SynchronizedMemoryTable(l_Memory);
                 RowLayout.CheckLayout(l_Syn.Layout, l_Memory.Layout);
             }
             // SynchronizeMemoryTable<T>
             // Create SynchronizeMemoryTable<T> from ITable<T>.
             {
-                MemoryTable<TestStructClean> l_Memory = new MemoryTable<TestStructClean>();
-                SynchronizedMemoryTable<TestStructClean> l_Syn = new SynchronizedMemoryTable<TestStructClean>(l_Memory);
+                var l_Memory = new MemoryTable<TestStructClean>();
+                var l_Syn = new SynchronizedMemoryTable<TestStructClean>(l_Memory);
                 RowLayout.CheckLayout(l_Syn.Layout, l_Memory.Layout);
             }
             // Create SynchronizeMemoryTable<T> from Memory<T>.
             {
-                MemoryTable<TestStructClean> l_Memory = new MemoryTable<TestStructClean>();
-                SynchronizedMemoryTable<TestStructClean> l_Syn = new SynchronizedMemoryTable<TestStructClean>(l_Memory);
+                var l_Memory = new MemoryTable<TestStructClean>();
+                var l_Syn = new SynchronizedMemoryTable<TestStructClean>(l_Memory);
                 RowLayout.CheckLayout(l_Syn.Layout, l_Memory.Layout);
             }
 
             // Convert SynchronizeMemoryTable<T> to untype
             {
-                MemoryTable<TestStructClean> l_Memory = new MemoryTable<TestStructClean>();
-                SynchronizedMemoryTable<TestStructClean> l_Syn = new SynchronizedMemoryTable<TestStructClean>(l_Memory);
-                SynchronizedMemoryTable l_SynExpect = (SynchronizedMemoryTable)l_Syn;
+                var l_Memory = new MemoryTable<TestStructClean>();
+                var l_Syn = new SynchronizedMemoryTable<TestStructClean>(l_Memory);
+                var l_SynExpect = (SynchronizedMemoryTable)l_Syn;
                 RowLayout.CheckLayout(l_Syn.Layout, l_SynExpect.Layout);
             }
         }
@@ -62,26 +62,26 @@ namespace Test.Cave.Data
         [Test]
         public void LoadTable()
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
-            MemoryTable l_Memory = new MemoryTable(layout);
+            var layout = RowLayout.CreateTyped(typeof(TestStructClean));
+            var l_Memory = new MemoryTable(layout);
 
-            TestStructClean t1 = TestStructClean.Create(1);
+            var t1 = TestStructClean.Create(1);
             t1.ID = 1;
-            Row row1 = Row.Create(layout, t1);
+            var row1 = Row.Create(layout, t1);
             l_Memory.Insert(row1);
 
-            TestStructClean t2 = TestStructClean.Create(2);
+            var t2 = TestStructClean.Create(2);
             t2.ID = 2;
-            Row row2 = Row.Create(layout, t2);
+            var row2 = Row.Create(layout, t2);
             l_Memory.Insert(row2);
 
-            TestStructClean t3 = TestStructClean.Create(3);
+            var t3 = TestStructClean.Create(3);
             t3.ID = 3;
-            Row row3 = Row.Create(layout, t3);
+            var row3 = Row.Create(layout, t3);
             l_Memory.Insert(row3);
             // SynchronizedMemoryTable
             {
-                SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
+                var l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
                 l_Syn.LoadTable(l_Memory);
                 var rows = l_Syn.GetRows();
                 CollectionAssert.Contains(rows, row1);
@@ -91,7 +91,7 @@ namespace Test.Cave.Data
             // SynchronizedMemoryTable<T>
             {
                 {
-                    SynchronizedMemoryTable<TestStructClean> l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
+                    var l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
                     l_Syn.LoadTable(l_Memory);
                     var rows = l_Syn.GetRows();
                     CollectionAssert.Contains(rows, row1);
@@ -106,25 +106,25 @@ namespace Test.Cave.Data
         {
             // SynchronizedMemoryTable
             {
-                RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
-                MemoryTable l_Memory = new MemoryTable(layout);
+                var layout = RowLayout.CreateTyped(typeof(TestStructClean));
+                var l_Memory = new MemoryTable(layout);
 
-                TestStructClean t1 = TestStructClean.Create(1);
+                var t1 = TestStructClean.Create(1);
                 t1.ID = 1;
-                Row row1 = Row.Create(layout, t1);
+                var row1 = Row.Create(layout, t1);
                 l_Memory.Insert(row1);
 
-                TestStructClean t2 = TestStructClean.Create(2);
+                var t2 = TestStructClean.Create(2);
                 t2.ID = 2;
-                Row row2 = Row.Create(layout, t2);
+                var row2 = Row.Create(layout, t2);
                 l_Memory.Insert(row2);
 
-                TestStructClean t3 = TestStructClean.Create(3);
+                var t3 = TestStructClean.Create(3);
                 t3.ID = 3;
-                Row row3 = Row.Create(layout, t3);
+                var row3 = Row.Create(layout, t3);
                 l_Memory.Insert(row3);
 
-                SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
+                var l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
                 l_Syn.LoadTable(l_Memory);
 
                 Assert.AreEqual(l_Syn.Count(Search.None), 3);
@@ -136,21 +136,21 @@ namespace Test.Cave.Data
             }
             // SynchronizedMemoryTable<T>
             {
-                MemoryTable<TestStructClean> l_Memory = new MemoryTable<TestStructClean>();
+                var l_Memory = new MemoryTable<TestStructClean>();
 
-                TestStructClean t1 = TestStructClean.Create(1);
+                var t1 = TestStructClean.Create(1);
                 t1.ID = 1;
                 l_Memory.Insert(t1);
 
-                TestStructClean t2 = TestStructClean.Create(2);
+                var t2 = TestStructClean.Create(2);
                 t2.ID = 2;
                 l_Memory.Insert(t2);
 
-                TestStructClean t3 = TestStructClean.Create(3);
+                var t3 = TestStructClean.Create(3);
                 t3.ID = 3;
                 l_Memory.Insert(t3);
 
-                SynchronizedMemoryTable<TestStructClean> l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
+                var l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
                 l_Syn.LoadTable(l_Memory);
 
                 Assert.AreEqual(l_Syn.Count(Search.None), 3);
@@ -165,25 +165,25 @@ namespace Test.Cave.Data
         [Test]
         public void Clear()
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
-            MemoryTable l_Memory = new MemoryTable(layout);
+            var layout = RowLayout.CreateTyped(typeof(TestStructClean));
+            var l_Memory = new MemoryTable(layout);
 
-            TestStructClean t1 = TestStructClean.Create(1);
+            var t1 = TestStructClean.Create(1);
             t1.ID = 1;
-            Row row1 = Row.Create(layout, t1);
+            var row1 = Row.Create(layout, t1);
             l_Memory.Insert(row1);
 
-            TestStructClean t2 = TestStructClean.Create(2);
+            var t2 = TestStructClean.Create(2);
             t2.ID = 2;
-            Row row2 = Row.Create(layout, t2);
+            var row2 = Row.Create(layout, t2);
             l_Memory.Insert(row2);
 
-            TestStructClean t3 = TestStructClean.Create(3);
+            var t3 = TestStructClean.Create(3);
             t3.ID = 3;
-            Row row3 = Row.Create(layout, t3);
+            var row3 = Row.Create(layout, t3);
             l_Memory.Insert(row3);
 
-            SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
+            var l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
             l_Syn.LoadTable(l_Memory);
 
             Assert.AreEqual(l_Syn.RowCount, l_Memory.RowCount);
@@ -195,27 +195,27 @@ namespace Test.Cave.Data
         [Test]
         public void GetRow()
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
+            var layout = RowLayout.CreateTyped(typeof(TestStructClean));
             // SynchronizedMemoryTable
             {
-                MemoryTable l_Memory = new MemoryTable(layout);
-                SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
-                for (int i = 1; i <= 10; i++)
+                var l_Memory = new MemoryTable(layout);
+                var l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
+                for (var i = 1; i <= 10; i++)
                 {
-                    TestStructClean t = TestStructClean.Create(i);
-                    Row row = Row.Create(layout, t);
+                    var t = TestStructClean.Create(i);
+                    var row = Row.Create(layout, t);
                     l_Syn.Insert(row);
                 }
                 // get row by id
                 {
-                    Row row = Row.Create(layout, TestStructClean.Create(1));
-                    row = row.SetID(layout.IDFieldIndex,1L);
+                    var row = Row.Create(layout, TestStructClean.Create(1));
+                    row = row.SetID(layout.IDFieldIndex, 1L);
                     Assert.AreEqual(l_Syn.GetRow(1).GetStruct<TestStructClean>(layout), row.GetStruct<TestStructClean>(layout));
                     row = Row.Create(layout, TestStructClean.Create(2));
-                    row = row.SetID(layout.IDFieldIndex,2L);
+                    row = row.SetID(layout.IDFieldIndex, 2L);
                     Assert.AreEqual(l_Syn.GetRow(2).GetStruct<TestStructClean>(layout), row.GetStruct<TestStructClean>(layout));
                     row = Row.Create(layout, TestStructClean.Create(3));
-                    row = row.SetID(layout.IDFieldIndex,3L);
+                    row = row.SetID(layout.IDFieldIndex, 3L);
                     Assert.AreEqual(l_Syn.GetRow(3).GetStruct<TestStructClean>(layout), row.GetStruct<TestStructClean>(layout));
                     try
                     {
@@ -238,7 +238,7 @@ namespace Test.Cave.Data
                     }
                 }
                 {
-                    Row row = Row.Create(layout, TestStructClean.Create(1));
+                    var row = Row.Create(layout, TestStructClean.Create(1));
                     row = row.SetID(layout.IDFieldIndex, 1L);
 
                     Assert.AreEqual(l_Syn.GetRow("ID", 1L).GetStruct<TestStructClean>(layout), row.GetStruct<TestStructClean>(layout));
@@ -250,20 +250,20 @@ namespace Test.Cave.Data
                 }
                 //Search
                 {
-                    Row row = Row.Create(layout, TestStructClean.Create(1));
+                    var row = Row.Create(layout, TestStructClean.Create(1));
                     row = row.SetID(layout.IDFieldIndex, 1L);
 
                     Assert.AreEqual(l_Syn.GetRow(Search.FieldEquals("ID", 1L)).GetStruct<TestStructClean>(layout), row.GetStruct<TestStructClean>(layout));
                 }
                 // Search + ResultOption
-                for (int i = 1; i <= 10; i++)
+                for (var i = 1; i <= 10; i++)
                 {
-                    TestStructClean t = TestStructClean.Create(i);
-                    Row row = Row.Create(layout, t);
+                    var t = TestStructClean.Create(i);
+                    var row = Row.Create(layout, t);
                     l_Syn.Insert(row);
                 }
                 {
-                    Row row = Row.Create(layout, TestStructClean.Create(1));
+                    var row = Row.Create(layout, TestStructClean.Create(1));
                     row = row.SetID(layout.IDFieldIndex, 1L);
                     Assert.AreEqual(l_Syn.GetRow(Search.FieldGreater("ID", 0L), ResultOption.Limit(1)).GetStruct<TestStructClean>(layout), row.GetStruct<TestStructClean>(layout));
 
@@ -300,13 +300,13 @@ namespace Test.Cave.Data
                     ids = l_Syn.GetRows(Search.FieldGreater("ID", 0L), ResultOption.SortDescending("ID"));
                     Assert.AreEqual(ids.Count, 20);
 
-                    Row row = Row.Create(layout, TestStructClean.Create(10));
+                    var row = Row.Create(layout, TestStructClean.Create(10));
                     row = row.SetID(layout.IDFieldIndex, 20);
                     Assert.AreEqual(ids[0].GetStruct<TestStructClean>(layout), row.GetStruct<TestStructClean>(layout));
                 }
                 {
                     var rows = l_Syn.GetRows(new long[] { 1, 2, 3, 4, 5 });
-                    Row row = Row.Create(layout, TestStructClean.Create(1));
+                    var row = Row.Create(layout, TestStructClean.Create(1));
                     row = row.SetID(layout.IDFieldIndex, 1);
                     Assert.AreEqual(rows[0].GetStruct<TestStructClean>(layout), row.GetStruct<TestStructClean>(layout));
 
@@ -325,17 +325,17 @@ namespace Test.Cave.Data
             }
             // SynchronizedMemoryTable<T>
             {
-                MemoryTable l_Memory = new MemoryTable(layout);
-                SynchronizedMemoryTable<TestStructClean> l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
-                for (int i = 1; i <= 10; i++)
+                var l_Memory = new MemoryTable(layout);
+                var l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
+                for (var i = 1; i <= 10; i++)
                 {
-                    TestStructClean t = TestStructClean.Create(i);
-                    Row row = Row.Create(layout, t);
+                    var t = TestStructClean.Create(i);
+                    var row = Row.Create(layout, t);
                     l_Syn.Insert(row);
                 }
                 // get row by id
                 {
-                    Row row = Row.Create(layout, TestStructClean.Create(1));
+                    var row = Row.Create(layout, TestStructClean.Create(1));
                     row = row.SetID(layout.IDFieldIndex, 1L);
                     Assert.AreEqual(l_Syn.GetRow(1).GetStruct<TestStructClean>(layout), row.GetStruct<TestStructClean>(layout));
                     row = Row.Create(layout, TestStructClean.Create(2));
@@ -365,7 +365,7 @@ namespace Test.Cave.Data
                     }
                 }
                 {
-                    Row row = Row.Create(layout, TestStructClean.Create(1));
+                    var row = Row.Create(layout, TestStructClean.Create(1));
                     row = row.SetID(layout.IDFieldIndex, 1L);
 
                     Assert.AreEqual(l_Syn.GetRow("ID", 1L).GetStruct<TestStructClean>(layout), row.GetStruct<TestStructClean>(layout));
@@ -377,20 +377,20 @@ namespace Test.Cave.Data
                 }
                 //Search
                 {
-                    Row row = Row.Create(layout, TestStructClean.Create(1));
+                    var row = Row.Create(layout, TestStructClean.Create(1));
                     row = row.SetID(layout.IDFieldIndex, 1L);
 
                     Assert.AreEqual(l_Syn.GetRow(Search.FieldEquals("ID", 1L)).GetStruct<TestStructClean>(layout), row.GetStruct<TestStructClean>(layout));
                 }
                 // Search + ResultOption
-                for (int i = 1; i <= 10; i++)
+                for (var i = 1; i <= 10; i++)
                 {
-                    TestStructClean t = TestStructClean.Create(i);
-                    Row row = Row.Create(layout, t);
+                    var t = TestStructClean.Create(i);
+                    var row = Row.Create(layout, t);
                     l_Syn.Insert(row);
                 }
                 {
-                    Row row = Row.Create(layout, TestStructClean.Create(1));
+                    var row = Row.Create(layout, TestStructClean.Create(1));
                     row = row.SetID(layout.IDFieldIndex, 1L);
                     Assert.AreEqual(l_Syn.GetRow(Search.FieldGreater("ID", 0L), ResultOption.Limit(1)).GetStruct<TestStructClean>(layout), row.GetStruct<TestStructClean>(layout));
 
@@ -427,13 +427,13 @@ namespace Test.Cave.Data
                     ids = l_Syn.GetRows(Search.FieldGreater("ID", 0L), ResultOption.SortDescending("ID"));
                     Assert.AreEqual(ids.Count, 20);
 
-                    Row row = Row.Create(layout, TestStructClean.Create(10));
+                    var row = Row.Create(layout, TestStructClean.Create(10));
                     row = row.SetID(layout.IDFieldIndex, 20);
                     Assert.AreEqual(ids[0].GetStruct<TestStructClean>(layout), row.GetStruct<TestStructClean>(layout));
                 }
                 {
                     var rows = l_Syn.GetRows(new long[] { 1, 2, 3, 4, 5 });
-                    Row row = Row.Create(layout, TestStructClean.Create(1));
+                    var row = Row.Create(layout, TestStructClean.Create(1));
                     row = row.SetID(layout.IDFieldIndex, 1);
                     Assert.AreEqual(rows[0].GetStruct<TestStructClean>(layout), row.GetStruct<TestStructClean>(layout));
 
@@ -455,26 +455,26 @@ namespace Test.Cave.Data
         [Test]
         public void GetRowAt()
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
-            MemoryTable l_Memory = new MemoryTable(layout);
+            var layout = RowLayout.CreateTyped(typeof(TestStructClean));
+            var l_Memory = new MemoryTable(layout);
 
-            TestStructClean t1 = TestStructClean.Create(1);
+            var t1 = TestStructClean.Create(1);
             t1.ID = 1;
-            Row row1 = Row.Create(layout, t1);
+            var row1 = Row.Create(layout, t1);
             l_Memory.Insert(row1);
 
-            TestStructClean t2 = TestStructClean.Create(2);
+            var t2 = TestStructClean.Create(2);
             t2.ID = 2;
-            Row row2 = Row.Create(layout, t2);
+            var row2 = Row.Create(layout, t2);
             l_Memory.Insert(row2);
 
-            TestStructClean t3 = TestStructClean.Create(3);
+            var t3 = TestStructClean.Create(3);
             t3.ID = 3;
-            Row row3 = Row.Create(layout, t3);
+            var row3 = Row.Create(layout, t3);
             l_Memory.Insert(row3);
             // SynchronizedMemoryTable
             {
-                SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
+                var l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
                 l_Syn.LoadTable(l_Memory);
                 Assert.AreEqual(l_Syn.GetRowAt(0), row1);
                 Assert.AreEqual(l_Syn.GetRowAt(1), row2);
@@ -490,7 +490,7 @@ namespace Test.Cave.Data
             }
             // SynchronizedMemoryTable<T>
             {
-                SynchronizedMemoryTable<TestStructClean> l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
+                var l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
                 l_Syn.LoadTable(l_Memory);
                 Assert.AreEqual(l_Syn.GetRowAt(0), row1);
                 Assert.AreEqual(l_Syn.GetRowAt(1), row2);
@@ -509,25 +509,25 @@ namespace Test.Cave.Data
         [Test]
         public void Set()
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
-            MemoryTable l_Memory = new MemoryTable(layout);
+            var layout = RowLayout.CreateTyped(typeof(TestStructClean));
+            var l_Memory = new MemoryTable(layout);
 
-            TestStructClean t1 = TestStructClean.Create(1);
+            var t1 = TestStructClean.Create(1);
             t1.ID = 1;
-            Row row1 = Row.Create(layout, t1);
+            var row1 = Row.Create(layout, t1);
             l_Memory.Insert(row1);
 
-            TestStructClean t2 = TestStructClean.Create(2);
+            var t2 = TestStructClean.Create(2);
             t2.ID = 2;
-            Row row2 = Row.Create(layout, t2);
+            var row2 = Row.Create(layout, t2);
             l_Memory.Insert(row2);
 
-            TestStructClean t3 = TestStructClean.Create(3);
+            var t3 = TestStructClean.Create(3);
             t3.ID = 3;
-            Row row3 = Row.Create(layout, t3);
+            var row3 = Row.Create(layout, t3);
             l_Memory.Insert(row3);
 
-            SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
+            var l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
             l_Syn.LoadTable(l_Memory);
             try
             {
@@ -544,25 +544,25 @@ namespace Test.Cave.Data
         [Test]
         public void Exist()
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
-            MemoryTable l_Memory = new MemoryTable(layout);
+            var layout = RowLayout.CreateTyped(typeof(TestStructClean));
+            var l_Memory = new MemoryTable(layout);
 
-            TestStructClean t1 = TestStructClean.Create(1);
+            var t1 = TestStructClean.Create(1);
             t1.ID = 1;
-            Row row1 = Row.Create(layout, t1);
+            var row1 = Row.Create(layout, t1);
             l_Memory.Insert(row1);
 
-            TestStructClean t2 = TestStructClean.Create(2);
+            var t2 = TestStructClean.Create(2);
             t2.ID = 2;
-            Row row2 = Row.Create(layout, t2);
+            var row2 = Row.Create(layout, t2);
             l_Memory.Insert(row2);
 
-            TestStructClean t3 = TestStructClean.Create(3);
+            var t3 = TestStructClean.Create(3);
             t3.ID = 3;
-            Row row3 = Row.Create(layout, t3);
+            var row3 = Row.Create(layout, t3);
             l_Memory.Insert(row3);
 
-            SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
+            var l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
             l_Syn.LoadTable(l_Memory);
 
             Assert.AreEqual(l_Syn.Exist(1), true);
@@ -575,48 +575,48 @@ namespace Test.Cave.Data
         [Test]
         public void Insert()
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
+            var layout = RowLayout.CreateTyped(typeof(TestStructClean));
 
 
-            TestStructClean t1 = TestStructClean.Create(1);
+            var t1 = TestStructClean.Create(1);
             t1.ID = 1;
-            Row row1 = Row.Create(layout, t1);
+            var row1 = Row.Create(layout, t1);
 
-            TestStructClean t2 = TestStructClean.Create(2);
+            var t2 = TestStructClean.Create(2);
             t2.ID = 2;
-            Row row2 = Row.Create(layout, t2);
+            var row2 = Row.Create(layout, t2);
 
-            TestStructClean t3 = TestStructClean.Create(3);
+            var t3 = TestStructClean.Create(3);
             t3.ID = 3;
-            Row row3 = Row.Create(layout, t3);
+            var row3 = Row.Create(layout, t3);
 
-            TestStructClean t4 = TestStructClean.Create(4);
-            Row row4 = Row.Create(layout, t4);
+            var t4 = TestStructClean.Create(4);
+            var row4 = Row.Create(layout, t4);
             {
-                SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
+                var l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
 
                 Assert.AreEqual(l_Syn.Insert(row1), 1);
                 Assert.AreEqual(l_Syn.Insert(row2), 2);
                 Assert.AreEqual(l_Syn.Insert(row3), 3);
 
-                long id = l_Syn.Insert(row4);
+                var id = l_Syn.Insert(row4);
                 row4 = row4.SetID(layout.IDFieldIndex, id);
                 Row rowExpect = l_Syn.GetRow(id);
-                for (int i = 0; i < layout.FieldCount; i++)
+                for (var i = 0; i < layout.FieldCount; i++)
                 {
                     Assert.AreEqual(rowExpect.GetValue(i), row4.GetValue(i));
                 }
                 Assert.AreEqual(row4.GetStruct<TestStructClean>(layout), l_Syn.GetRow(id).GetStruct<TestStructClean>(layout));
             }
             {
-                SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
+                var l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
                 l_Syn.Insert(new Row[] { row1, row2, row3, row4 });
                 Assert.AreEqual(l_Syn.RowCount, 4);
                 Assert.AreEqual(l_Syn.GetRow(1), row1);
                 Assert.AreEqual(l_Syn.GetRow(2), row2);
                 Assert.AreEqual(l_Syn.GetRow(3), row3);
 
-                long id = l_Syn.GetRowAt(3).GetID(layout.IDFieldIndex);
+                var id = l_Syn.GetRowAt(3).GetID(layout.IDFieldIndex);
                 row4 = row4.SetID(layout.IDFieldIndex, id);
                 Assert.AreEqual(row4.GetStruct<TestStructClean>(layout), l_Syn.GetRow(id).GetStruct<TestStructClean>(layout));
             }
@@ -626,27 +626,27 @@ namespace Test.Cave.Data
         [Test]
         public void Update()
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
-            MemoryTable l_Memory = new MemoryTable(layout);
+            var layout = RowLayout.CreateTyped(typeof(TestStructClean));
+            var l_Memory = new MemoryTable(layout);
 
-            TestStructClean t1 = TestStructClean.Create(1);
+            var t1 = TestStructClean.Create(1);
             t1.ID = 1;
-            Row row1 = Row.Create(layout, t1);
+            var row1 = Row.Create(layout, t1);
             l_Memory.Insert(row1);
 
-            TestStructClean t2 = TestStructClean.Create(2);
+            var t2 = TestStructClean.Create(2);
             t2.ID = 2;
-            Row row2 = Row.Create(layout, t2);
+            var row2 = Row.Create(layout, t2);
             l_Memory.Insert(row2);
 
-            TestStructClean t3 = TestStructClean.Create(3);
+            var t3 = TestStructClean.Create(3);
             t3.ID = 3;
-            Row row3 = Row.Create(layout, t3);
+            var row3 = Row.Create(layout, t3);
             l_Memory.Insert(row3);
 
             // SynchronizedMemoryTable
             {
-                SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
+                var l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
                 l_Syn.LoadTable(l_Memory);
                 {
 
@@ -654,7 +654,7 @@ namespace Test.Cave.Data
                     row1 = row1.SetID(layout.IDFieldIndex, 1);
                     l_Syn.Update(row1);
                     Row rowExpect = l_Syn.GetRow(row1.GetID(layout.IDFieldIndex));
-                    for (int i = 0; i < layout.FieldCount; i++)
+                    for (var i = 0; i < layout.FieldCount; i++)
                     {
                         Assert.AreEqual(row1.GetValue(i), rowExpect.GetValue(i));
                     }
@@ -674,7 +674,7 @@ namespace Test.Cave.Data
                     Row rowExpect2 = l_Syn.GetRow(2);
                     Row rowExpect3 = l_Syn.GetRow(3);
 
-                    for (int i = 0; i < layout.FieldCount; i++)
+                    for (var i = 0; i < layout.FieldCount; i++)
                     {
                         Assert.AreEqual(row1.GetValue(i), rowExpect1.GetValue(i));
                         Assert.AreEqual(row2.GetValue(i), rowExpect2.GetValue(i));
@@ -684,7 +684,7 @@ namespace Test.Cave.Data
             }
             // SynchronizedMemoryTable<T>
             {
-                SynchronizedMemoryTable<TestStructClean> l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
+                var l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
                 l_Syn.LoadTable(l_Memory);
                 {
 
@@ -692,7 +692,7 @@ namespace Test.Cave.Data
                     row1 = row1.SetID(layout.IDFieldIndex, 1);
                     l_Syn.Update(row1);
                     Row rowExpect = l_Syn.GetRow(row1.GetID(layout.IDFieldIndex));
-                    for (int i = 0; i < layout.FieldCount; i++)
+                    for (var i = 0; i < layout.FieldCount; i++)
                     {
                         Assert.AreEqual(row1.GetValue(i), rowExpect.GetValue(i));
                     }
@@ -712,7 +712,7 @@ namespace Test.Cave.Data
                     Row rowExpect2 = l_Syn.GetRow(2);
                     Row rowExpect3 = l_Syn.GetRow(3);
 
-                    for (int i = 0; i < layout.FieldCount; i++)
+                    for (var i = 0; i < layout.FieldCount; i++)
                     {
                         Assert.AreEqual(row1.GetValue(i), rowExpect1.GetValue(i));
                         Assert.AreEqual(row2.GetValue(i), rowExpect2.GetValue(i));
@@ -720,7 +720,7 @@ namespace Test.Cave.Data
                     }
                 }
                 {
-                    TestStructClean u1 = TestStructClean.Create(5);
+                    var u1 = TestStructClean.Create(5);
                     u1.ID = 1;
                     l_Syn.Update(u1);
                     Assert.AreEqual(l_Syn.GetStruct(1), u1);
@@ -733,25 +733,25 @@ namespace Test.Cave.Data
         {
             // SynchronizedMemoryTable
             {
-                RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
-                MemoryTable l_Memory = new MemoryTable(layout);
+                var layout = RowLayout.CreateTyped(typeof(TestStructClean));
+                var l_Memory = new MemoryTable(layout);
 
-                TestStructClean t1 = TestStructClean.Create(1);
+                var t1 = TestStructClean.Create(1);
                 t1.ID = 1;
-                Row row1 = Row.Create(layout, t1);
+                var row1 = Row.Create(layout, t1);
                 l_Memory.Insert(row1);
 
-                TestStructClean t2 = TestStructClean.Create(2);
+                var t2 = TestStructClean.Create(2);
                 t2.ID = 2;
-                Row row2 = Row.Create(layout, t2);
+                var row2 = Row.Create(layout, t2);
                 l_Memory.Insert(row2);
 
-                TestStructClean t3 = TestStructClean.Create(3);
+                var t3 = TestStructClean.Create(3);
                 t3.ID = 3;
-                Row row3 = Row.Create(layout, t3);
+                var row3 = Row.Create(layout, t3);
                 l_Memory.Insert(row3);
 
-                SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
+                var l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
                 {
                     l_Syn.LoadTable(l_Memory);
                     l_Syn.Delete(1);
@@ -819,21 +819,21 @@ namespace Test.Cave.Data
             }
             // SynchronizedMemoryTable<T>
             {
-                MemoryTable<TestStructClean> l_Memory = new MemoryTable<TestStructClean>();
+                var l_Memory = new MemoryTable<TestStructClean>();
 
-                TestStructClean t1 = TestStructClean.Create(1);
+                var t1 = TestStructClean.Create(1);
                 t1.ID = 1;
                 l_Memory.Insert(t1);
 
-                TestStructClean t2 = TestStructClean.Create(2);
+                var t2 = TestStructClean.Create(2);
                 t2.ID = 2;
                 l_Memory.Insert(t2);
 
-                TestStructClean t3 = TestStructClean.Create(3);
+                var t3 = TestStructClean.Create(3);
                 t3.ID = 3;
                 l_Memory.Insert(t3);
 
-                SynchronizedMemoryTable<TestStructClean> l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
+                var l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
                 {
                     l_Syn.LoadTable(l_Memory);
                     l_Syn.Delete(1);
@@ -904,38 +904,38 @@ namespace Test.Cave.Data
         [Test]
         public void Replace()
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
+            var layout = RowLayout.CreateTyped(typeof(TestStructClean));
             // SynchronizedMemoryTable
             {
-                MemoryTable l_Memory = new MemoryTable(layout);
+                var l_Memory = new MemoryTable(layout);
 
-                TestStructClean t1 = TestStructClean.Create(1);
+                var t1 = TestStructClean.Create(1);
                 t1.ID = 1;
-                Row row1 = Row.Create(layout, t1);
+                var row1 = Row.Create(layout, t1);
                 l_Memory.Insert(row1);
 
-                TestStructClean t2 = TestStructClean.Create(2);
+                var t2 = TestStructClean.Create(2);
                 t2.ID = 2;
-                Row row2 = Row.Create(layout, t2);
+                var row2 = Row.Create(layout, t2);
                 l_Memory.Insert(row2);
 
-                TestStructClean t3 = TestStructClean.Create(3);
+                var t3 = TestStructClean.Create(3);
                 t3.ID = 3;
-                Row row3 = Row.Create(layout, t3);
+                var row3 = Row.Create(layout, t3);
                 l_Memory.Insert(row3);
 
-                SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
+                var l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
 
-                Row row4 = Row.Create(layout, TestStructClean.Create(4));
+                var row4 = Row.Create(layout, TestStructClean.Create(4));
                 row4 = row4.SetID(layout.IDFieldIndex, 1);
 
-                Row row5 = Row.Create(layout, TestStructClean.Create(5));
+                var row5 = Row.Create(layout, TestStructClean.Create(5));
                 row5 = row5.SetID(layout.IDFieldIndex, 2);
 
-                Row row6 = Row.Create(layout, TestStructClean.Create(6));
+                var row6 = Row.Create(layout, TestStructClean.Create(6));
                 row6 = row6.SetID(layout.IDFieldIndex, 3);
 
-                Row row7 = Row.Create(layout, TestStructClean.Create(7));
+                var row7 = Row.Create(layout, TestStructClean.Create(7));
                 row7 = row7.SetID(layout.IDFieldIndex, 4);
                 {
                     l_Syn.LoadTable(l_Memory);
@@ -959,32 +959,32 @@ namespace Test.Cave.Data
             }
             // SynchronizedMemoryTable<T>
             {
-                MemoryTable<TestStructClean> l_Memory = new MemoryTable<TestStructClean>();
+                var l_Memory = new MemoryTable<TestStructClean>();
 
-                TestStructClean t1 = TestStructClean.Create(1);
+                var t1 = TestStructClean.Create(1);
                 t1.ID = 1;
                 l_Memory.Insert(t1);
 
-                TestStructClean t2 = TestStructClean.Create(2);
+                var t2 = TestStructClean.Create(2);
                 t2.ID = 2;
                 l_Memory.Insert(t2);
 
-                TestStructClean t3 = TestStructClean.Create(3);
+                var t3 = TestStructClean.Create(3);
                 t3.ID = 3;
                 l_Memory.Insert(t3);
 
-                SynchronizedMemoryTable<TestStructClean> l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
+                var l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
 
-                Row row4 = Row.Create(layout, TestStructClean.Create(4));
+                var row4 = Row.Create(layout, TestStructClean.Create(4));
                 row4 = row4.SetID(layout.IDFieldIndex, 1);
 
-                Row row5 = Row.Create(layout, TestStructClean.Create(5));
+                var row5 = Row.Create(layout, TestStructClean.Create(5));
                 row5 = row5.SetID(layout.IDFieldIndex, 2);
 
-                Row row6 = Row.Create(layout, TestStructClean.Create(6));
+                var row6 = Row.Create(layout, TestStructClean.Create(6));
                 row6 = row6.SetID(layout.IDFieldIndex, 3);
 
-                Row row7 = Row.Create(layout, TestStructClean.Create(7));
+                var row7 = Row.Create(layout, TestStructClean.Create(7));
                 row7 = row7.SetID(layout.IDFieldIndex, 4);
                 {
                     l_Syn.LoadTable(l_Memory);
@@ -1011,15 +1011,15 @@ namespace Test.Cave.Data
         [Test]
         public void FindRow()
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
+            var layout = RowLayout.CreateTyped(typeof(TestStructClean));
             // SynchronizedMemoryTable
             {
-                MemoryTable l_Memory = new MemoryTable(layout);
-                SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
-                for (int i = 1; i <= 10; i++)
+                var l_Memory = new MemoryTable(layout);
+                var l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
+                for (var i = 1; i <= 10; i++)
                 {
-                    TestStructClean t = TestStructClean.Create(i);
-                    Row row = Row.Create(layout, t);
+                    var t = TestStructClean.Create(i);
+                    var row = Row.Create(layout, t);
                     l_Syn.Insert(row);
                 }
                 //find row
@@ -1038,10 +1038,10 @@ namespace Test.Cave.Data
                     Assert.AreEqual(l_Syn.FindRow(Search.FieldEquals("ID", 0L)), -1);
                 }
                 // Search + ResultOption
-                for (int i = 1; i <= 10; i++)
+                for (var i = 1; i <= 10; i++)
                 {
-                    TestStructClean t = TestStructClean.Create(i);
-                    Row row = Row.Create(layout, t);
+                    var t = TestStructClean.Create(i);
+                    var row = Row.Create(layout, t);
                     l_Syn.Insert(row);
                 }
                 {
@@ -1080,12 +1080,12 @@ namespace Test.Cave.Data
             }
             // SynchronizedMemoryTable<T>
             {
-                MemoryTable<TestStructClean> l_Memory = new MemoryTable<TestStructClean>();
-                SynchronizedMemoryTable<TestStructClean> l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
-                for (int i = 1; i <= 10; i++)
+                var l_Memory = new MemoryTable<TestStructClean>();
+                var l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
+                for (var i = 1; i <= 10; i++)
                 {
-                    TestStructClean t = TestStructClean.Create(i);
-                    Row row = Row.Create(layout, t);
+                    var t = TestStructClean.Create(i);
+                    var row = Row.Create(layout, t);
                     l_Syn.Insert(row);
                 }
                 //find row
@@ -1104,10 +1104,10 @@ namespace Test.Cave.Data
                     Assert.AreEqual(l_Syn.FindRow(Search.FieldEquals("ID", 0L)), -1);
                 }
                 // Search + ResultOption
-                for (int i = 1; i <= 10; i++)
+                for (var i = 1; i <= 10; i++)
                 {
-                    TestStructClean t = TestStructClean.Create(i);
-                    Row row = Row.Create(layout, t);
+                    var t = TestStructClean.Create(i);
+                    var row = Row.Create(layout, t);
                     l_Syn.Insert(row);
                 }
                 {
@@ -1149,15 +1149,15 @@ namespace Test.Cave.Data
         [Test]
         public void GetValues()
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
+            var layout = RowLayout.CreateTyped(typeof(TestStructClean));
             // SynchronizedMemoryTable
             {
-                SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
-                MemoryTable l_Memory = new MemoryTable(layout);
-                for (int i = 1; i <= 10; i++)
+                var l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
+                var l_Memory = new MemoryTable(layout);
+                for (var i = 1; i <= 10; i++)
                 {
-                    TestStructClean t = TestStructClean.Create(i);
-                    Row row = Row.Create(layout, t);
+                    var t = TestStructClean.Create(i);
+                    var row = Row.Create(layout, t);
                     l_Memory.Insert(row);
                 }
                 l_Syn.LoadTable(l_Memory);
@@ -1202,12 +1202,12 @@ namespace Test.Cave.Data
             }
             // SynchronizedMemoryTable
             {
-                SynchronizedMemoryTable<TestStructClean> l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
-                MemoryTable l_Memory = new MemoryTable(layout);
-                for (int i = 1; i <= 10; i++)
+                var l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
+                var l_Memory = new MemoryTable(layout);
+                for (var i = 1; i <= 10; i++)
                 {
-                    TestStructClean t = TestStructClean.Create(i);
-                    Row row = Row.Create(layout, t);
+                    var t = TestStructClean.Create(i);
+                    var row = Row.Create(layout, t);
                     l_Memory.Insert(row);
                 }
                 l_Syn.LoadTable(l_Memory);
@@ -1258,15 +1258,15 @@ namespace Test.Cave.Data
 
             // SynchronizedMemoryTable
             {
-                RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
-                MemoryTable table = new MemoryTable(layout);
-                for (int i = 1; i <= 10; i++)
+                var layout = RowLayout.CreateTyped(typeof(TestStructClean));
+                var table = new MemoryTable(layout);
+                for (var i = 1; i <= 10; i++)
                 {
-                    TestStructClean t = TestStructClean.Create(i);
-                    Row row = Row.Create(layout, t);
+                    var t = TestStructClean.Create(i);
+                    var row = Row.Create(layout, t);
                     table.Insert(row);
                 }
-                SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
+                var l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
                 l_Syn.LoadTable(table);
 
                 MemoryTable l_MemoryExpect = l_Syn.ToMemory();
@@ -1280,14 +1280,14 @@ namespace Test.Cave.Data
             // SynchronizedMemoryTable<T>
             {
 
-                MemoryTable<TestStructClean> table = new MemoryTable<TestStructClean>();
-                for (int i = 1; i <= 10; i++)
+                var table = new MemoryTable<TestStructClean>();
+                for (var i = 1; i <= 10; i++)
                 {
-                    TestStructClean t = TestStructClean.Create(i);
+                    var t = TestStructClean.Create(i);
                     t.ID = i;
                     table.Insert(t);
                 }
-                SynchronizedMemoryTable<TestStructClean> l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
+                var l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
                 l_Syn.LoadTable(table);
 
                 MemoryTable<TestStructClean> l_MemoryExpect = l_Syn.ToTypedMemory();
@@ -1303,15 +1303,15 @@ namespace Test.Cave.Data
         [Test]
         public void SetRows()
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
+            var layout = RowLayout.CreateTyped(typeof(TestStructClean));
             // SynchronizedMemoryTable
             {
-                SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
-                List<Row> l_List = new List<Row>();
-                for (int i = 1; i <= 10; i++)
+                var l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
+                var l_List = new List<Row>();
+                for (var i = 1; i <= 10; i++)
                 {
-                    TestStructClean t = TestStructClean.Create(i);
-                    Row row = Row.Create(layout, t);
+                    var t = TestStructClean.Create(i);
+                    var row = Row.Create(layout, t);
                     row = row.SetID(layout.IDFieldIndex, i);
                     l_List.Add(row);
                 }
@@ -1321,13 +1321,13 @@ namespace Test.Cave.Data
             }
             // SynchronizedMemoryTable<T>
             {
-                SynchronizedMemoryTable<TestStructClean> l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
-                List<Row> l_List = new List<Row>();
-                for (int i = 1; i <= 10; i++)
+                var l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
+                var l_List = new List<Row>();
+                for (var i = 1; i <= 10; i++)
                 {
-                    TestStructClean t = TestStructClean.Create(i);
+                    var t = TestStructClean.Create(i);
                     t.ID = i;
-                    Row row = Row.Create(layout, t);
+                    var row = Row.Create(layout, t);
                     row = row.SetID(layout.IDFieldIndex, i);
                     l_List.Add(row);
                 }
@@ -1342,19 +1342,19 @@ namespace Test.Cave.Data
         {
             // SynchronizedMemoryTable
             {
-                RowLayout layout = RowLayout.CreateTyped(typeof(TestStructClean));
-                SynchronizedMemoryTable l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
-                for (int i = 1; i <= 10; i++)
+                var layout = RowLayout.CreateTyped(typeof(TestStructClean));
+                var l_Syn = new SynchronizedMemoryTable(RowLayout.CreateTyped(typeof(TestStructClean)));
+                for (var i = 1; i <= 10; i++)
                 {
-                    TestStructClean t = TestStructClean.Create(i);
-                    Row row = Row.Create(layout, t);
+                    var t = TestStructClean.Create(i);
+                    var row = Row.Create(layout, t);
                     l_Syn.Insert(row);
                     // get free id
                     Assert.AreEqual(l_Syn.GetNextFreeID(), i + 1);
                 }
 
                 // get used id
-                for (int i = 0; i < 10; i++)
+                for (var i = 0; i < 10; i++)
                 {
                     Assert.AreEqual(l_Syn.GetNextUsedID(i), i + 1);
                 }
@@ -1362,17 +1362,17 @@ namespace Test.Cave.Data
             }
             // SynchronizedMemoryTable<T>
             {
-                SynchronizedMemoryTable<TestStructClean> l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
-                for (int i = 1; i <= 10; i++)
+                var l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
+                for (var i = 1; i <= 10; i++)
                 {
-                    TestStructClean t = TestStructClean.Create(i);
+                    var t = TestStructClean.Create(i);
                     l_Syn.Insert(t);
                     // get free id
                     Assert.AreEqual(l_Syn.GetNextFreeID(), i + 1);
                 }
 
                 // get used id
-                for (int i = 0; i < 10; i++)
+                for (var i = 0; i < 10; i++)
                 {
                     Assert.AreEqual(l_Syn.GetNextUsedID(i), i + 1);
                 }
@@ -1383,11 +1383,11 @@ namespace Test.Cave.Data
         [Test]
         public void GetStructs()
         {
-            SynchronizedMemoryTable<TestStructClean> l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
-            List<TestStructClean> l_List = new List<TestStructClean>();
-            for (int i = 1; i <= 10; i++)
+            var l_Syn = new SynchronizedMemoryTable<TestStructClean>("Table");
+            var l_List = new List<TestStructClean>();
+            for (var i = 1; i <= 10; i++)
             {
-                TestStructClean t = TestStructClean.Create(i);
+                var t = TestStructClean.Create(i);
                 t.ID = i;
                 l_List.Add(t);
             }

@@ -6,7 +6,7 @@ namespace Cave.Data.SQLite
     public enum SQLiteValueType
     {
         /// <summary>undefined type value - do not use</summary>
-        undefined = 0,
+        Undefined = 0,
 
         /// <summary>
         /// Numeric signed integer values

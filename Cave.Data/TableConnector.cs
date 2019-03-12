@@ -12,7 +12,7 @@ namespace Cave.Data
     /// <seealso cref="ITableConnector" />
     public abstract class TableConnector : ITableConnector
     {
-        Dictionary<IMemoryTable, int> m_Tables;
+        Dictionary<IMemoryTable, int> tables;
 
         /// <summary>Connects to the given table.</summary>
         /// <typeparam name="T"></typeparam>
@@ -20,7 +20,7 @@ namespace Cave.Data
         /// <param name="name">Name of the table.</param>
         /// <param name="flags">The flags.</param>
         /// <exception cref="ArgumentNullException">Database.</exception>
-        /// <exception cref="NotSupportedException"></exception>
+        /// <exception cref="NotSupportedException">Mode {Mode} not supported!</exception>
         protected void ConnectTable<T>(ref ITable<T> table, string name = null, TableFlags flags = TableFlags.AllowCreate)
             where T : struct
         {
@@ -37,16 +37,16 @@ namespace Cave.Data
                 case TableConnectorMode.ReadCache: table = new ReadCachedTable<T>(table); break;
                 case TableConnectorMode.Direct: break;
                 case TableConnectorMode.Memory:
-                    m_Tables = new Dictionary<IMemoryTable, int>();
-                    lock (m_Tables)
+                    tables = new Dictionary<IMemoryTable, int>();
+                    lock (tables)
                     {
                         IMemoryTable<T> memTable = new SynchronizedMemoryTable<T>();
                         memTable.LoadTable(table);
                         table = memTable;
-                        m_Tables[memTable] = memTable.SequenceNumber;
+                        tables[memTable] = memTable.SequenceNumber;
                     }
                     break;
-                default: throw new NotSupportedException(string.Format("Mode {0} not supported!", Mode));
+                default: throw new NotSupportedException($"Mode {Mode} not supported!");
             }
         }
 
@@ -74,24 +74,24 @@ namespace Cave.Data
         /// <param name="path">The path.</param>
         public bool Load(string path)
         {
-            bool result = true;
+            var result = true;
             Folder = path;
-            m_Tables = new Dictionary<IMemoryTable, int>();
-            lock (m_Tables)
+            tables = new Dictionary<IMemoryTable, int>();
+            lock (tables)
             {
                 Mode = TableConnectorMode.Memory;
                 foreach (IMemoryTable table in Tables)
                 {
                     Trace.TraceInformation("Loading {0}", table);
-                    string file = Path.Combine(path, table.Name + ".dat");
-                    m_Tables[table] = 0;
+                    var file = Path.Combine(path, table.Name + ".dat");
+                    tables[table] = 0;
                     if (File.Exists(file))
                     {
                         try
                         {
                             table.Clear();
                             DatReader.ReadTable(table, file);
-                            m_Tables[table] = table.SequenceNumber;
+                            tables[table] = table.SequenceNumber;
                         }
                         catch (Exception ex)
                         {
@@ -112,16 +112,16 @@ namespace Cave.Data
                 return;
             }
 
-            lock (m_Tables)
+            lock (tables)
             {
                 foreach (IMemoryTable table in Tables)
                 {
-                    if (m_Tables[table] != table.SequenceNumber)
+                    if (tables[table] != table.SequenceNumber)
                     {
                         Trace.TraceInformation("Saving {0}", table);
-                        string file = Path.Combine(Folder, table.Name + ".dat");
+                        var file = Path.Combine(Folder, table.Name + ".dat");
                         DatWriter.WriteTable(table, file);
-                        m_Tables[table] = table.SequenceNumber;
+                        tables[table] = table.SequenceNumber;
                     }
                     else
                     {

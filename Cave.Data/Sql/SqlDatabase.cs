@@ -7,12 +7,12 @@ namespace Cave.Data.Sql
     /// </summary>
     public abstract class SqlDatabase : Database
     {
-        bool m_Closed = false;
+        bool closed = false;
 
         /// <summary>
-        /// Obtains whether this instance was closed.
+        /// Gets whether this instance was closed.
         /// </summary>
-        public override bool Closed => m_Closed;
+        public override bool Closed => closed;
 
         /// <summary>
         /// Creates a new SqlDatabase instance.
@@ -30,7 +30,7 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Obtains the underlying SqlStorage engine.
+        /// Gets the underlying SqlStorage engine.
         /// </summary>
         protected SqlStorage SqlStorage { get; private set; }
 
@@ -55,13 +55,13 @@ namespace Cave.Data.Sql
                 throw new ObjectDisposedException(Name);
             }
 
-            m_Closed = true;
+            closed = true;
         }
 
         #endregion
 
         /// <summary>
-        /// Obtains the name database.
+        /// Gets the name database.
         /// </summary>
         /// <returns></returns>
         public override string ToString()

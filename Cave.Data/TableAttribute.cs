@@ -5,7 +5,6 @@ namespace Cave.Data
     /// <summary>
     /// Provides a table <see cref="Attribute"/> for table settings at database structs.
     /// </summary>
-
     [AttributeUsage(AttributeTargets.Struct, Inherited = false)]
     public sealed class TableAttribute : Attribute
     {
@@ -22,7 +21,7 @@ namespace Cave.Data
 
             foreach (Attribute attribute in type.GetCustomAttributes(false))
             {
-                TableAttribute tableAttribute = attribute as TableAttribute;
+                var tableAttribute = attribute as TableAttribute;
                 if (tableAttribute != null)
                 {
                     return tableAttribute.Name;

@@ -15,17 +15,17 @@ namespace Test.Cave.Data
         [Test]
         public void OrderByWithLimit()
         {
-            MemoryTable<SmallTestStruct> test = new MemoryTable<SmallTestStruct>();
-            
-            Set<int> collisionCheck = new Set<int>();
-            for (int i = 0; i < 100; i++)
+            var test = new MemoryTable<SmallTestStruct>();
+
+            var collisionCheck = new Set<int>();
+            for (var i = 0; i < 100; i++)
             {
                 var content = string.Empty;
                 while (content.Length == 0)
                 {
                     content = DefaultRNG.GetPassword(DefaultRNG.UInt8 % 16, ASCII.Strings.Letters);
                 }
-                int integer = content.GetHashCode();
+                var integer = content.GetHashCode();
                 while (collisionCheck.Contains(integer)) integer++;
                 collisionCheck.Add(integer);
                 test.Insert(new SmallTestStruct()
@@ -44,7 +44,7 @@ namespace Test.Cave.Data
             CollectionAssert.AreEqual(array.OrderByDescending(a => a.DateTime), test.GetStructs(Search.None, ResultOption.SortDescending(nameof(SmallTestStruct.DateTime))));
 
             CollectionAssert.AreEqual(
-                array.OrderBy(a => a.Integer).SubRange(0, 3), 
+                array.OrderBy(a => a.Integer).SubRange(0, 3),
                 test.GetStructs(Search.None, ResultOption.SortAscending(nameof(SmallTestStruct.Integer)) + ResultOption.Limit(3)));
 
             CollectionAssert.AreEqual(
@@ -63,17 +63,17 @@ namespace Test.Cave.Data
         [Test]
         public void OrderByWithLimitWithIndex()
         {
-            MemoryTable<TestStructClean> test = new MemoryTable<TestStructClean>();
+            var test = new MemoryTable<TestStructClean>();
 
-            Set<int> collisionCheck = new Set<int>();
-            for (int i = 0; i < 1000; i++)
+            var collisionCheck = new Set<int>();
+            for (var i = 0; i < 1000; i++)
             {
                 var content = string.Empty;
                 while (content.Length == 0)
                 {
                     content = DefaultRNG.GetPassword(DefaultRNG.UInt8 % 16, ASCII.Strings.Letters);
                 }
-                int integer = content.GetHashCode();
+                var integer = content.GetHashCode();
                 while (collisionCheck.Contains(integer)) integer++;
                 collisionCheck.Add(integer);
                 test.Replace(new TestStructClean()
@@ -113,11 +113,11 @@ namespace Test.Cave.Data
         [Test]
         public void Default()
         {
-            MemoryTable<SmallTestStruct> test = new MemoryTable<SmallTestStruct>();
-            for (int i = 0; i < 1000; i++)
+            var test = new MemoryTable<SmallTestStruct>();
+            for (var i = 0; i < 1000; i++)
             {
                 //test.Insert(new LogEntry() { Content = "", DateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified).AddHours(i), HostName = "host" + (i%10), Level = LogLevel.Debug, ProcessName = "this", Source = "this", });
-                test.Insert(new SmallTestStruct() { Content = "", DateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified).AddHours(i), Name = "host" + (i%10), Level = TestEnum.A,  Source = "this", });
+                test.Insert(new SmallTestStruct() { Content = "", DateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified).AddHours(i), Name = "host" + (i % 10), Level = TestEnum.A, Source = "this", });
             }
             Assert.AreEqual(1000, test.RowCount);
             Assert.AreEqual(1, test.Count(Search.None, ResultOption.Group(nameof(SmallTestStruct.Content))));
@@ -127,14 +127,14 @@ namespace Test.Cave.Data
 
             var rows = test.GetStructs(Search.None, ResultOption.Group(nameof(SmallTestStruct.Name)) + ResultOption.SortDescending(nameof(SmallTestStruct.Name)));
             Assert.AreEqual(10, rows.Count);
-            for (int i = 0; i < 10; i++) Assert.AreEqual("host" + (9 - i), rows[i].Name);
+            for (var i = 0; i < 10; i++) Assert.AreEqual("host" + (9 - i), rows[i].Name);
 
             rows = test.GetStructs(
                 Search.FieldGreater(nameof(SmallTestStruct.DateTime), new DateTime(1970, 1, 1, 5, 0, 0, DateTimeKind.Unspecified)) &
                 Search.FieldSmallerOrEqual(nameof(SmallTestStruct.DateTime), new DateTime(1970, 1, 1, 10, 0, 0, DateTimeKind.Unspecified)),
                 ResultOption.SortDescending(nameof(SmallTestStruct.DateTime)));
             var rowsExpected = test.GetStructs().
-                Where(i => i.DateTime > new DateTime(1970, 1, 1, 5, 0, 0, DateTimeKind.Unspecified) && 
+                Where(i => i.DateTime > new DateTime(1970, 1, 1, 5, 0, 0, DateTimeKind.Unspecified) &&
                     i.DateTime <= new DateTime(1970, 1, 1, 10, 0, 0, DateTimeKind.Unspecified)).
                 OrderBy(i => -i.DateTime.Ticks);
             CollectionAssert.AreEqual(rowsExpected, rows);
@@ -149,9 +149,9 @@ namespace Test.Cave.Data
                 OrderBy(i => i.DateTime);
             CollectionAssert.AreEqual(rowsExpected, rows);
 
-            for (int i = 0; i < 1000; i++)
+            for (var i = 0; i < 1000; i++)
             {
-                SmallTestStruct e = new SmallTestStruct() { ID = i + 1, Content = "Updated" + i.ToString(), DateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified).AddHours(i % 100), Name = "this", Level = TestEnum.B,  Source = "this", };
+                var e = new SmallTestStruct() { ID = i + 1, Content = "Updated" + i.ToString(), DateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified).AddHours(i % 100), Name = "this", Level = TestEnum.B, Source = "this", };
                 test.Update(e);
                 Assert.AreEqual(e, test.GetStruct(i + 1));
             }
@@ -159,9 +159,9 @@ namespace Test.Cave.Data
             Assert.AreEqual(1000, test.Count(Search.None, ResultOption.Group(nameof(SmallTestStruct.Content))));
             Assert.AreEqual(1000, test.RowCount);
 
-            for (int i = 0; i < 1000; i++)
+            for (var i = 0; i < 1000; i++)
             {
-                SmallTestStruct e = new SmallTestStruct() { ID = i + 1, Content = "Replaced", DateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified).AddHours(i), Name = "this", Level = TestEnum.B,  Source = "this", };
+                var e = new SmallTestStruct() { ID = i + 1, Content = "Replaced", DateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified).AddHours(i), Name = "this", Level = TestEnum.B, Source = "this", };
                 test.Update(e);
                 Assert.AreEqual(e, test.GetStruct(i + 1));
             }

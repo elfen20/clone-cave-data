@@ -13,15 +13,10 @@ namespace Cave.Data
         /// <value>The default memory database.</value>
         public static MemoryDatabase Default { get; } = new MemoryDatabase();
 
-        /// <summary>Returns true assuming that no one else accesses the system memory.</summary>
-        /// <value><c>true</c>.</value>
-        public override bool IsSecure => true;
-
-        Dictionary<string, ITable> m_Tables = new Dictionary<string, ITable>();
+        Dictionary<string, ITable> tables = new Dictionary<string, ITable>();
 
         /// <summary>
-        /// Creates an empty unbound memory database (within a new memory storage)
-        /// This is used by temporary tables and query results.
+        /// Initializes a new instance of the <see cref="MemoryDatabase"/> class.
         /// </summary>
         private MemoryDatabase()
             : base(MemoryStorage.Default, "Default")
@@ -29,7 +24,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a new memory based database.
+        /// Initializes a new instance of the <see cref="MemoryDatabase"/> class.
         /// </summary>
         /// <param name="storage">The storage engine.</param>
         /// <param name="name">The name of the database.</param>
@@ -38,10 +33,14 @@ namespace Cave.Data
         {
         }
 
+        /// <summary>Returns true assuming that no one else accesses the system memory.</summary>
+        /// <value><c>true</c>.</value>
+        public override bool IsSecure => true;
+
         #region IDatabase Member
 
         /// <summary>
-        /// Obtains all available table names.
+        /// Gets all available table names.
         /// </summary>
         public override string[] TableNames
         {
@@ -52,12 +51,12 @@ namespace Cave.Data
                     throw new ObjectDisposedException(Name);
                 }
 
-                return m_Tables.Keys.ToArray();
+                return tables.Keys.ToArray();
             }
         }
 
         /// <summary>
-        /// Obtains whether the specified table exists or not.
+        /// Gets whether the specified table exists or not.
         /// </summary>
         /// <param name="table">The name of the table.</param>
         /// <returns></returns>
@@ -68,7 +67,7 @@ namespace Cave.Data
                 throw new ObjectDisposedException(Name);
             }
 
-            return m_Tables.ContainsKey(table);
+            return tables.ContainsKey(table);
         }
 
         /// <summary>
@@ -83,7 +82,7 @@ namespace Cave.Data
                 throw new InvalidOperationException(string.Format("Table '{0}' does not exist!", table));
             }
 
-            return m_Tables[table];
+            return tables[table];
         }
 
         /// <summary>
@@ -102,7 +101,7 @@ namespace Cave.Data
             ITable table = GetTable(layout.Name);
             Storage.CheckLayout(layout, table.Layout);
 
-            MemoryTable<T> t = table as MemoryTable<T>;
+            var t = table as MemoryTable<T>;
             return t != null ? t : Load<T>();
         }
 
@@ -118,13 +117,13 @@ namespace Cave.Data
                 throw new ArgumentNullException("Layout");
             }
 
-            if (m_Tables.ContainsKey(layout.Name))
+            if (tables.ContainsKey(layout.Name))
             {
                 throw new InvalidOperationException(string.Format("Table '{0}' already exists!", layout.Name));
             }
 
-            MemoryTable table = new MemoryTable(layout);
-            m_Tables[layout.Name] = table;
+            var table = new MemoryTable(layout);
+            tables[layout.Name] = table;
             return table;
         }
 
@@ -136,15 +135,15 @@ namespace Cave.Data
         /// <param name="tableName">Name of the table to create (optional, use this to overwrite the default table name).</param>
         public override ITable<T> CreateTable<T>(TableFlags flags, string tableName)
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(T), tableName, Storage);
+            var layout = RowLayout.CreateTyped(typeof(T), tableName, Storage);
             LogCreateTable(layout);
-            if (m_Tables.ContainsKey(layout.Name))
+            if (tables.ContainsKey(layout.Name))
             {
                 throw new InvalidOperationException(string.Format("Table '{0}' already exists!", layout.Name));
             }
 
-            MemoryTable<T> table = new MemoryTable<T>();
-            m_Tables[layout.Name] = table;
+            var table = new MemoryTable<T>();
+            tables[layout.Name] = table;
             return table;
         }
 
@@ -153,7 +152,7 @@ namespace Cave.Data
         /// <exception cref="ArgumentException"></exception>
         public override void DeleteTable(string table)
         {
-            if (!m_Tables.Remove(table))
+            if (!tables.Remove(table))
             {
                 throw new ArgumentException(string.Format("Table '{0}' does not exist!", table));
             }
@@ -169,14 +168,14 @@ namespace Cave.Data
                 throw new ObjectDisposedException(Name);
             }
 
-            m_Tables.Clear();
-            m_Tables = null;
+            tables.Clear();
+            tables = null;
         }
 
         /// <summary>
-        /// Obtains whether the database was already closed or not.
+        /// Gets whether the database was already closed or not.
         /// </summary>
-        public override bool Closed => m_Tables == null;
+        public override bool Closed => tables == null;
         #endregion
     }
 }

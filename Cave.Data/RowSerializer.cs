@@ -7,31 +7,19 @@ namespace Cave.Data
     /// <summary>
     /// Provides Row based serialization.
     /// </summary>
-    public static class RowSerializer
+    public static partial class RowSerializer
     {
-        /// <summary>
-        /// Settings used during de/serialization.
-        /// </summary>
-        public enum Flags
-        {
-            /// <summary>No flags</summary>
-            None = 0,
-
-            /// <summary>Serialize the layout first, then the data. This adds type safety to the stream but costs a lot of bandwith and time.</summary>
-            WithLayout = 1,
-        }
-
         #region private Data Serializer
         static void SerializeData(DataWriter writer, RowLayout layout, Row row)
         {
-            for (int i = 0; i < layout.FieldCount; i++)
+            for (var i = 0; i < layout.FieldCount; i++)
             {
                 DataType dataType = layout.GetProperties(i).DataType;
                 switch (dataType)
                 {
                     case DataType.Binary:
                     {
-                        byte[] data = (byte[])row.GetValue(i);
+                        var data = (byte[])row.GetValue(i);
                         if (data == null)
                         {
                             data = new byte[0];
@@ -42,8 +30,8 @@ namespace Cave.Data
                         break;
                     }
                     case DataType.Bool: writer.Write((bool)row.GetValue(i)); break;
-                    case DataType.TimeSpan: writer.Write(((TimeSpan)row.GetValue(i))); break;
-                    case DataType.DateTime: writer.Write(((DateTime)row.GetValue(i))); break;
+                    case DataType.TimeSpan: writer.Write((TimeSpan)row.GetValue(i)); break;
+                    case DataType.DateTime: writer.Write((DateTime)row.GetValue(i)); break;
                     case DataType.Single: writer.Write((float)row.GetValue(i)); break;
                     case DataType.Double: writer.Write((double)row.GetValue(i)); break;
                     case DataType.Int8: writer.Write((sbyte)row.GetValue(i)); break;
@@ -60,15 +48,15 @@ namespace Cave.Data
                     case DataType.String:
                     case DataType.User:
                     {
-                        object data = row.GetValue(i);
-                        string str = (data == null) ? null : data.ToString();
+                        var data = row.GetValue(i);
+                        var str = (data == null) ? null : data.ToString();
                         writer.WritePrefixed(str);
                         break;
                     }
 
                     case DataType.Enum:
                     {
-                        long value = Convert.ToInt64(row.GetValue(i));
+                        var value = Convert.ToInt64(row.GetValue(i));
                         writer.Write7BitEncoded64(value);
                         break;
                     }
@@ -81,6 +69,7 @@ namespace Cave.Data
         #endregion
 
         #region Serializer
+
         /// <summary>Serializes the specified items without layout.</summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="writer">The writer.</param>
@@ -115,8 +104,8 @@ namespace Cave.Data
             }
 
             writer.Write7BitEncoded32((int)flags);
-            RowLayout layout = RowLayout.CreateTyped(typeof(T));
-            if (0 != (flags & Flags.WithLayout))
+            var layout = RowLayout.CreateTyped(typeof(T));
+            if ((flags & Flags.WithLayout) != 0)
             {
                 layout.Save(writer);
             }
@@ -149,7 +138,7 @@ namespace Cave.Data
             }
 
             writer.Write7BitEncoded32((int)flags);
-            if (0 != (flags & Flags.WithLayout))
+            if ((flags & Flags.WithLayout) != 0)
             {
                 table.Layout.Save(writer);
             }
@@ -190,7 +179,7 @@ namespace Cave.Data
             }
 
             writer.Write7BitEncoded32((int)flags);
-            if (0 != (flags & Flags.WithLayout))
+            if ((flags & Flags.WithLayout) != 0)
             {
                 layout.Save(writer);
             }
@@ -205,15 +194,15 @@ namespace Cave.Data
         #region private Data Deserializer
         static Row DeserializeData(DataReader reader, RowLayout layout)
         {
-            object[] row = new object[layout.FieldCount];
-            for (int i = 0; i < layout.FieldCount; i++)
+            var row = new object[layout.FieldCount];
+            for (var i = 0; i < layout.FieldCount; i++)
             {
                 DataType dataType = layout.GetProperties(i).DataType;
 
                 switch (dataType)
                 {
                     case DataType.Binary:
-                        int size = reader.Read7BitEncodedInt32();
+                        var size = reader.Read7BitEncodedInt32();
                         row[i] = reader.ReadBytes(size);
                         break;
 
@@ -244,6 +233,7 @@ namespace Cave.Data
         #endregion
 
         #region Deserializer
+
         /// <summary>Deserializes an item array.</summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="reader">The reader.</param>
@@ -257,15 +247,15 @@ namespace Cave.Data
                 throw new ArgumentNullException("Reader");
             }
 
-            Flags flags = (Flags)reader.Read7BitEncodedInt32();
-            RowLayout layout = RowLayout.CreateTyped(typeof(T));
-            if (0 != (flags & Flags.WithLayout))
+            var flags = (Flags)reader.Read7BitEncodedInt32();
+            var layout = RowLayout.CreateTyped(typeof(T));
+            if ((flags & Flags.WithLayout) != 0)
             {
-                RowLayout otherLayout = RowLayout.Load(reader);
+                var otherLayout = RowLayout.Load(reader);
                 RowLayout.CheckLayout(layout, otherLayout);
             }
-            T[] results = new T[reader.Read7BitEncodedInt32()];
-            for (int i = 0; i < results.Length; i++)
+            var results = new T[reader.Read7BitEncodedInt32()];
+            for (var i = 0; i < results.Length; i++)
             {
                 Row row = DeserializeData(reader, layout);
                 results[i] = row.GetStruct<T>(layout);
@@ -285,14 +275,14 @@ namespace Cave.Data
                 throw new ArgumentNullException("Reader");
             }
 
-            Flags flags = (Flags)reader.Read7BitEncodedInt32();
-            MemoryTable<T> result = new MemoryTable<T>();
-            if (0 != (flags & Flags.WithLayout))
+            var flags = (Flags)reader.Read7BitEncodedInt32();
+            var result = new MemoryTable<T>();
+            if ((flags & Flags.WithLayout) != 0)
             {
-                RowLayout layout = RowLayout.Load(reader);
+                var layout = RowLayout.Load(reader);
                 result.Storage.CheckLayout(result.Layout, layout);
             }
-            long count = reader.Read7BitEncodedInt64();
+            var count = reader.Read7BitEncodedInt64();
             for (long l = 0; l < count; l++)
             {
                 Row row = DeserializeData(reader, result.Layout);
@@ -308,7 +298,7 @@ namespace Cave.Data
         public static T DeserializeStruct<T>(this DataReader reader)
             where T : struct
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(T));
+            var layout = RowLayout.CreateTyped(typeof(T));
             Row row = DeserializeRow(reader, layout);
             return row.GetStruct<T>(layout);
         }
@@ -330,13 +320,13 @@ namespace Cave.Data
                 throw new ArgumentNullException("Reader");
             }
 
-            Flags flags = (Flags)reader.Read7BitEncodedInt32();
-            if (0 != (flags & Flags.WithLayout))
+            var flags = (Flags)reader.Read7BitEncodedInt32();
+            if ((flags & Flags.WithLayout) != 0)
             {
-                RowLayout otherLayout = RowLayout.Load(reader);
+                var otherLayout = RowLayout.Load(reader);
                 RowLayout.CheckLayout(layout, otherLayout);
             }
-            int count = reader.Read7BitEncodedInt32();
+            var count = reader.Read7BitEncodedInt32();
             if (count != 1)
             {
                 throw new InvalidDataException(string.Format("Got {0} Rows at the stream but want to read exactly one!", count));
@@ -347,6 +337,7 @@ namespace Cave.Data
         #endregion
 
         #region Foreign Deserializer (needs layout at stream)
+
         /// <summary>Deserializes a foreign row.</summary>
         /// <remarks>This can only deserialize rows written with layout. (Requires use of <see cref="Flags.WithLayout"/> when serializing.)</remarks>
         /// <param name="reader">The reader to read from.</param>
@@ -361,13 +352,13 @@ namespace Cave.Data
                 throw new ArgumentNullException("Reader");
             }
 
-            Flags flags = (Flags)reader.Read7BitEncodedInt32();
-            if (0 == (flags & Flags.WithLayout))
+            var flags = (Flags)reader.Read7BitEncodedInt32();
+            if ((flags & Flags.WithLayout) == 0)
             {
                 throw new NotSupportedException("For DeserializeForeignX() functions the layout has to be written by the sender! The current decoded data does not contain a layout!");
             }
-            RowLayout layout = RowLayout.Load(reader);
-            int count = reader.Read7BitEncodedInt32();
+            var layout = RowLayout.Load(reader);
+            var count = reader.Read7BitEncodedInt32();
             if (count != 1)
             {
                 throw new InvalidDataException(string.Format("Got {0} Rows at the stream but want to read exactly one!", count));
@@ -387,14 +378,14 @@ namespace Cave.Data
                 throw new ArgumentNullException("Reader");
             }
 
-            Flags flags = (Flags)reader.Read7BitEncodedInt32();
-            if (0 == (flags & Flags.WithLayout))
+            var flags = (Flags)reader.Read7BitEncodedInt32();
+            if ((flags & Flags.WithLayout) == 0)
             {
                 throw new NotSupportedException("For DeserializeForeignX() functions the layout has to be written by the sender! The current decoded data does not contain a layout!");
             }
-            RowLayout layout = RowLayout.Load(reader);
-            MemoryTable result = new MemoryTable(layout);
-            long count = reader.Read7BitEncodedInt64();
+            var layout = RowLayout.Load(reader);
+            var result = new MemoryTable(layout);
+            var count = reader.Read7BitEncodedInt64();
             for (long l = 0; l < count; l++)
             {
                 Row row = DeserializeData(reader, layout);

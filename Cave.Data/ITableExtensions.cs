@@ -18,8 +18,15 @@ namespace Cave.Data
         public static bool TryInsert(this ITable table, Row row)
         {
             // TODO, implement this without exceptions: needed at Table, SqlTable, MemoryTable
-            try { table.Insert(row); return true; }
-            catch { return false; }
+            try
+            {
+                table.Insert(row);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>Tries to insert the specified dataset (id has to be set).</summary>
@@ -29,8 +36,15 @@ namespace Cave.Data
         public static bool TryUpdate(this ITable table, Row row)
         {
             // TODO, implement this without exceptions: needed at Table, SqlTable, MemoryTable
-            try { table.Update(row); return true; }
-            catch { return false; }
+            try
+            {
+                table.Update(row);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>Tries to delete the dataset with the specified id.</summary>
@@ -96,7 +110,7 @@ namespace Cave.Data
         /// <param name="field">The fieldname to match.</param>
         /// <param name="value">The value to match.</param>
         /// <returns>Returns the IDs of the rows found.</returns>
-        public static List<long> FindRows(this ITable table, string field, object value)
+        public static IList<long> FindRows(this ITable table, string field, object value)
         {
             return table.FindRows(Search.FieldEquals(field, value), ResultOption.None);
         }
@@ -106,7 +120,7 @@ namespace Cave.Data
         /// <param name="field">The fieldname to match.</param>
         /// <param name="value">The value to match.</param>
         /// <returns>Returns the rows found.</returns>
-        public static List<Row> GetRows(this ITable table, string field, object value)
+        public static IList<Row> GetRows(this ITable table, string field, object value)
         {
             return table.GetRows(Search.FieldEquals(field, value), ResultOption.None);
         }
@@ -117,7 +131,7 @@ namespace Cave.Data
         public static MemoryTable ToMemory(this ITable table)
         {
             Trace.TraceInformation("Copy {0} rows to memory table", table.RowCount);
-            MemoryTable mem = new MemoryTable(table.Layout);
+            var mem = new MemoryTable(table.Layout);
             mem.LoadTable(table);
             return mem;
         }
@@ -144,8 +158,15 @@ namespace Cave.Data
             where T : struct
         {
             // TODO, implement this without exceptions: needed at Table, SqlTable, MemoryTable
-            try { table.Insert(row); return true; }
-            catch { return false; }
+            try
+            {
+                table.Insert(row);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>Tries to insert the specified dataset (id has to be set).</summary>
@@ -157,8 +178,15 @@ namespace Cave.Data
             where T : struct
         {
             // TODO, implement this without exceptions: needed at Table, SqlTable, MemoryTable
-            try { table.Update(row); return true; }
-            catch { return false; }
+            try
+            {
+                table.Update(row);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         /// <summary>Tries to get the row with the specified id.</summary>
@@ -204,7 +232,7 @@ namespace Cave.Data
         public static bool TryGetStruct<T>(this ITable<T> table, long id, out T row)
             where T : struct
         {
-            List<T> results = table.GetStructs(new long[] { id });
+            var results = table.GetStructs(new long[] { id });
             if (results.Count > 0)
             {
                 row = results[0];
@@ -224,7 +252,7 @@ namespace Cave.Data
         public static bool TryGetStruct<T>(this ITable<T> table, string field, object value, out T row)
             where T : struct
         {
-            List<T> results = table.GetStructs(field, value);
+            var results = table.GetStructs(field, value);
             if (results.Count > 0)
             {
                 row = results[0];
@@ -243,7 +271,7 @@ namespace Cave.Data
         public static bool TryGetStruct<T>(this ITable<T> table, Search search, out T row)
             where T : struct
         {
-            List<T> results = table.GetStructs(search);
+            var results = table.GetStructs(search);
             if (results.Count > 0)
             {
                 row = results[0];
@@ -259,7 +287,7 @@ namespace Cave.Data
         /// <param name="field">The fieldname to match.</param>
         /// <param name="value">The value to match.</param>
         /// <returns>Returns the rows found.</returns>
-        public static List<T> GetStructs<T>(this ITable<T> table, string field, object value)
+        public static IList<T> GetStructs<T>(this ITable<T> table, string field, object value)
             where T : struct
         {
             return table.GetStructs(Search.FieldEquals(field, value), ResultOption.None);
@@ -283,7 +311,7 @@ namespace Cave.Data
         public static MemoryTable<T> ToTypedMemory<T>(this ITable<T> table)
             where T : struct
         {
-            MemoryTable<T> mem = new MemoryTable<T>();
+            var mem = new MemoryTable<T>();
             mem.LoadTable(table);
             return mem;
         }

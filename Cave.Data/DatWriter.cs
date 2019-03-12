@@ -23,7 +23,7 @@ namespace Cave.Data
                 throw new ArgumentNullException("table");
             }
 
-            using (DatWriter writer = new DatWriter(table.Layout, fileName))
+            using (var writer = new DatWriter(table.Layout, fileName))
             {
                 writer.WriteTable(table);
             }
@@ -41,13 +41,13 @@ namespace Cave.Data
                 throw new ArgumentNullException("table");
             }
 
-            using (DatWriter writer = new DatWriter(table.Layout, fileName))
+            using (var writer = new DatWriter(table.Layout, fileName))
             {
                 writer.WriteTable(table);
             }
         }
 
-        DataWriter m_Writer;
+        DataWriter writer;
 
         /// <summary>
         /// Creates a new dat file writer.
@@ -71,27 +71,27 @@ namespace Cave.Data
                 throw new ArgumentNullException("Stream");
             }
 
-            m_Writer = new DataWriter(stream);
-            m_Layout = layout;
-            DatTable.WriteFieldDefinition(m_Writer, m_Layout, DatTable.CurrentVersion);
+            writer = new DataWriter(stream);
+            this.layout = layout;
+            DatTable.WriteFieldDefinition(writer, this.layout, DatTable.CurrentVersion);
         }
 
         /// <summary>
         /// row layout.
         /// </summary>
-        RowLayout m_Layout;
+        RowLayout layout;
 
         void WriteData(byte[] data)
         {
-            int entrySize = data.Length + BitCoder32.GetByteCount7BitEncoded(data.Length + 10);
-            long start = m_Writer.BaseStream.Position;
-            BitCoder32.Write7BitEncoded(m_Writer, entrySize);
-            m_Writer.Write(data);
+            var entrySize = data.Length + BitCoder32.GetByteCount7BitEncoded(data.Length + 10);
+            var start = writer.BaseStream.Position;
+            BitCoder32.Write7BitEncoded(writer, entrySize);
+            writer.Write(data);
 
-            long fill = (start + entrySize) - m_Writer.BaseStream.Position;
+            var fill = start + entrySize - writer.BaseStream.Position;
             if (fill > 0)
             {
-                m_Writer.Write(new byte[fill]);
+                writer.Write(new byte[fill]);
             }
             else if (fill < 0)
             {
@@ -105,7 +105,7 @@ namespace Cave.Data
         /// <param name="row"></param>
         public void Write(Row row)
         {
-            byte[] data = DatTable.GetData(m_Layout, row, DatTable.CurrentVersion);
+            var data = DatTable.GetData(layout, row, DatTable.CurrentVersion);
             WriteData(data);
         }
 
@@ -116,7 +116,7 @@ namespace Cave.Data
         public void Write<T>(T value)
             where T : struct
         {
-            Write(new Row(m_Layout.GetValues(value)));
+            Write(new Row(layout.GetValues(value)));
         }
 
         /// <summary>
@@ -132,7 +132,7 @@ namespace Cave.Data
 
             foreach (Row row in table)
             {
-                byte[] data = DatTable.GetData(m_Layout, row, DatTable.CurrentVersion);
+                var data = DatTable.GetData(layout, row, DatTable.CurrentVersion);
                 WriteData(data);
             }
         }
@@ -149,12 +149,12 @@ namespace Cave.Data
                 throw new ArgumentNullException("table");
             }
 
-            RowLayout layout = RowLayout.CreateTyped(typeof(T));
-            RowLayout.CheckLayout(m_Layout, layout);
+            var layout = RowLayout.CreateTyped(typeof(T));
+            RowLayout.CheckLayout(this.layout, layout);
             foreach (T dataSet in table)
             {
-                Row row = new Row(layout.GetValues(dataSet));
-                byte[] data = DatTable.GetData(m_Layout, row, DatTable.CurrentVersion);
+                var row = new Row(layout.GetValues(dataSet));
+                var data = DatTable.GetData(this.layout, row, DatTable.CurrentVersion);
                 WriteData(data);
             }
         }
@@ -170,10 +170,10 @@ namespace Cave.Data
                 throw new ArgumentNullException("table");
             }
 
-            RowLayout.CheckLayout(m_Layout, table.Layout);
+            RowLayout.CheckLayout(layout, table.Layout);
             foreach (Row row in table.GetRows())
             {
-                byte[] data = DatTable.GetData(m_Layout, row, DatTable.CurrentVersion);
+                var data = DatTable.GetData(layout, row, DatTable.CurrentVersion);
                 WriteData(data);
             }
         }
@@ -183,10 +183,10 @@ namespace Cave.Data
         /// </summary>
         public void Close()
         {
-            if (m_Writer != null)
+            if (writer != null)
             {
-                m_Writer.Close();
-                m_Writer = null;
+                writer.Close();
+                writer = null;
             }
         }
 

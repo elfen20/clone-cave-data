@@ -14,25 +14,22 @@ namespace Cave.Data
     {
         internal class DebugView
         {
-            Row m_Row;
+            Row row;
 
             public DebugView(Row row)
             {
-                m_Row = row;
+                this.row = row;
             }
 
             [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-            public object[] Fields => m_Row.data;
+            public object[] Fields => row.data;
         }
 
         /// <summary>Implements the operator ==.</summary>
         /// <param name="x">The x row.</param>
         /// <param name="y">The y row.</param>
         /// <returns>The result of the operator.</returns>
-        public static bool operator ==(Row x, Row y)
-        {
-            return ReferenceEquals(null, x) ? ReferenceEquals(y, null) : x.Equals(y);
-        }
+        public static bool operator ==(Row x, Row y) => ReferenceEquals(null, x) ? ReferenceEquals(y, null) : x.Equals(y);
 
         /// <summary>Implements the operator !=.</summary>
         /// <param name="x">The x row.</param>
@@ -90,7 +87,7 @@ namespace Cave.Data
         #region Row Members
 
         /// <summary>
-        /// Obtains the value of the specified field.
+        /// Gets the value of the specified field.
         /// </summary>
         /// <param name="fieldNumber">The fieldnumber to read.</param>
         /// <returns>Returns the value.</returns>
@@ -121,7 +118,7 @@ namespace Cave.Data
         /// <returns></returns>
         public Row SetID(int idFieldIndex, long id)
         {
-            object[] row = GetValues();
+            var row = GetValues();
             row[idFieldIndex] = id;
             return new Row(row);
         }
@@ -131,12 +128,12 @@ namespace Cave.Data
         /// <returns></returns>
         public long GetID(int idFieldIndex)
         {
-            object value = data[idFieldIndex];
+            var value = data[idFieldIndex];
             return value is long ? (long)value : Convert.ToInt64(value);
         }
 
         /// <summary>
-        /// Obtains all values of the row.
+        /// Gets all values of the row.
         /// </summary>
         /// <returns></returns>
         public object[] GetValues()
@@ -145,7 +142,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains a struct containing all values of the row.
+        /// Gets a struct containing all values of the row.
         /// </summary>
         /// <exception cref="NotSupportedException">Thrown if the row was not created with a typed layout.</exception>
         public T GetStruct<T>(RowLayout layout)
@@ -156,7 +153,7 @@ namespace Cave.Data
                 throw new NotSupportedException(string.Format("This Row was not created from a typed layout!"));
             }
 
-            object result = new T();
+            object result = default(T);
             layout.SetValues(ref result, data);
             return (T)result;
         }
@@ -169,19 +166,19 @@ namespace Cave.Data
         /// <returns></returns>
         public string GetDisplayString(RowLayout layout, int field)
         {
-            object value = GetValue(field);
-            return value == null ? "" : layout.GetDisplayString(field, value);
+            var value = GetValue(field);
+            return value == null ? string.Empty : layout.GetDisplayString(field, value);
         }
 
         /// <summary>
-        /// Obtains all row values as strings using the string format defined at the rowlayout.
+        /// Gets all row values as strings using the string format defined at the rowlayout.
         /// </summary>
         /// <returns></returns>
         public string[] GetDisplayStrings(RowLayout layout)
         {
-            object[] values = GetValues();
-            string[] strings = new string[values.Length];
-            for (int i = 0; i < values.Length; i++)
+            var values = GetValues();
+            var strings = new string[values.Length];
+            for (var i = 0; i < values.Length; i++)
             {
                 strings[i] = layout.GetDisplayString(i, values[i]);
             }
@@ -196,13 +193,13 @@ namespace Cave.Data
         /// <returns></returns>
         public override string ToString()
         {
-            StringBuilder result = new StringBuilder();
+            var result = new StringBuilder();
             result.Append("Row[");
             result.Append(data.Length);
             result.Append("] ");
             result.Append(" ");
-            bool l_First = true;
-            foreach (object obj in data)
+            var l_First = true;
+            foreach (var obj in data)
             {
                 if (l_First)
                 {

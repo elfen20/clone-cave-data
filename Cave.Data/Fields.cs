@@ -24,9 +24,9 @@ namespace Cave.Data
                 throw new ArgumentNullException("fieldInfo");
             }
 
-            foreach (object attribute in fieldInfo.GetCustomAttributes(true))
+            foreach (var attribute in fieldInfo.GetCustomAttributes(true))
             {
-                FieldAttribute fieldAttribute = attribute as FieldAttribute;
+                var fieldAttribute = attribute as FieldAttribute;
                 if (fieldAttribute != null)
                 {
                     return !string.IsNullOrEmpty(fieldAttribute.Name) ? fieldAttribute.Name : fieldInfo.Name;
@@ -47,9 +47,9 @@ namespace Cave.Data
                 throw new ArgumentNullException("fieldInfo");
             }
 
-            foreach (object attribute in fieldInfo.GetCustomAttributes(true))
+            foreach (var attribute in fieldInfo.GetCustomAttributes(true))
             {
-                FieldAttribute fieldAttribute = attribute as FieldAttribute;
+                var fieldAttribute = attribute as FieldAttribute;
                 if (fieldAttribute != null)
                 {
                     return fieldAttribute.Length;
@@ -70,9 +70,9 @@ namespace Cave.Data
                 throw new ArgumentNullException("fieldInfo");
             }
 
-            foreach (object attribute in fieldInfo.GetCustomAttributes(true))
+            foreach (var attribute in fieldInfo.GetCustomAttributes(true))
             {
-                FieldAttribute fieldAttribute = attribute as FieldAttribute;
+                var fieldAttribute = attribute as FieldAttribute;
                 if (fieldAttribute != null)
                 {
                     return fieldAttribute.Flags;
@@ -82,7 +82,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the description of a field.
+        /// Gets the description of a field.
         /// If the attribute is not present null is returned.
         /// </summary>
         /// <param name="fieldInfo"></param>
@@ -94,9 +94,9 @@ namespace Cave.Data
                 throw new ArgumentNullException("fieldInfo");
             }
 
-            foreach (object attribute in fieldInfo.GetCustomAttributes(false))
+            foreach (var attribute in fieldInfo.GetCustomAttributes(false))
             {
-                DescriptionAttribute descriptionAttribute = attribute as DescriptionAttribute;
+                var descriptionAttribute = attribute as DescriptionAttribute;
                 if (descriptionAttribute != null)
                 {
                     return descriptionAttribute.Description;
@@ -125,12 +125,12 @@ namespace Cave.Data
                     return null;
                 }
 
-                string name = Enum.GetName(value.GetType(), value);
+                var name = Enum.GetName(value.GetType(), value);
                 return GetDescription(type.GetField(name));
             }
-            foreach (object attribute in type.GetCustomAttributes(false))
+            foreach (var attribute in type.GetCustomAttributes(false))
             {
-                DescriptionAttribute descriptionAttribute = attribute as DescriptionAttribute;
+                var descriptionAttribute = attribute as DescriptionAttribute;
                 if (descriptionAttribute != null)
                 {
                     return descriptionAttribute.Description;
@@ -185,7 +185,7 @@ namespace Cave.Data
             if (fieldType.Name.StartsWith("Nullable"))
             {
 #if NET45 || NET46 || NET47 || NETSTANDARD20
-				fieldType = fieldType.GenericTypeArguments[0];
+                fieldType = fieldType.GenericTypeArguments[0];
 #elif NET20 || NET35 || NET40
                 fieldType = fieldType.GetGenericArguments()[0];
 #else
@@ -236,8 +236,14 @@ namespace Cave.Data
                     MethodInfo l_Method = value.GetType().GetMethod("ToString", BindingFlags.Public | BindingFlags.Instance, null, new Type[] { typeof(IFormatProvider) }, null);
                     if (l_Method != null)
                     {
-                        try { str = (string)l_Method.Invoke(value, new object[] { cultureInfo }); }
-                        catch (TargetInvocationException ex) { throw ex.InnerException; }
+                        try
+                        {
+                            str = (string)l_Method.Invoke(value, new object[] { cultureInfo });
+                        }
+                        catch (TargetInvocationException ex)
+                        {
+                            throw ex.InnerException;
+                        }
                     }
                     else
                     {
@@ -252,7 +258,7 @@ namespace Cave.Data
 
             if (fieldType == typeof(DateTime))
             {
-                if (long.TryParse(str, out long ticks))
+                if (long.TryParse(str, out var ticks))
                 {
                     return new DateTime(ticks, DateTimeKind.Unspecified);
                 }
@@ -287,18 +293,30 @@ namespace Cave.Data
             // parse from string
             {
                 // try to find public static Parse(string, IFormatProvider) method in class
-                List<Exception> errors = new List<Exception>();
+                var errors = new List<Exception>();
                 MethodInfo method = fieldType.GetMethod("Parse", BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string), typeof(IFormatProvider) }, null);
                 if (method != null)
                 {
-                    try { return method.Invoke(null, new object[] { str, cultureInfo }); }
-                    catch (TargetInvocationException ex) { errors.Add(ex.InnerException); }
+                    try
+                    {
+                        return method.Invoke(null, new object[] { str, cultureInfo });
+                    }
+                    catch (TargetInvocationException ex)
+                    {
+                        errors.Add(ex.InnerException);
+                    }
                 }
                 method = fieldType.GetMethod("Parse", BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string) }, null);
                 if (method != null)
                 {
-                    try { return method.Invoke(null, new object[] { str }); }
-                    catch (TargetInvocationException ex) { errors.Add(ex.InnerException); }
+                    try
+                    {
+                        return method.Invoke(null, new object[] { str });
+                    }
+                    catch (TargetInvocationException ex)
+                    {
+                        errors.Add(ex.InnerException);
+                    }
                 }
                 if (errors.Count > 0)
                 {
@@ -338,16 +356,16 @@ namespace Cave.Data
                 throw new ArgumentNullException("cultureInfo");
             }
 
-            for (int i = 0; i < values.Count; i++)
+            for (var i = 0; i < values.Count; i++)
             {
                 FieldInfo fieldInfo = fields[i];
-                object value = ConvertValue(fieldInfo.FieldType, values[i], cultureInfo);
+                var value = ConvertValue(fieldInfo.FieldType, values[i], cultureInfo);
                 fields[i].SetValue(obj, value);
             }
         }
 
         /// <summary>
-        /// Obtains an array containing all values of the specified fields.
+        /// Gets an array containing all values of the specified fields.
         /// </summary>
         /// <param name="fields"></param>
         /// <param name="value"></param>
@@ -359,8 +377,8 @@ namespace Cave.Data
                 throw new ArgumentNullException("fields");
             }
 
-            object[] result = new object[fields.Count];
-            for (int i = 0; i < fields.Count; i++)
+            var result = new object[fields.Count];
+            for (var i = 0; i < fields.Count; i++)
             {
                 result[i] = fields[i].GetValue(value);
             }

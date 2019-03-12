@@ -18,24 +18,24 @@ namespace Cave.Data.Sql
     {
         class SqlConnectionPool
         {
-            TimeSpan? m_Timeout = TimeSpan.FromMinutes(5);
-            SqlStorage m_Storage;
-            LinkedList<SqlConnection> m_Queue = new LinkedList<SqlConnection>();
-            Set<SqlConnection> m_Used = new Set<SqlConnection>();
+            TimeSpan? timeout = TimeSpan.FromMinutes(5);
+            SqlStorage storage;
+            LinkedList<SqlConnection> queue = new LinkedList<SqlConnection>();
+            Set<SqlConnection> used = new Set<SqlConnection>();
 
             /// <summary>Gets or sets the connection close timeout.</summary>
             /// <value>The connection close timeout.</value>
-            public TimeSpan ConnectionCloseTimeout { get => m_Timeout.Value; set => m_Timeout = value; }
+            public TimeSpan ConnectionCloseTimeout { get => timeout.Value; set => timeout = value; }
 
             /// <summary>Gets the name of the log source.</summary>
             /// <value>The name of the log source.</value>
-            public string LogSourceName => "SqlConnectionPool " + ((m_Storage != null) ? m_Storage.LogSourceName : "");
+            public string LogSourceName => "SqlConnectionPool " + ((storage != null) ? storage.LogSourceName : string.Empty);
 
             /// <summary>Initializes a new instance of the <see cref="SqlConnectionPool"/> class.</summary>
             /// <param name="storage">The storage.</param>
             public SqlConnectionPool(SqlStorage storage)
             {
-                m_Storage = storage;
+                this.storage = storage;
             }
 
             /// <summary>Clears the whole connection pool (forced, including connections in use).</summary>
@@ -43,24 +43,24 @@ namespace Cave.Data.Sql
             {
                 lock (this)
                 {
-                    foreach (SqlConnection connection in m_Used)
+                    foreach (SqlConnection connection in used)
                     {
                         Trace.TraceInformation(string.Format("Closing connection {0} (pool clearing)", connection));
                         connection.Close();
                     }
-                    foreach (SqlConnection connection in m_Queue)
+                    foreach (SqlConnection connection in queue)
                     {
                         Trace.TraceInformation(string.Format("Closing connection {0} (pool clearing)", connection));
                         connection.Close();
                     }
-                    m_Queue.Clear();
-                    m_Used.Clear();
+                    queue.Clear();
+                    used.Clear();
                 }
             }
 
             SqlConnection GetQueuedConnection(string database)
             {
-                LinkedListNode<SqlConnection> nextNode = m_Queue.First;
+                LinkedListNode<SqlConnection> nextNode = queue.First;
                 LinkedListNode<SqlConnection> selectedNode = null;
                 while (nextNode != null)
                 {
@@ -69,32 +69,38 @@ namespace Cave.Data.Sql
                     nextNode = currentNode.Next;
 
                     // remove dead and old connections
-                    if ((currentNode.Value.State != ConnectionState.Open) || (DateTime.UtcNow > currentNode.Value.LastUsed + m_Timeout.Value))
+                    if ((currentNode.Value.State != ConnectionState.Open) || (DateTime.UtcNow > currentNode.Value.LastUsed + timeout.Value))
                     {
-                        Trace.TraceInformation(string.Format("Closing connection {0} (livetime exceeded) (Idle:{1} Used:{2})", currentNode.Value, m_Queue.Count, m_Used.Count));
+                        Trace.TraceInformation(string.Format("Closing connection {0} (livetime exceeded) (Idle:{1} Used:{2})", currentNode.Value, queue.Count, used.Count));
                         currentNode.Value.Dispose();
-                        m_Queue.Remove(currentNode);
+                        queue.Remove(currentNode);
                         continue;
                     }
 
                     // allow only connection with matching db name ?
-                    if (!m_Storage.DBConnectionCanChangeDataBase)
+                    if (!storage.DBConnectionCanChangeDataBase)
                     {
                         // check if database name matches
-                        if (currentNode.Value.Database != database) { continue; }
+                        if (currentNode.Value.Database != database)
+                        {
+                            continue;
+                        }
                     }
 
                     // set selected node
                     selectedNode = currentNode;
 
                     // break if we found a perfect match
-                    if (currentNode.Value.Database == database) { break; }
+                    if (currentNode.Value.Database == database)
+                    {
+                        break;
+                    }
                 }
                 if (selectedNode != null)
                 {
                     // remove node
-                    m_Queue.Remove(selectedNode);
-                    m_Used.Add(selectedNode.Value);
+                    queue.Remove(selectedNode);
+                    used.Add(selectedNode.Value);
                     return selectedNode.Value;
                 }
 
@@ -112,11 +118,11 @@ namespace Cave.Data.Sql
                     SqlConnection connection = GetQueuedConnection(databaseName);
                     if (connection == null)
                     {
-                        Trace.TraceInformation("Creating new connection for Database {0} (Idle:{1} Used:{2})", databaseName, m_Queue.Count, m_Used.Count);
-                        IDbConnection iDbConnection = m_Storage.CreateNewConnection(databaseName);
+                        Trace.TraceInformation("Creating new connection for Database {0} (Idle:{1} Used:{2})", databaseName, queue.Count, used.Count);
+                        IDbConnection iDbConnection = storage.CreateNewConnection(databaseName);
                         connection = new SqlConnection(databaseName, iDbConnection);
-                        m_Used.Add(connection);
-                        Trace.TraceInformation(string.Format("Created new connection for Database {0} (Idle:{1} Used:{2})", databaseName, m_Queue.Count, m_Used.Count));
+                        used.Add(connection);
+                        Trace.TraceInformation(string.Format("Created new connection for Database {0} (Idle:{1} Used:{2})", databaseName, queue.Count, used.Count));
                     }
                     else
                     {
@@ -143,12 +149,12 @@ namespace Cave.Data.Sql
 
                 lock (this)
                 {
-                    if (m_Used.Contains(connection))
+                    if (used.Contains(connection))
                     {
-                        m_Used.Remove(connection);
+                        used.Remove(connection);
                         if (!close && (connection.State == ConnectionState.Open))
                         {
-                            m_Queue.AddFirst(connection);
+                            queue.AddFirst(connection);
                             connection = null;
                             return;
                         }
@@ -166,15 +172,15 @@ namespace Cave.Data.Sql
             }
         }
 
-        SqlConnectionPool m_Pool;
-        bool m_WarnedUnsafe;
+        SqlConnectionPool pool;
+        bool warnedUnsafe;
 
         /// <summary>
         /// Do a result schema check on each query (this impacts performance very badly if you query large amounts of single rows).
         /// A common practice is to use this while developing the application and unittest, running the unittests and set this to false on release builds.
         /// </summary>
 #if DEBUG
-		public bool DoSchemaCheckOnQuery { get; set; } = Debugger.IsAttached;
+        public bool DoSchemaCheckOnQuery { get; set; } = Debugger.IsAttached;
 #else
         public bool DoSchemaCheckOnQuery { get; set; }
 #endif
@@ -187,16 +193,17 @@ namespace Cave.Data.Sql
 
         /// <summary>Gets or sets the connection close timeout.</summary>
         /// <value>The connection close timeout.</value>
-        public TimeSpan ConnectionCloseTimeout { get => m_Pool.ConnectionCloseTimeout; set => m_Pool.ConnectionCloseTimeout = value; }
+        public TimeSpan ConnectionCloseTimeout { get => pool.ConnectionCloseTimeout; set => pool.ConnectionCloseTimeout = value; }
 
         #region helper LogQuery
+
         /// <summary>Logs the query in verbose mode.</summary>
         /// <param name="command">The command.</param>
         protected internal void LogQuery(IDbCommand command)
         {
             if (command.Parameters.Count > 0)
             {
-                StringBuilder paramText = new StringBuilder();
+                var paramText = new StringBuilder();
                 foreach (IDataParameter dp in command.Parameters)
                 {
                     if (paramText.Length > 0)
@@ -241,22 +248,23 @@ namespace Cave.Data.Sql
             AllowUnsafeConnections = options.HasFlag(DbConnectionOptions.AllowUnsafeConnections);
             Trace.TraceInformation("Preparing sql connection to {0} with unsafe connections {1}", connectionString, AllowUnsafeConnections);
 
-            m_Pool = new SqlConnectionPool(this);
+            pool = new SqlConnectionPool(this);
             WarnUnsafe();
         }
 
         /// <summary>Warns on unsafe connection.</summary>
         protected void WarnUnsafe()
         {
-            if (!m_WarnedUnsafe && AllowUnsafeConnections)
+            if (!warnedUnsafe && AllowUnsafeConnections)
             {
-                m_WarnedUnsafe = true;
+                warnedUnsafe = true;
                 Trace.TraceWarning("<red>AllowUnsafeConnections is enabled!\nConnection details {0} including password and any transmitted data may be seen by any eavesdropper!", ConnectionString);
             }
         }
         #endregion
 
         #region assembly interface functionality
+
         /// <summary>
         /// Initializes the needed interop assembly and type.
         /// </summary>
@@ -265,17 +273,17 @@ namespace Cave.Data.Sql
         protected abstract void InitializeInterOp(out Assembly dbAdapterAssembly, out Type dbConnectionType);
 
         /// <summary>
-        /// Obtains whether the db connections can change the database with the Sql92 "USE Database" command.
+        /// Gets whether the db connections can change the database with the Sql92 "USE Database" command.
         /// </summary>
         protected abstract bool DBConnectionCanChangeDataBase { get; }
 
         /// <summary>
-        /// Obtains the <see cref="IDbConnection"/> type.
+        /// Gets the <see cref="IDbConnection"/> type.
         /// </summary>
         protected readonly Type DbConnectionType;
 
         /// <summary>
-        /// Obtains the <see cref="Assembly"/> with the name <see cref="DbAdapterAssembly"/> containing the needed <see cref="DbConnectionType"/>.
+        /// Gets the <see cref="Assembly"/> with the name <see cref="DbAdapterAssembly"/> containing the needed <see cref="DbConnectionType"/>.
         /// </summary>
         protected readonly Assembly DbAdapterAssembly;
 
@@ -305,43 +313,43 @@ namespace Cave.Data.Sql
             }
 
             // escape escape char
-            if (-1 != text.IndexOf('\\'))
+            if (text.IndexOf('\\') != -1)
             {
                 text = text.Replace("\\", "\\\\");
             }
 
             // escape invalid chars
-            if (-1 != text.IndexOf('\0'))
+            if (text.IndexOf('\0') != -1)
             {
                 text = text.Replace("\0", "\\0");
             }
 
-            if (-1 != text.IndexOf('\''))
+            if (text.IndexOf('\'') != -1)
             {
                 text = text.Replace("'", "\\'");
             }
 
-            if (-1 != text.IndexOf('"'))
+            if (text.IndexOf('"') != -1)
             {
                 text = text.Replace("\"", "\\\"");
             }
 
-            if (-1 != text.IndexOf('\b'))
+            if (text.IndexOf('\b') != -1)
             {
                 text = text.Replace("\b", "\\b");
             }
 
-            if (-1 != text.IndexOf('\n'))
+            if (text.IndexOf('\n') != -1)
             {
                 text = text.Replace("\n", "\\n");
             }
 
-            if (-1 != text.IndexOf('\r'))
+            if (text.IndexOf('\r') != -1)
             {
                 text = text.Replace("\r", "\\r");
             }
 
-            if (-1 != text.IndexOf('\t'))
+            if (text.IndexOf('\t') != -1)
             {
                 text = text.Replace("\t", "\\t");
             }
@@ -410,7 +418,7 @@ namespace Cave.Data.Sql
                 DateTime dt;
                 switch (properties.DateTimeKind)
                 {
-                    case DateTimeKind.Unspecified: dt = ((DateTime)value); break;
+                    case DateTimeKind.Unspecified: dt = (DateTime)value; break;
                     case DateTimeKind.Utc: dt = ((DateTime)value).ToUniversalTime(); break;
                     case DateTimeKind.Local: dt = ((DateTime)value).ToLocalTime(); break;
                     default: throw new NotSupportedException(string.Format("DateTimeKind {0} not supported!", properties.DateTimeKind));
@@ -443,9 +451,9 @@ namespace Cave.Data.Sql
         /// <param name="field">The <see cref="FieldProperties" /> of the affected field.</param>
         /// <param name="localValue">The local value to be encoded for the database.</param>
         /// <returns></returns>
-        /// <exception cref="System.ArgumentNullException">Field.</exception>
-        /// <exception cref="System.NotSupportedException"></exception>
-        /// <exception cref="System.NotImplementedException"></exception>
+        /// <exception cref="ArgumentNullException">Field.</exception>
+        /// <exception cref="NotSupportedException"></exception>
+        /// <exception cref="NotImplementedException"></exception>
         public virtual object GetDatabaseValue(FieldProperties field, object localValue)
         {
             if (field == null)
@@ -468,7 +476,7 @@ namespace Cave.Data.Sql
 
                 case DataType.TimeSpan:
                 {
-                    TimeSpan value = (TimeSpan)localValue;
+                    var value = (TimeSpan)localValue;
                     switch (field.DateTimeType)
                     {
                         case DateTimeType.Undefined:
@@ -476,8 +484,8 @@ namespace Cave.Data.Sql
 
                         case DateTimeType.BigIntHumanReadable: return long.Parse(new DateTime(value.Ticks).ToString(CaveSystemData.BigIntDateTimeFormat));
                         case DateTimeType.BigIntTicks: return value.Ticks;
-                        case DateTimeType.DecimalSeconds: return ((decimal)value.Ticks / TimeSpan.TicksPerSecond);
-                        case DateTimeType.DoubleSeconds: return ((double)value.Ticks / TimeSpan.TicksPerSecond);
+                        case DateTimeType.DecimalSeconds: return (decimal)value.Ticks / TimeSpan.TicksPerSecond;
+                        case DateTimeType.DoubleSeconds: return (double)value.Ticks / TimeSpan.TicksPerSecond;
                         default: throw new NotImplementedException();
                     }
                 }
@@ -489,7 +497,7 @@ namespace Cave.Data.Sql
                         return null;
                     }
 
-                    DateTime value = (DateTime)localValue;
+                    var value = (DateTime)localValue;
                     switch (field.DateTimeKind)
                     {
                         case DateTimeKind.Unspecified: break;
@@ -525,8 +533,8 @@ namespace Cave.Data.Sql
 
                         case DateTimeType.BigIntHumanReadable: return long.Parse(value.ToString(CaveSystemData.BigIntDateTimeFormat));
                         case DateTimeType.BigIntTicks: return value.Ticks;
-                        case DateTimeType.DecimalSeconds: return ((decimal)value.Ticks / TimeSpan.TicksPerSecond);
-                        case DateTimeType.DoubleSeconds: return ((double)value.Ticks / TimeSpan.TicksPerSecond);
+                        case DateTimeType.DecimalSeconds: return (decimal)value.Ticks / TimeSpan.TicksPerSecond;
+                        case DateTimeType.DoubleSeconds: return (double)value.Ticks / TimeSpan.TicksPerSecond;
                         default: throw new NotImplementedException();
                     }
                 }
@@ -555,7 +563,7 @@ namespace Cave.Data.Sql
                     {
                         return null;
                     }
-                    string text = (string)databaseValue;
+                    var text = (string)databaseValue;
                     return text == null ? null : field.ParseValue(text, null, CultureInfo.InvariantCulture);
                 }
                 case DataType.Enum:
@@ -581,8 +589,14 @@ namespace Cave.Data.Sql
 
                             case DateTimeType.Undefined:
                             case DateTimeType.Native:
-                                try { ticks = ((DateTime)Convert.ChangeType(databaseValue, typeof(DateTime), CultureInfo.InvariantCulture)).Ticks; }
-                                catch { ticks = 0; }
+                                try
+                                {
+                                    ticks = ((DateTime)Convert.ChangeType(databaseValue, typeof(DateTime), CultureInfo.InvariantCulture)).Ticks;
+                                }
+                                catch
+                                {
+                                    ticks = 0;
+                                }
                                 break;
 
                             case DateTimeType.BigIntTicks:
@@ -615,8 +629,14 @@ namespace Cave.Data.Sql
 
                             case DateTimeType.Undefined:
                             case DateTimeType.Native:
-                                try { ticks = ((TimeSpan)Convert.ChangeType(databaseValue, typeof(TimeSpan), CultureInfo.InvariantCulture)).Ticks; }
-                                catch { ticks = 0; }
+                                try
+                                {
+                                    ticks = ((TimeSpan)Convert.ChangeType(databaseValue, typeof(TimeSpan), CultureInfo.InvariantCulture)).Ticks;
+                                }
+                                catch
+                                {
+                                    ticks = 0;
+                                }
                                 break;
 
                             case DateTimeType.BigIntTicks:
@@ -648,15 +668,15 @@ namespace Cave.Data.Sql
         /// <exception cref="ObjectDisposedException">SqlConnection.</exception>
         public void ClearCachedConnections()
         {
-            if (m_Pool == null)
+            if (pool == null)
             {
                 throw new ObjectDisposedException("SqlConnection");
             }
-            m_Pool.Clear();
+            pool.Clear();
         }
 
         /// <summary>
-        /// Obtains a connection string for the <see cref="DbConnectionType"/>.
+        /// Gets a connection string for the <see cref="DbConnectionType"/>.
         /// </summary>
         /// <param name="database">The database to connect to.</param>
         /// <returns></returns>
@@ -667,7 +687,7 @@ namespace Cave.Data.Sql
         /// <returns></returns>
         public SqlConnection GetConnection(string databaseName)
         {
-            return m_Pool.GetConnection(databaseName);
+            return pool.GetConnection(databaseName);
         }
 
         /// <summary>
@@ -677,8 +697,11 @@ namespace Cave.Data.Sql
         /// <param name="close">Force close of the connection.</param>
         public void ReturnConnection(ref SqlConnection connection, bool close)
         {
-            if (connection == null) { return; }
-            m_Pool.ReturnConnection(ref connection, close);
+            if (connection == null)
+            {
+                return;
+            }
+            pool.ReturnConnection(ref connection, close);
         }
 
         /// <summary>Creates a new database connection.</summary>
@@ -686,7 +709,7 @@ namespace Cave.Data.Sql
         /// <returns></returns>
         public virtual IDbConnection CreateNewConnection(string databaseName)
         {
-            IDbConnection connection = (IDbConnection)Activator.CreateInstance(DbConnectionType);
+            var connection = (IDbConnection)Activator.CreateInstance(DbConnectionType);
             connection.ConnectionString = GetConnectionString(databaseName);
             connection.Open();
             WarnUnsafe();
@@ -707,7 +730,6 @@ namespace Cave.Data.Sql
         /// <param name="cmd"></param>
         /// <param name="parameters"></param>
         /// <returns></returns>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Security", "CA2100:SQL-Abfragen auf Sicherheitsrisiken überprüfen")]
         protected virtual IDbCommand CreateCommand(SqlConnection connection, string cmd, params DatabaseParameter[] parameters)
         {
             if (connection == null)
@@ -746,17 +768,17 @@ namespace Cave.Data.Sql
         #region sql command and query functions
 
         /// <summary>
-        /// Obtains wether the connection supports named parameters or not.
+        /// Gets wether the connection supports named parameters or not.
         /// </summary>
         public abstract bool SupportsNamedParameters { get; }
 
         /// <summary>
-        /// Obtains wether the connection supports select * groupby.
+        /// Gets wether the connection supports select * groupby.
         /// </summary>
         public abstract bool SupportsAllFieldsGroupBy { get; }
 
         /// <summary>
-        /// Obtains the parameter prefix for this storage.
+        /// Gets the parameter prefix for this storage.
         /// </summary>
         public abstract string ParameterPrefix { get; }
 
@@ -766,7 +788,7 @@ namespace Cave.Data.Sql
         public TimeSpan CommandTimeout = TimeSpan.FromMinutes(1);
 
         /// <summary>
-        /// Obtains FieldProperties for the Database based on requested FieldProperties.
+        /// Gets FieldProperties for the Database based on requested FieldProperties.
         /// </summary>
         /// <param name="field"></param>
         /// <returns></returns>
@@ -820,49 +842,49 @@ namespace Cave.Data.Sql
             // check columns (name, number and type)
             DataTable schemaTable = reader.GetSchemaTable();
 
-            List<FieldProperties> fields = new List<FieldProperties>();
+            var fields = new List<FieldProperties>();
 
             // check fieldcount
-            int fieldCount = reader.FieldCount;
+            var fieldCount = reader.FieldCount;
             if (fieldCount != schemaTable.Rows.Count)
             {
                 throw new InvalidDataException(string.Format("Invalid field count at {0}!", "SchemaTable"));
             }
 
-            for (int i = 0; i < fieldCount; i++)
+            for (var i = 0; i < fieldCount; i++)
             {
                 DataRow row = schemaTable.Rows[i];
 
-                object isHidden = row["IsHidden"];
+                var isHidden = row["IsHidden"];
                 if ((isHidden != DBNull.Value) && (bool)isHidden)
                 {
                     // continue;
                 }
 
-                string fieldName = (string)row["ColumnName"];
+                var fieldName = (string)row["ColumnName"];
                 if (string.IsNullOrEmpty(fieldName))
                 {
                     fieldName = i.ToString();
                 }
 
-                uint fieldSize = (uint)(int)row["ColumnSize"];
+                var fieldSize = (uint)(int)row["ColumnSize"];
                 Type fieldType = reader.GetFieldType(i);
                 DataType dataType = GetLocalDataType(fieldType, fieldSize);
                 FieldFlags fieldFlags = FieldFlags.None;
 
-                object isKey = row["IsKey"];
+                var isKey = row["IsKey"];
                 if ((isKey != DBNull.Value) && (bool)isKey)
                 {
                     fieldFlags |= FieldFlags.ID;
                 }
 
-                object isAutoIncrement = row["IsAutoIncrement"];
+                var isAutoIncrement = row["IsAutoIncrement"];
                 if ((isAutoIncrement != DBNull.Value) && (bool)isAutoIncrement)
                 {
                     fieldFlags |= FieldFlags.AutoIncrement;
                 }
 
-                object isUnique = row["IsUnique"];
+                var isUnique = row["IsUnique"];
                 if ((isUnique != DBNull.Value) && (bool)isUnique)
                 {
                     fieldFlags |= FieldFlags.Unique;
@@ -870,7 +892,7 @@ namespace Cave.Data.Sql
 
                 // TODO detect bigint timestamps
                 // TODO detect string encoding
-                FieldProperties properties = new FieldProperties(source, fieldFlags, dataType, fieldType, fieldSize, fieldName, dataType, DateTimeType.Native, DateTimeKind.Utc, StringEncoding.UTF8, fieldName, null, null, null);
+                var properties = new FieldProperties(source, fieldFlags, dataType, fieldType, fieldSize, fieldName, dataType, DateTimeType.Native, DateTimeKind.Utc, StringEncoding.UTF8, fieldName, null, null, null);
                 properties = GetDatabaseFieldProperties(properties);
                 fields.Add(properties);
             }
@@ -880,6 +902,7 @@ namespace Cave.Data.Sql
         #endregion
 
         #region execute function
+
         /// <summary>
         /// Executes a database dependent sql statement silently.
         /// </summary>
@@ -894,10 +917,10 @@ namespace Cave.Data.Sql
                 throw new ObjectDisposedException(ToString());
             }
 
-            for (int i = 1; ; i++)
+            for (var i = 1; ; i++)
             {
                 SqlConnection connection = GetConnection(database);
-                bool error = false;
+                var error = false;
                 try
                 {
                     using (IDbCommand command = CreateCommand(connection, cmd, parameters))
@@ -908,11 +931,17 @@ namespace Cave.Data.Sql
                 catch (Exception ex)
                 {
                     error = true;
-                    if (i > MaxErrorRetries) { throw; }
+                    if (i > MaxErrorRetries)
+                    {
+                        throw;
+                    }
 
                     Trace.TraceError("<red>{3}<default> Error during Execute(<cyan>{0}<default>, <cyan>{1}<default>) -> <yellow>retry {2}\n{4}", database, table, i, ex.Message, ex);
                 }
-                finally { ReturnConnection(ref connection, error); }
+                finally
+                {
+                    ReturnConnection(ref connection, error);
+                }
             }
         }
         #endregion
@@ -940,7 +969,7 @@ namespace Cave.Data.Sql
                 throw new InvalidDataException(string.Format("Fieldcount of table {0} differs (found {1} expected {2})!", table, databaseLayout.FieldCount, itemLayout.FieldCount));
             }
 
-            for (int i = 0; i < databaseLayout.FieldCount; i++)
+            for (var i = 0; i < databaseLayout.FieldCount; i++)
             {
                 FieldProperties databaseField = databaseLayout.GetProperties(i);
                 FieldProperties valueField = GetDatabaseFieldProperties(itemLayout.GetProperties(i));
@@ -952,6 +981,7 @@ namespace Cave.Data.Sql
         }
 
         #region Query functions
+
         /// <summary>Reads a row from a DataReader.</summary>
         /// <param name="layout">The layout.</param>
         /// <param name="reader">The reader.</param>
@@ -960,13 +990,13 @@ namespace Cave.Data.Sql
         /// </exception>
         Row ReadRow(RowLayout layout, IDataReader reader)
         {
-            object[] values = new object[layout.FieldCount];
-            int count = reader.GetValues(values);
+            var values = new object[layout.FieldCount];
+            var count = reader.GetValues(values);
             if (count != layout.FieldCount)
             {
                 throw new InvalidDataException(string.Format("Error while reading row data at table {0}!", layout) + "\n" + string.Format("Invalid field count!"));
             }
-            int fieldNumber = 0;
+            var fieldNumber = 0;
             try
             {
                 for (; fieldNumber < count; fieldNumber++)
@@ -987,7 +1017,7 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Obtains the <see cref="RowLayout"/> of the specified database table.
+        /// Gets the <see cref="RowLayout"/> of the specified database table.
         /// </summary>
         /// <param name="database">The affected database (dependent on the storage engine this may be null).</param>
         /// <param name="table">The affected table (dependent on the storage engine this may be null).</param>
@@ -1009,10 +1039,10 @@ namespace Cave.Data.Sql
                 throw new ObjectDisposedException(ToString());
             }
 
-            for (int i = 1; ; i++)
+            for (var i = 1; ; i++)
             {
                 SqlConnection connection = GetConnection(database);
-                bool error = false;
+                var error = false;
                 try
                 {
                     using (IDbCommand cmd = CreateCommand(connection, "SELECT * FROM " + FQTN(database, table) + " WHERE FALSE"))
@@ -1024,10 +1054,16 @@ namespace Cave.Data.Sql
                 catch (Exception ex)
                 {
                     error = true;
-                    if (i > MaxErrorRetries) { throw; }
+                    if (i > MaxErrorRetries)
+                    {
+                        throw;
+                    }
                     Trace.TraceError("<red>{3}<default> Error during QuerySchema(<cyan>{0}<default>, <cyan>{1}<default>) -> <yellow>retry {2}\n{4}", database, table, i, ex.Message, ex);
                 }
-                finally { ReturnConnection(ref connection, error); }
+                finally
+                {
+                    ReturnConnection(ref connection, error);
+                }
             }
         }
 
@@ -1046,16 +1082,16 @@ namespace Cave.Data.Sql
                 throw new ObjectDisposedException(ToString());
             }
 
-            for (int i = 1; ; i++)
+            for (var i = 1; ; i++)
             {
                 SqlConnection connection = GetConnection(database);
-                bool error = false;
+                var error = false;
                 try
                 {
                     using (IDbCommand command = CreateCommand(connection, cmd, parameters))
                     using (IDataReader reader = command.ExecuteReader(CommandBehavior.KeyInfo))
                     {
-                        string name = table ?? cmd;
+                        var name = table ?? cmd;
 
                         // read schema
                         RowLayout layout = ReadSchema(reader, name);
@@ -1071,7 +1107,7 @@ namespace Cave.Data.Sql
                             throw new InvalidDataException(string.Format("Error while reading row data!") + "\n" + string.Format("More than one field returned!") + string.Format("\n Database: {0}\n Table: {1}\n Command: {2}", database, table, cmd));
                         }
 
-                        object result = GetLocalValue(layout.GetProperties(0), reader.GetValue(0));
+                        var result = GetLocalValue(layout.GetProperties(0), reader.GetValue(0));
                         if (reader.Read())
                         {
                             throw new InvalidDataException(string.Format("Error while reading row data!") + "\n" + string.Format("Additional data available (expected only one row of data)!") + string.Format("\n Database: {0}\n Table: {1}\n Command: {2}", database, table, cmd));
@@ -1083,10 +1119,16 @@ namespace Cave.Data.Sql
                 catch (Exception ex)
                 {
                     error = true;
-                    if (i > MaxErrorRetries) { throw; }
+                    if (i > MaxErrorRetries)
+                    {
+                        throw;
+                    }
                     Trace.TraceError("<red>{3}<default> Error during QueryValue(<cyan>{0}<default>, <cyan>{1}<default>) -> <yellow>retry {2}\n{4}", database, table, i, ex.Message, ex);
                 }
-                finally { ReturnConnection(ref connection, error); }
+                finally
+                {
+                    ReturnConnection(ref connection, error);
+                }
             }
         }
 
@@ -1130,10 +1172,10 @@ namespace Cave.Data.Sql
             }
 
             // get command
-            for (int i = 1; ; i++)
+            for (var i = 1; ; i++)
             {
                 SqlConnection connection = GetConnection(database);
-                bool error = false;
+                var error = false;
                 try
                 {
                     using (IDbCommand command = CreateCommand(connection, cmd, parameters))
@@ -1144,7 +1186,7 @@ namespace Cave.Data.Sql
                         if (schema == null)
                         {
                             // read layout from schema
-                            string name = table ?? cmd;
+                            var name = table ?? cmd;
                             schema = ReadSchema(reader, name);
                             layout = schema;
                         }
@@ -1155,7 +1197,7 @@ namespace Cave.Data.Sql
                         }
 
                         // load rows
-                        List<Row> result = new List<Row>();
+                        var result = new List<Row>();
                         while (reader.Read())
                         {
                             Row row = ReadRow(layout, reader);
@@ -1174,7 +1216,10 @@ namespace Cave.Data.Sql
 
                     Trace.TraceError("<red>{3}<default> Error during Query(<cyan>{0}<default>, <cyan>{1}<default>) -> <yellow>retry {2}\n{4}", database, table, i, ex.Message, ex);
                 }
-                finally { ReturnConnection(ref connection, error); }
+                finally
+                {
+                    ReturnConnection(ref connection, error);
+                }
             }
         }
 
@@ -1219,26 +1264,26 @@ namespace Cave.Data.Sql
                 throw new ObjectDisposedException(ToString());
             }
 
-            for (int i = 1; ; i++)
+            for (var i = 1; ; i++)
             {
                 SqlConnection connection = GetConnection(database);
 
                 // prepare result
-                List<T> result = new List<T>();
+                var result = new List<T>();
 
                 // get reader
-                bool error = false;
+                var error = false;
                 try
                 {
                     // todo find a way to prevent the recreation of this layout instance all the time
-                    RowLayout layout = RowLayout.CreateTyped(typeof(T));
+                    var layout = RowLayout.CreateTyped(typeof(T));
                     using (IDbCommand command = CreateCommand(connection, cmd, parameters))
                     using (IDataReader reader = command.ExecuteReader(CommandBehavior.KeyInfo))
                     {
                         if (DoSchemaCheckOnQuery)
                         {
                             // read schema
-                            string name = table ?? cmd;
+                            var name = table ?? cmd;
                             RowLayout schema = ReadSchema(reader, name);
 
                             // check schema
@@ -1257,10 +1302,16 @@ namespace Cave.Data.Sql
                 catch (Exception ex)
                 {
                     error = true;
-                    if (i > MaxErrorRetries) { throw; }
+                    if (i > MaxErrorRetries)
+                    {
+                        throw;
+                    }
                     Trace.TraceError("<red>{3}<default> Error during Query(<cyan>{0}<default>, <cyan>{1}<default>) -> <yellow>retry {2}\n{4}", database, table, i, ex.Message, ex);
                 }
-                finally { ReturnConnection(ref connection, error); }
+                finally
+                {
+                    ReturnConnection(ref connection, error);
+                }
             }
         }
 
@@ -1271,7 +1322,7 @@ namespace Cave.Data.Sql
         #region FQTN Member
 
         /// <summary>
-        /// Obtains a full qualified table name.
+        /// Gets a full qualified table name.
         /// </summary>
         /// <param name="database">A database name.</param>
         /// <param name="table">A table name.</param>
@@ -1312,13 +1363,11 @@ namespace Cave.Data.Sql
             {
                 if (disposing)
                 {
-
-                    if (m_Pool != null)
+                    if (pool != null)
                     {
-                        m_Pool.Close();
-                        m_Pool = null;
+                        pool.Close();
+                        pool = null;
                     }
-
                 }
                 disposedValue = true;
             }

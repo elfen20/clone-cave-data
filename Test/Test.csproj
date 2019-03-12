@@ -2,17 +2,13 @@
   <PropertyGroup>
     <TargetFrameworks>net45</TargetFrameworks>
     <IsPackable>false</IsPackable>
-    <Version>1.0.4</Version>
-    <AssemblyVersion>1.0.4</AssemblyVersion>
-    <FileVersion>2019.224.1513.746</FileVersion>
-    <StartupObject>Test.Cave.Data.TestRunner</StartupObject>
+    <StartupObject>Test.Program</StartupObject>
     <ApplicationIcon />
     <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="nunit" Version="3.11.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.9.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Cave.Data\Cave.Data.csproj" />

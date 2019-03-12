@@ -60,7 +60,7 @@ namespace Cave.Data
         public int Length => BitCoder64.GetByteCount7BitEncoded(ID) + BitCoder64.GetByteCount7BitEncoded(BucketPosition) + BitCoder64.GetByteCount7BitEncoded(BucketLength);
 
         /// <summary>
-        /// Obtains "DatEntry[ID:Position Length]".
+        /// Gets "DatEntry[ID:Position Length]".
         /// </summary>
         /// <returns></returns>
         public override string ToString()
@@ -68,5 +68,4 @@ namespace Cave.Data
             return "DatEntry[" + ID + ":" + BucketPosition + " " + BucketLength + "]";
         }
     }
-
 }

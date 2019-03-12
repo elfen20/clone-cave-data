@@ -40,7 +40,7 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Obtains FieldProperties for the Database based on requested FieldProperties.
+        /// Gets FieldProperties for the Database based on requested FieldProperties.
         /// </summary>
         /// <param name="field"></param>
         /// <returns></returns>
@@ -59,7 +59,7 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Obtains the database value for the specified local value.
+        /// Gets the database value for the specified local value.
         /// MsSql does not support Int8 so we patch Int8 to Int16.
         /// </summary>
         /// <param name="field">The <see cref="FieldProperties"/> of the affected field.</param>
@@ -85,8 +85,8 @@ namespace Cave.Data.Microsoft
                     l_PreDecimal = Math.Truncate(field.MaximumLength);
                     l_Decimal = field.MaximumLength - l_PreDecimal;
                 }
-                decimal l_Max = (decimal)Math.Pow(10, l_PreDecimal - l_Decimal);
-                decimal l_LocalValue = (decimal)localValue;
+                var l_Max = (decimal)Math.Pow(10, l_PreDecimal - l_Decimal);
+                var l_LocalValue = (decimal)localValue;
 
                 if (l_LocalValue >= l_Max)
                 {
@@ -102,13 +102,13 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Obtains a reusable connection or creates a new one.
+        /// Gets a reusable connection or creates a new one.
         /// </summary>
         /// <param name="database">The database to connect to.</param>
         /// <returns></returns>
         protected override string GetConnectionString(string database)
         {
-            bool l_RequireSSL = RequireSSL;
+            var l_RequireSSL = RequireSSL;
             if (l_RequireSSL)
             {
                 if (ConnectionString.Server == "127.0.0.1" || ConnectionString.Server == "::1" || ConnectionString.Server == "localhost")
@@ -116,7 +116,7 @@ namespace Cave.Data.Microsoft
                     l_RequireSSL = false;
                 }
             }
-            StringBuilder result = new StringBuilder();
+            var result = new StringBuilder();
             result.Append("Server=");
             result.Append(ConnectionString.Server);
             if (ConnectionString.Port > 0)
@@ -153,6 +153,7 @@ namespace Cave.Data.Microsoft
         }
 
         #region execute function
+
         /// <summary>
         /// Executes a database dependent sql statement silently.
         /// </summary>
@@ -167,15 +168,15 @@ namespace Cave.Data.Microsoft
                 throw new ObjectDisposedException(ToString());
             }
 
-            for (int i = 1; ; i++)
+            for (var i = 1; ; i++)
             {
                 SqlConnection connection = GetConnection(database);
-                bool error = false;
+                var error = false;
                 try
                 {
                     using (IDbCommand command = CreateCommand(connection, cmd, parameters))
                     {
-                        int result = command.ExecuteNonQuery();
+                        var result = command.ExecuteNonQuery();
                         if (result == 0)
                         {
                             throw new InvalidOperationException();
@@ -194,14 +195,17 @@ namespace Cave.Data.Microsoft
 
                     Trace.TraceInformation("<red>{3}<default> Error during Execute(<cyan>{0}<default>, <cyan>{1}<default>) -> <yellow>retry {2}", database, table, i, ex.Message);
                 }
-                finally { ReturnConnection(ref connection, error); }
+                finally
+                {
+                    ReturnConnection(ref connection, error);
+                }
             }
         }
 
         #endregion
 
         /// <summary>
-        /// Obtains a full qualified table name.
+        /// Gets a full qualified table name.
         /// </summary>
         /// <param name="database"></param>
         /// <param name="table"></param>
@@ -212,17 +216,17 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Obtains all available database names.
+        /// Gets all available database names.
         /// </summary>
         public override string[] DatabaseNames
         {
             get
             {
-                List<string> result = new List<string>();
+                var result = new List<string>();
                 List<Row> rows = Query(null, "master", "sdatabases", "EXEC sdatabases;");
                 foreach (Row row in rows)
                 {
-                    string databaseName = (string)row.GetValue(0);
+                    var databaseName = (string)row.GetValue(0);
                     switch (databaseName)
                     {
                         case "master":
@@ -251,7 +255,7 @@ namespace Cave.Data.Microsoft
             {
                 throw new ArgumentException("Database name contains invalid chars!");
             }
-            foreach (string name in DatabaseNames)
+            foreach (var name in DatabaseNames)
             {
                 if (string.Equals(database, name, StringComparison.CurrentCultureIgnoreCase))
                 {
@@ -262,7 +266,7 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Obtains the database with the specified name.
+        /// Gets the database with the specified name.
         /// </summary>
         /// <param name="database">The name of the database.</param>
         /// <returns></returns>
@@ -305,7 +309,7 @@ namespace Cave.Data.Microsoft
         }
 
         /// <summary>
-        /// Obtains whether the db connections can change the database with the Sql92 "USE Database" command.
+        /// Gets whether the db connections can change the database with the Sql92 "USE Database" command.
         /// </summary>
         protected override bool DBConnectionCanChangeDataBase => true;
 
@@ -319,7 +323,7 @@ namespace Cave.Data.Microsoft
             Trace.TraceInformation(string.Format("Searching for MS SQL interop libraries..."));
             dbConnectionType = AppDom.FindType("System.Data.SqlClient.SqlConnection", AppDom.LoadMode.LoadAssemblies);
             dbAdapterAssembly = dbConnectionType.Assembly;
-            IDisposable connection = (IDisposable)Activator.CreateInstance(dbConnectionType);
+            var connection = (IDisposable)Activator.CreateInstance(dbConnectionType);
             connection.Dispose();
         }
 
@@ -329,28 +333,29 @@ namespace Cave.Data.Microsoft
         public override bool SupportsNamedParameters => true;
 
         /// <summary>
-        /// Obtains wether the connection supports select * groupby.
+        /// Gets wether the connection supports select * groupby.
         /// </summary>
         public override bool SupportsAllFieldsGroupBy => true;
 
         /// <summary>
-        /// Obtains the parameter prefix char (@).
+        /// Gets the parameter prefix char (@).
         /// </summary>
         public override string ParameterPrefix => "@";
 
         #region precision members
+
         /// <summary>
-        /// Obtains the maximum <see cref="DateTime"/> value precision of this storage engine.
+        /// Gets the maximum <see cref="DateTime"/> value precision of this storage engine.
         /// </summary>
         public override TimeSpan DateTimePrecision => TimeSpan.FromMilliseconds(4);
 
         /// <summary>
-        /// Obtains the maximum <see cref="TimeSpan"/> value precision of this storage engine.
+        /// Gets the maximum <see cref="TimeSpan"/> value precision of this storage engine.
         /// </summary>
         public override TimeSpan TimeSpanPrecision => TimeSpan.FromMilliseconds(1) - new TimeSpan(1);
 
         /// <summary>
-        /// Obtains the maximum <see cref="decimal"/> value precision of this storage engine.
+        /// Gets the maximum <see cref="decimal"/> value precision of this storage engine.
         /// </summary>
         public override decimal GetDecimalPrecision(float count)
         {

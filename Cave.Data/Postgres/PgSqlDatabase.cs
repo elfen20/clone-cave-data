@@ -21,11 +21,21 @@ namespace Cave.Data.Postgres
         {
             get
             {
-                bool error = false;
+                var error = false;
                 SqlConnection connection = SqlStorage.GetConnection(Name);
-                try { return connection.ConnectionString.ToUpperInvariant().Contains("SSLMODE=REQUIRE"); }
-                catch { error = true; throw; }
-                finally { SqlStorage.ReturnConnection(ref connection, error); }
+                try
+                {
+                    return connection.ConnectionString.ToUpperInvariant().Contains("SSLMODE=REQUIRE");
+                }
+                catch
+                {
+                    error = true;
+                    throw;
+                }
+                finally
+                {
+                    SqlStorage.ReturnConnection(ref connection, error);
+                }
             }
         }
 
@@ -41,14 +51,14 @@ namespace Cave.Data.Postgres
         }
 
         /// <summary>
-        /// Obtains the available table names.
+        /// Gets the available table names.
         /// </summary>
         public override string[] TableNames
         {
             get
             {
-                List<string> result = new List<string>();
-                List<Row> rows = SqlStorage.Query(null, Name, "pg_tables", "SELECT tablename FROM pg_tables");// where pg_tables.schemaname = " + SqlStorage.EscapeString(Name));
+                var result = new List<string>();
+                List<Row> rows = SqlStorage.Query(null, Name, "pg_tables", "SELECT tablename FROM pg_tables"); // where pg_tables.schemaname = " + SqlStorage.EscapeString(Name));
                 foreach (Row row in rows)
                 {
                     result.Add((string)row.GetValue(0));
@@ -58,13 +68,13 @@ namespace Cave.Data.Postgres
         }
 
         /// <summary>
-        /// Obtains whether the specified table exists or not.
+        /// Gets whether the specified table exists or not.
         /// </summary>
         /// <param name="table">The name of the table.</param>
         /// <returns></returns>
         public override bool HasTable(string table)
         {
-            object value = SqlStorage.QueryValue(Name, "pg_tables", "SELECT COUNT(*) FROM pg_tables WHERE tablename LIKE " + SqlStorage.EscapeString(pgSqlStorage.GetObjectName(table)));
+            var value = SqlStorage.QueryValue(Name, "pg_tables", "SELECT COUNT(*) FROM pg_tables WHERE tablename LIKE " + SqlStorage.EscapeString(pgSqlStorage.GetObjectName(table)));
             return Convert.ToInt32(value) > 0;
         }
 
@@ -100,7 +110,7 @@ namespace Cave.Data.Postgres
         /// <returns></returns>
         public override ITable<T> CreateTable<T>(TableFlags flags, string table)
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(T), table, Storage);
+            var layout = RowLayout.CreateTyped(typeof(T), table, Storage);
             CreateTable(layout, flags);
             return OpenTable<T>(layout);
         }
@@ -123,14 +133,14 @@ namespace Cave.Data.Postgres
             {
                 throw new ArgumentException("Table name contains invalid chars!");
             }
-            StringBuilder queryText = new StringBuilder();
+            var queryText = new StringBuilder();
             queryText.Append("CREATE ");
-            if (0 != (flags & TableFlags.InMemory))
+            if ((flags & TableFlags.InMemory) != 0)
             {
                 queryText.Append("UNLOGGED ");
             }
             queryText.AppendFormat("TABLE {0} (", SqlStorage.FQTN(Name, layout.Name));
-            for (int i = 0; i < layout.FieldCount; i++)
+            for (var i = 0; i < layout.FieldCount; i++)
             {
                 FieldProperties fieldProperties = layout.GetProperties(i);
                 if (i > 0)
@@ -138,7 +148,7 @@ namespace Cave.Data.Postgres
                     queryText.Append(",");
                 }
 
-                string fieldName = SqlStorage.EscapeFieldName(fieldProperties);
+                var fieldName = SqlStorage.EscapeFieldName(fieldProperties);
                 queryText.Append(fieldName);
                 queryText.Append(" ");
                 switch (fieldProperties.TypeAtDatabase)
@@ -295,9 +305,9 @@ namespace Cave.Data.Postgres
 
                         if (fieldProperties.MaximumLength > 0)
                         {
-                            int prec = (int)fieldProperties.MaximumLength;
-                            float temp = (fieldProperties.MaximumLength - prec) * 100;
-                            int scale = (int)temp;
+                            var prec = (int)fieldProperties.MaximumLength;
+                            var temp = (fieldProperties.MaximumLength - prec) * 100;
+                            var scale = (int)temp;
                             if ((scale >= prec) || (scale != temp))
                             {
                                 throw new ArgumentOutOfRangeException(string.Format("Field {0} has an invalid MaximumLength of {1},{2}. Correct values range from s,p = 1,0 to 65,30(default value) with 0 < s < p!", fieldProperties.Name, prec, scale));
@@ -358,7 +368,7 @@ namespace Cave.Data.Postgres
             }
             queryText.Append(")");
             SqlStorage.Execute(Name, layout.Name, queryText.ToString());
-            for (int i = 0; i < layout.FieldCount; i++)
+            for (var i = 0; i < layout.FieldCount; i++)
             {
                 FieldProperties fieldProperties = layout.GetProperties(i);
                 if ((fieldProperties.Flags & FieldFlags.ID) != 0)
@@ -368,9 +378,9 @@ namespace Cave.Data.Postgres
 
                 if ((fieldProperties.Flags & FieldFlags.Index) != 0)
                 {
-                    string command = string.Format("CREATE INDEX {0} ON {1} ({2})", pgSqlStorage.GetObjectName("idx_" + layout.Name + "_" + fieldProperties.Name),
-                        SqlStorage.FQTN(Name, layout.Name), SqlStorage.EscapeFieldName(fieldProperties));
-                    SqlStorage.Execute(Name, layout.Name, command);
+                    var name = pgSqlStorage.GetObjectName($"idx_{layout.Name}_{fieldProperties.Name}");
+                    var cmd = $"CREATE INDEX {name} ON {SqlStorage.FQTN(Name, layout.Name)} ({SqlStorage.EscapeFieldName(fieldProperties)})";
+                    SqlStorage.Execute(Name, layout.Name, cmd);
                 }
             }
             return GetTable(layout, TableFlags.None);

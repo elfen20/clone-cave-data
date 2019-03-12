@@ -13,6 +13,7 @@ namespace Cave.Data
     public sealed class CSVReader : IDisposable
     {
         #region static ReadTable
+
         /// <summary>Reads a whole table from the specified csv stream.</summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="table">Table to read the csv file into.</param>
@@ -27,7 +28,7 @@ namespace Cave.Data
                 throw new ArgumentNullException(nameof(table));
             }
 
-            using (CSVReader reader = new CSVReader(table.Layout, properties, stream))
+            using (var reader = new CSVReader(table.Layout, properties, stream))
             {
                 reader.ReadTable(table);
             }
@@ -47,7 +48,7 @@ namespace Cave.Data
                 throw new ArgumentNullException(nameof(table));
             }
 
-            using (CSVReader reader = new CSVReader(table.Layout, properties, fileName))
+            using (var reader = new CSVReader(table.Layout, properties, fileName))
             {
                 reader.ReadTable(table);
             }
@@ -61,8 +62,8 @@ namespace Cave.Data
             where T : struct
         {
             ReadTable(table, CSVProperties.Default, stream);
-
         }
+
         /// <summary>Reads a whole table from the specified csv file.</summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="table">Table to read the csv file into.</param>
@@ -81,10 +82,10 @@ namespace Cave.Data
         public static void ReadTable<T>(ITable<T> table, string[] lines)
             where T : struct
         {
-            using (MemoryStream ms = new MemoryStream())
+            using (var ms = new MemoryStream())
             {
-                DataWriter w = new DataWriter(ms);
-                foreach (string line in lines)
+                var w = new DataWriter(ms);
+                foreach (var line in lines)
                 {
                     w.WriteLine(line);
                 }
@@ -98,6 +99,7 @@ namespace Cave.Data
         #endregion
 
         #region static ReadList
+
         /// <summary>Reads a whole list from the specified csv stream.</summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="properties">Properties of the csv file.</param>
@@ -106,8 +108,8 @@ namespace Cave.Data
         public static List<T> ReadList<T>(CSVProperties properties, Stream stream)
             where T : struct
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(T));
-            using (CSVReader reader = new CSVReader(layout, properties, stream))
+            var layout = RowLayout.CreateTyped(typeof(T));
+            using (var reader = new CSVReader(layout, properties, stream))
             {
                 return reader.ReadList<T>();
             }
@@ -119,8 +121,8 @@ namespace Cave.Data
         public static List<T> ReadList<T>(CSVProperties properties, string fileName)
             where T : struct
         {
-            RowLayout layout = RowLayout.CreateTyped(typeof(T));
-            using (CSVReader reader = new CSVReader(layout, properties, fileName))
+            var layout = RowLayout.CreateTyped(typeof(T));
+            using (var reader = new CSVReader(layout, properties, fileName))
             {
                 return reader.ReadList<T>();
             }
@@ -154,10 +156,10 @@ namespace Cave.Data
         public static List<T> ReadList<T>(string[] lines)
             where T : struct
         {
-            using (MemoryStream ms = new MemoryStream())
+            using (var ms = new MemoryStream())
             {
-                DataWriter w = new DataWriter(ms);
-                foreach (string line in lines)
+                var w = new DataWriter(ms);
+                foreach (var line in lines)
                 {
                     w.WriteLine(line);
                 }
@@ -172,34 +174,34 @@ namespace Cave.Data
 
         #region private implementation
 
-        DataReader m_Reader;
-        bool m_CloseBaseStream;
-        int m_CurrentRowNumber;
-        int[] m_FieldNumberMatching;
+        DataReader reader;
+        bool closeBaseStream;
+        int currentRowNumber;
+        int[] fieldNumberMatching;
 
         Row ReadRowData()
         {
-            if (m_Reader == null)
+            if (reader == null)
             {
                 throw new ObjectDisposedException("CSVReader");
             }
 
-            string buffer = "";
+            var buffer = string.Empty;
             try
             {
-                if (m_Reader.Available == 0)
+                if (reader.Available == 0)
                 {
                     return null;
                 }
 
-                int fieldCount = Layout.FieldCount;
-                int fieldNumber = 0;
-                Queue<char> ident = new Queue<char>();
-                int identInARowCount = 0;
+                var fieldCount = Layout.FieldCount;
+                var fieldNumber = 0;
+                var ident = new Queue<char>();
+                var identInARowCount = 0;
 
-                List<char> currentValue = new List<char>();
-                int i = -1;
-                object[] result = new object[fieldCount];
+                var currentValue = new List<char>();
+                var i = -1;
+                var result = new object[fieldCount];
 
                 while (fieldNumber < fieldCount)
                 {
@@ -211,7 +213,7 @@ namespace Cave.Data
 
                     while (i >= buffer.Length)
                     {
-                        buffer = m_Reader.ReadLine();
+                        buffer = reader.ReadLine();
                         i = 0;
                     }
                     if (Properties.Separator == buffer[i])
@@ -225,7 +227,7 @@ namespace Cave.Data
                             }
                             else
                             {
-                                result[fieldNumber] = Layout.ParseValue(fieldNumber, new string(currentValue.ToArray()), "", Properties.Culture);
+                                result[fieldNumber] = Layout.ParseValue(fieldNumber, new string(currentValue.ToArray()), string.Empty, Properties.Culture);
                             }
                             fieldNumber++;
                             currentValue.Clear();
@@ -257,7 +259,7 @@ namespace Cave.Data
                 }
                 if (ident.Count > 0)
                 {
-                    throw new InvalidDataException(string.Format("Invalid ident at row {0}!", m_CurrentRowNumber));
+                    throw new InvalidDataException(string.Format("Invalid ident at row {0}!", currentRowNumber));
                 }
 
                 if (Properties.StringMarker.HasValue)
@@ -266,7 +268,7 @@ namespace Cave.Data
                 }
                 else
                 {
-                    result[fieldNumber] = Layout.ParseValue(fieldNumber, new string(currentValue.ToArray()), "", Properties.Culture);
+                    result[fieldNumber] = Layout.ParseValue(fieldNumber, new string(currentValue.ToArray()), string.Empty, Properties.Culture);
                 }
                 fieldNumber++;
                 if (i < buffer.Length)
@@ -278,10 +280,10 @@ namespace Cave.Data
 
                     if (i < buffer.Length)
                     {
-                        throw new InvalidDataException(string.Format("Additional data at end of line in row {0}!", m_CurrentRowNumber));
+                        throw new InvalidDataException(string.Format("Additional data at end of line in row {0}!", currentRowNumber));
                     }
                 }
-                m_CurrentRowNumber++;
+                currentRowNumber++;
                 return new Row(result);
             }
             catch (EndOfStreamException)
@@ -295,24 +297,24 @@ namespace Cave.Data
             }
             catch (Exception ex)
             {
-                throw new InvalidDataException(string.Format("Error while reading row data at row #{0}", m_CurrentRowNumber), ex);
+                throw new InvalidDataException(string.Format("Error while reading row data at row #{0}", currentRowNumber), ex);
             }
         }
         #endregion
 
         /// <summary>
-        /// Creates a new csv file reader with default properties.
+        /// Initializes a new instance of the <see cref="CSVReader"/> class.
         /// </summary>
         /// <param name="layout">Layout to use when reading from the csv file.</param>
         /// <param name="fileName">Filename to write to.</param>
         public CSVReader(RowLayout layout, string fileName)
             : this(layout, CSVProperties.Default, File.OpenRead(fileName))
         {
-            m_CloseBaseStream = true;
+            closeBaseStream = true;
         }
 
         /// <summary>
-        /// Creates a new csv file reader with default properties.
+        /// Initializes a new instance of the <see cref="CSVReader"/> class.
         /// </summary>
         /// <param name="layout">Layout to use when reading the csv data.</param>
         /// <param name="stream">Stream to read data from.</param>
@@ -322,7 +324,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Creates a new csv file reader with the specified properties.
+        /// Initializes a new instance of the <see cref="CSVReader"/> class.
         /// </summary>
         /// <param name="properties">Properties to apply to the reader.</param>
         /// <param name="layout">Layout to use when reading from the csv file.</param>
@@ -330,11 +332,11 @@ namespace Cave.Data
         public CSVReader(RowLayout layout, CSVProperties properties, string fileName)
             : this(layout, properties, File.OpenRead(fileName))
         {
-            m_CloseBaseStream = true;
+            closeBaseStream = true;
         }
 
         /// <summary>
-        /// Creates a new csv file reader with the specified properties.
+        /// Initializes a new instance of the <see cref="CSVReader"/> class.
         /// </summary>
         /// <param name="properties">Properties to apply to the reader.</param>
         /// <param name="layout">Layout to use when reading the csv data.</param>
@@ -365,13 +367,13 @@ namespace Cave.Data
                 case CompressionType.None: break;
                 default: throw new ArgumentException(string.Format("Unknown Compression {0}", Properties.Compression), "Compression");
             }
-            m_Reader = new DataReader(stream, Properties.Encoding, Properties.NewLineMode);
+            reader = new DataReader(stream, Properties.Encoding, Properties.NewLineMode);
             if (!Properties.NoHeader)
             {
-                string header = m_Reader.ReadLine();
-                m_CurrentRowNumber++;
+                var header = reader.ReadLine();
+                currentRowNumber++;
 
-                string[] fields = header.Split(Properties.Separator);
+                var fields = header.Split(Properties.Separator);
 
                 if (!Properties.AllowFieldMatching)
                 {
@@ -387,15 +389,15 @@ namespace Cave.Data
                 {
                     if (fields.Length != Layout.FieldCount)
                     {
-                        m_FieldNumberMatching = new int[Layout.FieldCount];
+                        fieldNumberMatching = new int[Layout.FieldCount];
                     }
                 }
 
-                int count = Math.Min(Layout.FieldCount, fields.Length);
-                for (int i = 0; i < count; i++)
+                var count = Math.Min(Layout.FieldCount, fields.Length);
+                for (var i = 0; i < count; i++)
                 {
-                    string fieldName = fields[i].UnboxText(false);
-                    int fieldIndex = Layout.GetFieldIndex(fieldName);
+                    var fieldName = fields[i].UnboxText(false);
+                    var fieldIndex = Layout.GetFieldIndex(fieldName);
                     if (fieldIndex < 0)
                     {
                         throw new InvalidDataException(string.Format("Error loading CSV Header! Got field name '{0}' instead of '{1}' at type '{2}'", fieldName, Layout.GetProperties(i).Name, Layout.Name));
@@ -414,52 +416,52 @@ namespace Cave.Data
                     }
                     else
                     {
-                        if ((m_FieldNumberMatching == null) && (fieldIndex != i))
+                        if ((fieldNumberMatching == null) && (fieldIndex != i))
                         {
-                            m_FieldNumberMatching = new int[Layout.FieldCount];
+                            fieldNumberMatching = new int[Layout.FieldCount];
                         }
                     }
                 }
 
-                if (m_FieldNumberMatching != null)
+                if (fieldNumberMatching != null)
                 {
-                    int i = 0;
+                    var i = 0;
                     for (; i < count; i++)
                     {
-                        string fieldName = fields[i].UnboxText(false);
-                        m_FieldNumberMatching[i] = Layout.GetFieldIndex(fieldName);
+                        var fieldName = fields[i].UnboxText(false);
+                        fieldNumberMatching[i] = Layout.GetFieldIndex(fieldName);
                     }
                     for (; i < Layout.FieldCount; i++)
                     {
-                        m_FieldNumberMatching[i] = -1;
+                        fieldNumberMatching[i] = -1;
                     }
                 }
             }
         }
 
         /// <summary>
-        /// Obtains the underlying base stream.
+        /// Gets the underlying base stream.
         /// </summary>
         public Stream BaseStream { get; private set; }
 
         /// <summary>
-        /// Obtains the <see cref="CSVProperties"/>.
+        /// Gets the <see cref="CSVProperties"/>.
         /// </summary>
         public readonly CSVProperties Properties;
 
         /// <summary>
-        /// Obtains the row layout.
+        /// Gets the row layout.
         /// </summary>
         public RowLayout Layout { get; private set; }
 
         /// <summary>
         /// Reads a row from the file.
         /// </summary>
-        /// <param name="row"></param>
-        /// <returns></returns>
+        /// <param name="row">The read row.</param>
+        /// <returns>Returns true on success, false if no further row can be read.</returns>
         public bool ReadRow(out Row row)
         {
-            if (m_Reader == null)
+            if (reader == null)
             {
                 throw new ObjectDisposedException(nameof(CSVReader));
             }
@@ -471,12 +473,12 @@ namespace Cave.Data
         /// <summary>
         /// Reads a row from the file.
         /// </summary>
-        /// <param name="row"></param>
-        /// <returns></returns>
+        /// <param name="row">The read row.</param>
+        /// <returns>Returns true on success, false if no further row can be read.</returns>
         public bool ReadRow<T>(out T row)
             where T : struct
         {
-            if (m_Reader == null)
+            if (reader == null)
             {
                 throw new ObjectDisposedException(nameof(CSVReader));
             }
@@ -494,11 +496,11 @@ namespace Cave.Data
         /// <summary>
         /// Reads the whole file to the specified table.
         /// </summary>
-        /// <param name="table"></param>
+        /// <param name="table">The read table.</param>
         public void ReadTable<T>(ITable<T> table)
             where T : struct
         {
-            if (m_Reader == null)
+            if (reader == null)
             {
                 throw new ObjectDisposedException(nameof(CSVReader));
             }
@@ -509,7 +511,7 @@ namespace Cave.Data
             }
 
             Row row;
-            while (null != (row = ReadRowData()))
+            while ((row = ReadRowData()) != null)
             {
                 table.Insert(row.GetStruct<T>(Layout));
             }
@@ -518,18 +520,18 @@ namespace Cave.Data
         /// <summary>
         /// Reads the whole file to a new list.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The read list.</returns>
         public List<T> ReadList<T>()
             where T : struct
         {
-            if (m_Reader == null)
+            if (reader == null)
             {
                 throw new ObjectDisposedException(nameof(CSVReader));
             }
 
-            List<T> result = new List<T>();
+            var result = new List<T>();
             Row row;
-            while (null != (row = ReadRowData()))
+            while ((row = ReadRowData()) != null)
             {
                 result.Add(row.GetStruct<T>(Layout));
             }
@@ -539,11 +541,11 @@ namespace Cave.Data
         /// <summary>
         /// Skips a number of rows.
         /// </summary>
-        /// <param name="rows"></param>
+        /// <param name="rows">The number of rows.</param>
         /// <returns>if all rows have been skipped.</returns>
         public bool SkipRows(long rows = 0)
         {
-            if (m_Reader == null)
+            if (reader == null)
             {
                 throw new ObjectDisposedException(nameof(CSVReader));
             }
@@ -551,25 +553,29 @@ namespace Cave.Data
             long c = 0;
             while (c < rows)
             {
-                try { m_Reader.ReadLine(); }
-                catch (EndOfStreamException) { break; }
+                try
+                {
+                    reader.ReadLine();
+                }
+                catch (EndOfStreamException)
+                {
+                    break;
+                }
                 c++;
             }
-            return (c == rows);
+            return c == rows;
         }
-
-
 
         /// <summary>
         /// Closes the reader.
         /// </summary>
         public void Close()
         {
-            if (m_CloseBaseStream)
+            if (closeBaseStream)
             {
-                m_Reader?.Close();
+                reader?.Close();
             }
-            m_Reader = null;
+            reader = null;
         }
 
         #region IDisposable Support
@@ -580,14 +586,14 @@ namespace Cave.Data
         {
             if (disposing)
             {
-                if (m_CloseBaseStream)
+                if (closeBaseStream)
                 {
-                    if (m_Reader != null)
+                    if (reader != null)
                     {
-                        m_Reader.BaseStream.Dispose();
+                        reader.BaseStream.Dispose();
                     }
                 }
-                m_Reader = null;
+                reader = null;
             }
         }
 

@@ -13,11 +13,12 @@ namespace Cave.Data.SQLite
     /// </summary>
     public sealed class SQLiteStorage : SqlStorage
     {
-        const string s_ConnectionString = "Data Source={0}";
+        const string StaticConnectionString = "Data Source={0}";
 
         #region static functions
+
         /// <summary>
-        /// Obtains the database type for the specified field type.
+        /// Gets the database type for the specified field type.
         /// Sqlite does not implement all different sql92 types directly instead they are reusing only 4 different types.
         /// So we have to check only the sqlite value types and convert to the dotnet type.
         /// </summary>
@@ -37,7 +38,7 @@ namespace Cave.Data.SQLite
         }
 
         /// <summary>
-        /// Obtains the sqlite value type of the specified datatype.
+        /// Gets the sqlite value type of the specified datatype.
         /// </summary>
         /// <param name="dataType"></param>
         /// <returns></returns>
@@ -79,8 +80,9 @@ namespace Cave.Data.SQLite
         #endregion
 
         #region protected overrides
+
         /// <summary>
-        /// Obtains whether the db connections can change the database with the Sql92 "USE Database" command.
+        /// Gets whether the db connections can change the database with the Sql92 "USE Database" command.
         /// </summary>
         protected override bool DBConnectionCanChangeDataBase => false;
 
@@ -92,7 +94,7 @@ namespace Cave.Data.SQLite
         protected override void InitializeInterOp(out Assembly dbAdapterAssembly, out Type dbConnectionType)
         {
             Trace.TraceInformation(string.Format("Searching for SQLite interop libraries..."));
-            Type[] types = new Type[]
+            var types = new Type[]
             {
                 Type.GetType("System.Data.SQLite.SQLiteConnection, System.Data.SQLite", false),
                 Type.GetType("Mono.Data.SQLite.SQLiteConnection, Mono.Data.SQLite", false),
@@ -109,7 +111,7 @@ namespace Cave.Data.SQLite
                 {
                     dbAdapterAssembly = type.Assembly;
                     dbConnectionType = type;
-                    IDbConnection connection = (IDbConnection)Activator.CreateInstance(dbConnectionType);
+                    var connection = (IDbConnection)Activator.CreateInstance(dbConnectionType);
                     connection.Dispose();
                     Trace.TraceInformation(string.Format("Using {0}", dbAdapterAssembly));
                     return;
@@ -124,7 +126,7 @@ namespace Cave.Data.SQLite
         }
 
         /// <summary>
-        /// Obtains a connection string for the <see cref="SqlStorage.DbConnectionType"/>.
+        /// Gets a connection string for the <see cref="SqlStorage.DbConnectionType"/>.
         /// </summary>
         /// <param name="database">The database to connect to.</param>
         /// <returns></returns>
@@ -135,13 +137,13 @@ namespace Cave.Data.SQLite
                 throw new ArgumentNullException("Database");
             }
 
-            string path = GetFileName(database);
-            return string.Format(s_ConnectionString, path);
+            var path = GetFileName(database);
+            return string.Format(StaticConnectionString, path);
         }
         #endregion
 
         /// <summary>
-        /// Obtains the fileName for the specified database name.
+        /// Gets the fileName for the specified database name.
         /// </summary>
         /// <param name="database"></param>
         /// <returns></returns>
@@ -161,7 +163,7 @@ namespace Cave.Data.SQLite
         #region IStorage implementation
 
         /// <summary>
-        /// Obtains FieldProperties for the Database based on requested FieldProperties.
+        /// Gets FieldProperties for the Database based on requested FieldProperties.
         /// </summary>
         /// <param name="field"></param>
         /// <returns></returns>
@@ -194,7 +196,7 @@ namespace Cave.Data.SQLite
             if (field.DataType == DataType.Decimal)
             {
                 // unbox double and convert
-                double d = (double)databaseValue;
+                var d = (double)databaseValue;
                 if (d >= (double)decimal.MaxValue)
                 {
                     return decimal.MaxValue;
@@ -221,7 +223,7 @@ namespace Cave.Data.SQLite
         }
 
         /// <summary>
-        /// Obtains a full qualified table name.
+        /// Gets a full qualified table name.
         /// </summary>
         /// <param name="database"></param>
         /// <param name="table"></param>
@@ -232,14 +234,14 @@ namespace Cave.Data.SQLite
         }
 
         /// <summary>
-        /// Obtains all available database names.
+        /// Gets all available database names.
         /// </summary>
         public override string[] DatabaseNames
         {
             get
             {
-                List<string> result = new List<string>();
-                foreach (string directory in Directory.GetFiles(ConnectionString.Location, "*.db"))
+                var result = new List<string>();
+                foreach (var directory in Directory.GetFiles(ConnectionString.Location, "*.db"))
                 {
                     result.Add(Path.GetFileNameWithoutExtension(directory));
                 }
@@ -252,13 +254,10 @@ namespace Cave.Data.SQLite
         /// </summary>
         /// <param name="database">The name of the database.</param>
         /// <returns></returns>
-        public override bool HasDatabase(string database)
-        {
-            return (File.Exists(GetFileName(database)));
-        }
+        public override bool HasDatabase(string database) => File.Exists(GetFileName(database));
 
         /// <summary>
-        /// Obtains the database with the specified name.
+        /// Gets the database with the specified name.
         /// </summary>
         /// <param name="database">The name of the database.</param>
         /// <returns></returns>
@@ -279,7 +278,7 @@ namespace Cave.Data.SQLite
         /// <returns></returns>
         public override IDatabase CreateDatabase(string database)
         {
-            string file = GetFileName(database);
+            var file = GetFileName(database);
             if (File.Exists(file))
             {
                 throw new InvalidOperationException(string.Format("Database '{0}' already exists!", database));
@@ -305,29 +304,30 @@ namespace Cave.Data.SQLite
         }
 
         /// <summary>
-        /// Obtains whether the connection supports named parameters or not.
+        /// Gets whether the connection supports named parameters or not.
         /// </summary>
         public override bool SupportsNamedParameters => true;
 
         /// <summary>
-        /// Obtains wether the connection supports select * groupby.
+        /// Gets wether the connection supports select * groupby.
         /// </summary>
         public override bool SupportsAllFieldsGroupBy => true;
 
         /// <summary>
-        /// Obtains the parameter prefix char (@).
+        /// Gets the parameter prefix char (@).
         /// </summary>
         public override string ParameterPrefix => "@";
         #endregion
 
         #region precision members
+
         /// <summary>
-        /// Obtains the maximum <see cref="TimeSpan"/> value precision (absolute) of this storage engine.
+        /// Gets the maximum <see cref="TimeSpan"/> value precision (absolute) of this storage engine.
         /// </summary>
         public override TimeSpan TimeSpanPrecision => TimeSpan.FromMilliseconds(1);
 
         /// <summary>
-        /// Obtains the maximum <see cref="decimal"/> value precision of this storage engine.
+        /// Gets the maximum <see cref="decimal"/> value precision of this storage engine.
         /// </summary>
         public override decimal GetDecimalPrecision(float count)
         {

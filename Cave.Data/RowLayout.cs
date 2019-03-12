@@ -37,7 +37,7 @@ namespace Cave.Data
             {
                 throw new InvalidDataException(string.Format("Fieldcount of table {0} differs (found {1} expected {2})!", current.Name, current.FieldCount, expected.FieldCount));
             }
-            for (int i = 0; i < expected.FieldCount; i++)
+            for (var i = 0; i < expected.FieldCount; i++)
             {
                 FieldProperties expectedField = expected.GetProperties(i);
                 FieldProperties currentField = current.GetProperties(i);
@@ -63,10 +63,10 @@ namespace Cave.Data
                 throw new ArgumentNullException("Reader");
             }
 
-            int count = reader.Read7BitEncodedInt32();
-            string name = reader.ReadString();
-            List<FieldProperties> fieldProperties = new List<FieldProperties>(count);
-            for (int i = 0; i < count; i++)
+            var count = reader.Read7BitEncodedInt32();
+            var name = reader.ReadString();
+            var fieldProperties = new List<FieldProperties>(count);
+            for (var i = 0; i < count; i++)
             {
                 fieldProperties.Add(FieldProperties.Load(name, reader));
             }
@@ -96,8 +96,8 @@ namespace Cave.Data
             }
 
             FieldInfo[] rawInfos = type.GetFields(bindingFlags);
-            List<FieldProperties> properties = new List<FieldProperties>(rawInfos.Length);
-            List<FieldInfo> infos = new List<FieldInfo>(rawInfos.Length);
+            var properties = new List<FieldProperties>(rawInfos.Length);
+            var infos = new List<FieldInfo>(rawInfos.Length);
             foreach (FieldInfo fieldInfo in rawInfos)
             {
                 try
@@ -107,7 +107,7 @@ namespace Cave.Data
                         continue;
                     }
 
-                    FieldProperties field = FieldProperties.Create(type.Name, fieldInfo);
+                    var field = FieldProperties.Create(type.Name, fieldInfo);
                     properties.Add(field);
                     infos.Add(fieldInfo);
                 }
@@ -162,14 +162,14 @@ namespace Cave.Data
                 throw new ArgumentNullException("Type");
             }
 
-            int idFieldIndex = -1;
-            bool l_IsStruct = type.IsValueType && !type.IsEnum && !type.IsPrimitive;
+            var idFieldIndex = -1;
+            var l_IsStruct = type.IsValueType && !type.IsEnum && !type.IsPrimitive;
             if (!l_IsStruct)
             {
                 throw new ArgumentException(string.Format("Type {0} is not a struct! Only structs may be used as row definition!", type));
             }
 
-            string tableName = TableAttribute.GetName(type);
+            var tableName = TableAttribute.GetName(type);
             if (string.IsNullOrEmpty(tableName))
             {
                 tableName = type.Name;
@@ -186,8 +186,8 @@ namespace Cave.Data
             }
 
             FieldInfo[] rawInfos = type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
-            List<FieldProperties> properties = new List<FieldProperties>(rawInfos.Length);
-            List<FieldInfo> fieldInfos = new List<FieldInfo>(rawInfos.Length);
+            var properties = new List<FieldProperties>(rawInfos.Length);
+            var fieldInfos = new List<FieldInfo>(rawInfos.Length);
             foreach (FieldInfo fieldInfo in rawInfos)
             {
                 try
@@ -203,7 +203,7 @@ namespace Cave.Data
                             continue;
                         }
                     }
-                    FieldProperties field = FieldProperties.Create(tableName, fieldInfo);
+                    var field = FieldProperties.Create(tableName, fieldInfo);
 
                     if (storage != null)
                     {
@@ -230,7 +230,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the <see cref="DataType"/> for a given <see cref="Type"/>.
+        /// Gets the <see cref="DataType"/> for a given <see cref="Type"/>.
         /// </summary>
         /// <param name="type">The <see cref="Type"/> to convert.</param>
         /// <returns></returns>
@@ -241,23 +241,74 @@ namespace Cave.Data
                 throw new ArgumentNullException("Type");
             }
 
-            if (type == typeof(sbyte)) { return DataType.Int8; }
-            if (type == typeof(byte)) { return DataType.UInt8; }
-            if (type == typeof(short)) { return DataType.Int16; }
-            if (type == typeof(ushort)) { return DataType.UInt16; }
-            if (type == typeof(int)) { return DataType.Int32; }
-            if (type == typeof(uint)) { return DataType.UInt32; }
-            if (type == typeof(long)) { return DataType.Int64; }
-            if (type == typeof(ulong)) { return DataType.UInt64; }
-            if (type == typeof(char)) { return DataType.Char; }
-            if (type == typeof(string)) { return DataType.String; }
-            if (type == typeof(float)) { return DataType.Single; }
-            if (type == typeof(double)) { return DataType.Double; }
-            if (type == typeof(bool)) { return DataType.Bool; }
-            if (type == typeof(decimal)) { return DataType.Decimal; }
-            if (type == typeof(byte[])) { return DataType.Binary; }
-            if (type == typeof(TimeSpan)) { return DataType.TimeSpan; }
-            if (type == typeof(DateTime)) { return DataType.DateTime; }
+            if (type == typeof(sbyte))
+            {
+                return DataType.Int8;
+            }
+            if (type == typeof(byte))
+            {
+                return DataType.UInt8;
+            }
+            if (type == typeof(short))
+            {
+                return DataType.Int16;
+            }
+            if (type == typeof(ushort))
+            {
+                return DataType.UInt16;
+            }
+            if (type == typeof(int))
+            {
+                return DataType.Int32;
+            }
+            if (type == typeof(uint))
+            {
+                return DataType.UInt32;
+            }
+            if (type == typeof(long))
+            {
+                return DataType.Int64;
+            }
+            if (type == typeof(ulong))
+            {
+                return DataType.UInt64;
+            }
+            if (type == typeof(char))
+            {
+                return DataType.Char;
+            }
+            if (type == typeof(string))
+            {
+                return DataType.String;
+            }
+            if (type == typeof(float))
+            {
+                return DataType.Single;
+            }
+            if (type == typeof(double))
+            {
+                return DataType.Double;
+            }
+            if (type == typeof(bool))
+            {
+                return DataType.Bool;
+            }
+            if (type == typeof(decimal))
+            {
+                return DataType.Decimal;
+            }
+            if (type == typeof(byte[]))
+            {
+                return DataType.Binary;
+            }
+            if (type == typeof(TimeSpan))
+            {
+                return DataType.TimeSpan;
+            }
+            if (type == typeof(DateTime))
+            {
+                return DataType.DateTime;
+            }
             return type.IsEnum ? DataType.Enum : DataType.User;
         }
 
@@ -267,7 +318,7 @@ namespace Cave.Data
         /// <returns></returns>
         public string GetDisplayString(int field, object value)
         {
-            FieldProperties fp = m_Properties[field];
+            FieldProperties fp = properties[field];
             if (fp.DisplayFormat == "FormatTimeSpan")
             {
                 switch (fp.DataType)
@@ -299,35 +350,44 @@ namespace Cave.Data
                 case DataType.Single: return ((float)value).ToString(fp.DisplayFormat);
                 case DataType.Double: return ((double)value).ToString(fp.DisplayFormat);
                 case DataType.Decimal: return ((decimal)value).ToString(fp.DisplayFormat);
-                default: return value == null ? "" : value.ToString();
+                default: return value == null ? string.Empty : value.ToString();
             }
         }
 
-        FieldProperties[] m_Properties;
-        FieldInfo[] m_Infos;
+        FieldProperties[] properties;
+        FieldInfo[] infos;
 
         /// <summary>
         /// Provides direct access to the field properties.
         /// </summary>
-        public FieldProperties GetProperties(int field) { return m_Properties[field]; }
+        public FieldProperties GetProperties(int field)
+        {
+            return properties[field];
+        }
 
         /// <summary>
         /// Provides direct access to the field properties.
         /// </summary>
-        public FieldProperties GetProperties(string fieldName) { return m_Properties[GetFieldIndex(fieldName)]; }
+        public FieldProperties GetProperties(string fieldName)
+        {
+            return properties[GetFieldIndex(fieldName)];
+        }
 
         /// <summary>
         /// Provides direct access to the field infos.
         /// </summary>
-        public FieldInfo GetInfo(int field) { return m_Infos[field]; }
+        public FieldInfo GetInfo(int field)
+        {
+            return infos[field];
+        }
 
         /// <summary>
-        /// Obtains the name of the layout.
+        /// Gets the name of the layout.
         /// </summary>
         public readonly string Name;
 
         /// <summary>
-        /// Obtains whether the layout was created from a typed struct or not.
+        /// Gets whether the layout was created from a typed struct or not.
         /// </summary>
         public bool IsTyped => RowType != null;
 
@@ -335,25 +395,25 @@ namespace Cave.Data
         public readonly Type RowType;
 
         /// <summary>
-        /// Obtains the fieldcount.
+        /// Gets the fieldcount.
         /// </summary>
         public readonly int FieldCount;
 
         /// <summary>
-        /// Obtains the index of the ID field.
+        /// Gets the index of the ID field.
         /// </summary>
         public readonly int IDFieldIndex = -1;
 
         /// <summary>
-        /// Obtains the name of the ID field.
+        /// Gets the name of the ID field.
         /// </summary>
         public readonly FieldProperties IDField;
 
         /// <summary>Initializes a new undefined instance of the <see cref="RowLayout"/> class.</summary>
         public RowLayout()
         {
-            m_Properties = new FieldProperties[0];
-            m_Infos = new FieldInfo[0];
+            properties = new FieldProperties[0];
+            infos = new FieldInfo[0];
             Name = "Undefined";
         }
 
@@ -370,17 +430,17 @@ namespace Cave.Data
             }
 
             FieldCount = fields.Length;
-            m_Properties = new FieldProperties[FieldCount];
-            m_Infos = new FieldInfo[FieldCount];
-            for (int i = 0; i < FieldCount; i++)
+            properties = new FieldProperties[FieldCount];
+            infos = new FieldInfo[FieldCount];
+            for (var i = 0; i < FieldCount; i++)
             {
-                m_Properties[i] = fields[i];
+                properties[i] = fields[i];
                 if ((fields[i].Flags & FieldFlags.ID) != 0)
                 {
                     if (IDFieldIndex < 0)
                     {
                         IDFieldIndex = i;
-                        IDField = m_Properties[i];
+                        IDField = properties[i];
                     }
                 }
             }
@@ -415,8 +475,8 @@ namespace Cave.Data
         /// <param name="infos">The field infos.</param>
         /// <param name="idFieldIndex">Index of the identifier field.</param>
         /// <param name="rowType">Type of the row.</param>
-        /// <exception cref="System.ArgumentNullException">Name.</exception>
-        /// <exception cref="System.ArgumentException">Invalid characters at table name!.</exception>
+        /// <exception cref="ArgumentNullException">Name.</exception>
+        /// <exception cref="ArgumentException">Invalid characters at table name!.</exception>
         /// <exception cref="InvalidDataException">FieldCount does not match!.</exception>
         RowLayout(string name, FieldProperties[] properties, FieldInfo[] infos, int idFieldIndex, Type rowType)
         {
@@ -432,10 +492,10 @@ namespace Cave.Data
 
             Name = name;
             RowType = rowType;
-            m_Properties = properties;
-            m_Infos = infos;
+            this.properties = properties;
+            this.infos = infos;
             IDFieldIndex = idFieldIndex;
-            IDField = (IDFieldIndex < 0) ? null : m_Properties[IDFieldIndex];
+            IDField = (IDFieldIndex < 0) ? null : this.properties[IDFieldIndex];
             FieldCount = properties.Length;
             if (infos.Length != FieldCount)
             {
@@ -444,7 +504,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the ID of the dataset from the specified struct.
+        /// Gets the ID of the dataset from the specified struct.
         /// </summary>
         /// <param name="item">The struct to read the ID from.</param>
         /// <returns>Returns the ID of the dataset.</returns>
@@ -470,7 +530,7 @@ namespace Cave.Data
                 throw new DataException($"{this}: ID Field cannot not be found");
             }
 
-            object value = row.GetValue(IDFieldIndex);
+            var value = row.GetValue(IDFieldIndex);
             return value is long ? (long)value : Convert.ToInt64(value);
         }
 
@@ -513,11 +573,11 @@ namespace Cave.Data
         /// <returns></returns>
         public string GetName(int field)
         {
-            return m_Properties[field].Name;
+            return properties[field].Name;
         }
 
         /// <summary>
-        /// Obtains the value of a field from the specified struct.
+        /// Gets the value of a field from the specified struct.
         /// </summary>
         /// <param name="field">The field number/index.</param>
         /// <param name="item">The struct to read the value from.</param>
@@ -529,7 +589,7 @@ namespace Cave.Data
                 throw new InvalidOperationException(string.Format("This RowLayout was not created from a typed struct!"));
             }
 
-            return m_Infos[field].GetValue(item);
+            return infos[field].GetValue(item);
         }
 
         /// <summary>
@@ -545,15 +605,15 @@ namespace Cave.Data
                 throw new InvalidOperationException(string.Format("This RowLayout was not created from a typed struct!"));
             }
 
-            if (value != null && value.GetType() != m_Properties[field].ValueType)
+            if (value != null && value.GetType() != properties[field].ValueType)
             {
-                value = Convert.ChangeType(value, m_Properties[field].ValueType);
+                value = Convert.ChangeType(value, properties[field].ValueType);
             }
-            m_Infos[field].SetValue(item, value);
+            infos[field].SetValue(item, value);
         }
 
         /// <summary>
-        /// Obtains all values of the struct.
+        /// Gets all values of the struct.
         /// </summary>
         /// <param name="item">The struct to get the values from.</param>
         /// <returns>Returns all values of the struct.</returns>
@@ -565,10 +625,10 @@ namespace Cave.Data
                 throw new InvalidOperationException(string.Format("This RowLayout was not created from a typed struct!"));
             }
 
-            object[] result = new object[FieldCount];
-            for (int i = 0; i < FieldCount; i++)
+            var result = new object[FieldCount];
+            for (var i = 0; i < FieldCount; i++)
             {
-                result[i] = m_Infos[i].GetValue(item);
+                result[i] = infos[i].GetValue(item);
             }
             return result;
         }
@@ -590,40 +650,40 @@ namespace Cave.Data
                 throw new InvalidOperationException(string.Format("This RowLayout was not created from a typed struct!"));
             }
 
-            for (int i = 0; i < FieldCount; i++)
+            for (var i = 0; i < FieldCount; i++)
             {
-                object value = values[i];
-                FieldProperties field = m_Properties[i];
+                var value = values[i];
+                FieldProperties field = properties[i];
                 if (value != null && value.GetType() != field.ValueType)
                 {
                     switch (field.DataType)
                     {
-                        case DataType.User: value = m_Properties[i].ParseValue(value.ToString(), null); break;
+                        case DataType.User: value = properties[i].ParseValue(value.ToString(), null); break;
                         case DataType.Enum: value = Enum.Parse(field.ValueType, value.ToString(), true); break;
-                        default: value = Convert.ChangeType(values[i], m_Properties[i].ValueType); break;
+                        default: value = Convert.ChangeType(values[i], properties[i].ValueType); break;
                     }
                 }
-                m_Infos[i].SetValue(item, value);
+                infos[i].SetValue(item, value);
             }
         }
 
         /// <summary>
-        /// Obtains the field index of the specified field name.
+        /// Gets the field index of the specified field name.
         /// </summary>
         /// <param name="field">The fieldname to search for.</param>
         /// <returns>Returns the field index of the specified field name.</returns>
         public int GetFieldIndex(string field)
         {
-            for (int i = 0; i < FieldCount; i++)
+            for (var i = 0; i < FieldCount; i++)
             {
-                if (m_Properties[i].Name.Equals(field))
+                if (properties[i].Name.Equals(field))
                 {
                     return i;
                 }
             }
-            for (int i = 0; i < FieldCount; i++)
+            for (var i = 0; i < FieldCount; i++)
             {
-                string[] names = m_Properties[i].AlternativeNames?.Split(" ,;".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                var names = properties[i].AlternativeNames?.Split(" ,;".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
                 if (names != null && names.Any(n => n == field))
                 {
                     return i;
@@ -637,18 +697,18 @@ namespace Cave.Data
         /// <returns>Returns a new <see cref="RowLayout"/> instance.</returns>
         public RowLayout Remove(string fieldName)
         {
-            int index = GetFieldIndex(fieldName);
-            List<FieldProperties> fieldProperties = new List<FieldProperties>();
-            List<FieldInfo> fieldInfos = new List<FieldInfo>();
-            for (int i = 0; i < FieldCount; i++)
+            var index = GetFieldIndex(fieldName);
+            var fieldProperties = new List<FieldProperties>();
+            var fieldInfos = new List<FieldInfo>();
+            for (var i = 0; i < FieldCount; i++)
             {
                 if (i == index)
                 {
                     continue;
                 }
 
-                fieldProperties.Add(m_Properties[i]);
-                fieldInfos.Add(m_Infos[i]);
+                fieldProperties.Add(properties[i]);
+                fieldInfos.Add(infos[i]);
             }
             return new RowLayout(Name, fieldProperties.ToArray(), fieldInfos.ToArray(), IDFieldIndex, RowType);
         }
@@ -670,9 +730,9 @@ namespace Cave.Data
                 return false;
             }
 
-            for (int i = 0; i < FieldCount; i++)
+            for (var i = 0; i < FieldCount; i++)
             {
-                if (!layout.m_Properties[i].Equals(m_Properties[i]))
+                if (!layout.properties[i].Equals(properties[i]))
                 {
                     return false;
                 }
@@ -691,15 +751,15 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the hash code for this instance.
+        /// Gets the hash code for this instance.
         /// </summary>
         /// <returns></returns>
         public override int GetHashCode()
         {
-            int result = IsTyped ? 0x00001234 : 0x12345678;
-            for (int i = 0; i < FieldCount; i++)
+            var result = IsTyped ? 0x00001234 : 0x12345678;
+            for (var i = 0; i < FieldCount; i++)
             {
-                result ^= m_Properties[i].GetHashCode() ^ i;
+                result ^= properties[i].GetHashCode() ^ i;
             }
             return result;
         }
@@ -715,15 +775,15 @@ namespace Cave.Data
 
             writer.Write7BitEncoded32(FieldCount);
             writer.WritePrefixed(Name);
-            for (int i = 0; i < FieldCount; i++)
+            for (var i = 0; i < FieldCount; i++)
             {
-                m_Properties[i].Save(writer);
+                properties[i].Save(writer);
             }
         }
 
         /// <summary>Gets the fields.</summary>
         /// <value>The fields.</value>
-        public ICollection<FieldProperties> Fields => new ReadOnlyCollection<FieldProperties>(m_Properties);
+        public ICollection<FieldProperties> Fields => new ReadOnlyCollection<FieldProperties>(properties);
 
         /// <summary>Returns a <see cref="string" /> that represents this instance.</summary>
         /// <returns>A <see cref="string" /> that represents this instance.</returns>

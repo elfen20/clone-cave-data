@@ -11,43 +11,43 @@ namespace Cave.Data
     public sealed class ResultOption
     {
         /// <summary>Implements the operator ==.</summary>
-        /// <param name="A">The first item.</param>
-        /// <param name="B">The second item.</param>
+        /// <param name="left">The first item.</param>
+        /// <param name="right">The second item.</param>
         /// <returns>The result of the operator.</returns>
-        public static bool operator ==(ResultOption A, ResultOption B)
+        public static bool operator ==(ResultOption left, ResultOption right)
         {
-            if (ReferenceEquals(B, null))
+            if (ReferenceEquals(right, null))
             {
-                return ReferenceEquals(A, null);
+                return ReferenceEquals(left, null);
             }
 
-            return ReferenceEquals(A, null) ? false : A.Mode == B.Mode && A.Parameter == B.Parameter;
+            return ReferenceEquals(left, null) ? false : left.Mode == right.Mode && left.Parameter == right.Parameter;
         }
 
         /// <summary>Implements the operator !=.</summary>
-        /// <param name="A">The first item.</param>
-        /// <param name="B">The second item.</param>
+        /// <param name="left">The first item.</param>
+        /// <param name="right">The second item.</param>
         /// <returns>The result of the operator.</returns>
-        public static bool operator !=(ResultOption A, ResultOption B)
+        public static bool operator !=(ResultOption left, ResultOption right)
         {
-            return !(A == B);
+            return !(left == right);
         }
 
         /// <summary>
         /// Combines two <see cref="ResultOption"/>s with AND.
         /// </summary>
-        /// <param name="A"></param>
-        /// <param name="B"></param>
+        /// <param name="left"></param>
+        /// <param name="right"></param>
         /// <returns></returns>
-        public static ResultOption operator +(ResultOption A, ResultOption B)
+        public static ResultOption operator +(ResultOption left, ResultOption right)
         {
-            if (A == null)
+            if (left == null)
             {
                 throw new ArgumentNullException("A");
             }
 
-            A.Add(B);
-            return A;
+            left.Add(right);
+            return left;
         }
 
         /// <summary>
@@ -115,13 +115,13 @@ namespace Cave.Data
             return new ResultOption(ResultOptionMode.Group, field);
         }
 
-        List<ResultOption> m_ParentList = new List<ResultOption>();
+        List<ResultOption> parentList = new List<ResultOption>();
 
         ResultOption(ResultOptionMode mode, string parameter)
         {
             Mode = mode;
             Parameter = parameter;
-            m_ParentList.Add(this);
+            parentList.Add(this);
         }
 
         /// <summary>Gets the mode.</summary>
@@ -137,20 +137,20 @@ namespace Cave.Data
         /// <exception cref="InvalidOperationException"></exception>
         public void Add(ResultOption option)
         {
-            if (option.m_ParentList == m_ParentList)
+            if (option.parentList == parentList)
             {
                 throw new InvalidOperationException();
             }
 
-            m_ParentList.AddRange(option.m_ParentList);
-            option.m_ParentList = m_ParentList;
+            parentList.AddRange(option.parentList);
+            option.parentList = parentList;
         }
 
         /// <summary>Returns an array with all options.</summary>
         /// <returns>Returns an array with all options.</returns>
         public ResultOption[] ToArray()
         {
-            return m_ParentList.Where(i => i.Mode != ResultOptionMode.None).ToArray();
+            return parentList.Where(i => i.Mode != ResultOptionMode.None).ToArray();
         }
 
         /// <summary>Returns an array with all options with the specified modes.</summary>
@@ -158,8 +158,8 @@ namespace Cave.Data
         /// <returns>Returns an array with all matching options.</returns>
         public ResultOption[] ToArray(params ResultOptionMode[] modes)
         {
-            List<ResultOption> results = new List<ResultOption>();
-            foreach (ResultOption option in m_ParentList)
+            var results = new List<ResultOption>();
+            foreach (ResultOption option in parentList)
             {
                 if (Array.IndexOf(modes, option.Mode) > -1)
                 {
@@ -174,7 +174,7 @@ namespace Cave.Data
         /// <returns><c>true</c> if [contains] [the specified modes]; otherwise, <c>false</c>.</returns>
         public bool Contains(params ResultOptionMode[] modes)
         {
-            foreach (ResultOption option in m_ParentList)
+            foreach (ResultOption option in parentList)
             {
                 if (Array.IndexOf(modes, option.Mode) > -1)
                 {
@@ -190,7 +190,7 @@ namespace Cave.Data
         {
             get
             {
-                List<string> result = new List<string>();
+                var result = new List<string>();
                 foreach (ResultOption option in ToArray())
                 {
                     switch (option.Mode)
@@ -207,12 +207,12 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains a string describing this instance.
+        /// Gets a string describing this instance.
         /// </summary>
         /// <returns></returns>
         public override string ToString()
         {
-            StringBuilder result = new StringBuilder();
+            var result = new StringBuilder();
             foreach (ResultOption option in ToArray())
             {
                 if (result.Length > 0)
@@ -236,12 +236,12 @@ namespace Cave.Data
         /// <returns><c>true</c> if the specified <see cref="object" /> is equal to this instance; otherwise, <c>false</c>.</returns>
         public override bool Equals(object obj)
         {
-            ResultOption o = obj as ResultOption;
+            var o = obj as ResultOption;
             return o == null ? false : o.Mode == Mode && o.Parameter == Parameter;
         }
 
         /// <summary>
-        /// Obtains the hashcode for this instance.
+        /// Gets the hashcode for this instance.
         /// </summary>
         /// <returns></returns>
         public override int GetHashCode()

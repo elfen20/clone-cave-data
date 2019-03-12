@@ -12,7 +12,7 @@ namespace Cave.Data
         /// <param name="id">The identifier.</param>
         /// <param name="row">Data.</param>
         /// <returns></returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">Row ID is invalid!.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Row ID is invalid!.</exception>
         public static Transaction Create(TransactionType type, long id, Row row)
         {
             if (id <= 0)
@@ -71,24 +71,23 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the <see cref="TransactionType"/>.
+        /// Gets the <see cref="TransactionType"/>.
         /// </summary>
         public TransactionType Type { get; }
 
         /// <summary>
-        /// Obtains the ID of the entry.
+        /// Gets the ID of the entry.
         /// </summary>
         public long ID { get; }
 
         /// <summary>
-        /// Obtains the full row data (only set on <see cref="TransactionType.Updated"/> and <see cref="TransactionType.Inserted"/>).
+        /// Gets the full row data (only set on <see cref="TransactionType.Updated"/> and <see cref="TransactionType.Inserted"/>).
         /// </summary>
         public Row Row { get; }
 
         /// <summary>Gets the created date time.</summary>
         /// <value>The created date time.</value>
         public DateTime Created { get; } = DateTime.UtcNow;
-
 
         Transaction(TransactionType type, long id)
         {
@@ -113,7 +112,7 @@ namespace Cave.Data
         }
 
         /// <summary>
-        /// Obtains the HashCode based on the ID of the dataset.
+        /// Gets the HashCode based on the ID of the dataset.
         /// </summary>
         /// <returns></returns>
         public override int GetHashCode()

@@ -44,13 +44,13 @@ namespace Cave.Data
                 throw new ArgumentOutOfRangeException("connection", "Database name not specified!");
             }
 
-            string[] parts = connection.Location.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+            var parts = connection.Location.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length < 1)
             {
                 throw new ArgumentException("Missing database name at connection string!");
             }
 
-            return storage.GetDatabase(parts[0], 0 != (options & DbConnectionOptions.AllowCreate));
+            return storage.GetDatabase(parts[0], (options & DbConnectionOptions.AllowCreate) != 0);
         }
 
         /// <summary>Connects to a database using the specified <see cref="ISettings" />.</summary>
@@ -61,7 +61,7 @@ namespace Cave.Data
         public static IDatabase ConnectDatabase(ISettings settings, string databaseName = null, DbConnectionOptions options = DbConnectionOptions.None)
         {
             // use [Database]Connection if present
-            string connectionString = settings.ReadSetting("Database", "Connection");
+            var connectionString = settings.ReadSetting("Database", "Connection");
             if (connectionString != null)
             {
                 return ConnectDatabase(connectionString);
@@ -76,18 +76,18 @@ namespace Cave.Data
             // prepare database name if none specified
             if (databaseName == null)
             {
-                string serviceName = AssemblyVersionInfo.Program.Product;
-                string service = serviceName.GetValidChars(ASCII.Strings.SafeName).ToLower();
-                string programID = Base32.Safe.Encode(AppDom.ProgramID);
-                string machine = Environment.MachineName.Split('.')[0].GetValidChars(ASCII.Strings.SafeName).ToLower();
+                var serviceName = AssemblyVersionInfo.Program.Product;
+                var service = serviceName.GetValidChars(ASCII.Strings.SafeName).ToLower();
+                var programID = Base32.Safe.Encode(AppDom.ProgramID);
+                var machine = Environment.MachineName.Split('.')[0].GetValidChars(ASCII.Strings.SafeName).ToLower();
                 databaseName = $"{service}_{machine}_{programID}";
             }
 
             // read the [Database] section
-            string type = settings.ReadString("Database", "Type");
-            string user = settings.ReadString("Database", "Username");
-            string pass = settings.ReadString("Database", "Password");
-            string server = settings.ReadString("Database", "Server");
+            var type = settings.ReadString("Database", "Type");
+            var user = settings.ReadString("Database", "Username");
+            var pass = settings.ReadString("Database", "Password");
+            var server = settings.ReadString("Database", "Server");
             return ConnectDatabase($"{type}://{user}:{pass}@{server}/{databaseName}", options);
         }
     }
