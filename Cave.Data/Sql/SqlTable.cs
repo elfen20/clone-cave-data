@@ -69,7 +69,7 @@ namespace Cave.Data.Sql
         #region protected properties
 
         /// <summary>
-        /// The used <see cref="SqlStorage"/> backend.
+        /// Gets the used <see cref="SqlStorage"/> backend.
         /// </summary>
         protected SqlStorage SqlStorage { get; private set; }
 
@@ -94,7 +94,7 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Creates a new SqlTable instance (retrieves layout from database).
+        /// Initializes a new instance of the <see cref="SqlTable"/> class.
         /// </summary>
         /// <param name="database">The database this table belongs to.</param>
         /// <param name="name">The name of the table.</param>
@@ -104,7 +104,7 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Creates a new SqlTable instance (checks layout against database).
+        /// Initializes a new instance of the <see cref="SqlTable"/> class.
         /// </summary>
         /// <param name="database">The database this table belongs to.</param>
         /// <param name="layout">The layout of the table.</param>
@@ -205,10 +205,10 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>Obtains all different field values of a given field.</summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="field"></param>
-        /// <param name="includeNull">allow null value to be added to the results.</param>
-        /// <param name="ids"></param>
+        /// <typeparam name="T">Structure type.</typeparam>
+        /// <param name="field">Name of the field.</param>
+        /// <param name="includeNull">Allow null value to be added to the results.</param>
+        /// <param name="ids">List of IDs to retrieve.</param>
         /// <returns></returns>
         public override IItemSet<T> GetValues<T>(string field, bool includeNull = false, IEnumerable<long> ids = null)
         {
@@ -242,17 +242,18 @@ namespace Cave.Data.Sql
         /// <returns></returns>
         public override double Sum(string fieldName, Search search = null)
         {
+            FieldProperties field = Layout.GetProperties(fieldName);
             search = search ?? Search.None;
             SqlSearch s = search.ToSql(Layout, SqlStorage);
             var command = new StringBuilder();
             command.Append("SELECT SUM(");
-            command.Append(SqlStorage.EscapeFieldName(Layout.GetProperties(fieldName)));
+            command.Append(SqlStorage.EscapeFieldName(field));
             command.Append(") FROM ");
             command.Append(FQTN);
             command.Append(" WHERE ");
             command.Append(s.ToString());
-            var result = Convert.ToDouble(SqlStorage.QueryValue(Database.Name, Name, command.ToString(), s.Parameters.ToArray()));
-            FieldProperties field = Layout.GetProperties(fieldName);
+            double result = double.NaN;
+            object dbValue = SqlStorage.QueryValue(Database.Name, Name, command.ToString(), s.Parameters.ToArray());
             switch (field.DataType)
             {
                 case DataType.Binary:
@@ -262,8 +263,28 @@ namespace Cave.Data.Sql
                 case DataType.Unknown:
                     throw new NotSupportedException($"Sum() is not supported for field {field}!");
 
-                case DataType.TimeSpan: result *= TimeSpan.TicksPerSecond; break;
-                default: break;
+                case DataType.TimeSpan:
+                    switch (field.DateTimeType)
+                    {
+                        case DateTimeType.BigIntHumanReadable:
+                        case DateTimeType.Undefined:
+                            throw new NotSupportedException($"Sum() is not supported for field {field}!");
+
+                        case DateTimeType.BigIntTicks:
+                            result = Convert.ToDouble(dbValue) / TimeSpan.TicksPerSecond;
+                            break;
+
+                        case DateTimeType.Native:
+                        case DateTimeType.DecimalSeconds:
+                        case DateTimeType.DoubleSeconds:
+                            result = Convert.ToDouble(dbValue);
+                            break;
+                    }
+                    break;
+
+                default:
+                    result = Convert.ToDouble(dbValue);
+                    break;
             }
             return result;
         }
@@ -1047,7 +1068,7 @@ namespace Cave.Data.Sql
 
         #region Transaction interface
 
-        /// <summary>Gets or sets a value indicating whether [transactions use parameters during commit].</summary>
+        /// <summary>Gets a value indicating whether [transactions use parameters during commit].</summary>
         /// <value>
         /// <c>true</c> if [transactions use parameters]; otherwise, <c>false</c>.
         /// </value>

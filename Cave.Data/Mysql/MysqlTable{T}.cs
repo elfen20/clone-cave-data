@@ -8,7 +8,7 @@ namespace Cave.Data.Mysql
     /// <summary>
     /// Provides a mysql table implementation.
     /// </summary>
-    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="T">Structure type.</typeparam>
     public class MySqlTable<T> : SqlTable<T>
         where T : struct
     {
@@ -135,7 +135,7 @@ namespace Cave.Data.Mysql
         #endregion
 
         /// <summary>
-        /// Creates a new mysql table instance.
+        /// Initializes a new instance of the <see cref="MySqlTable{T}"/> class.
         /// </summary>
         /// <param name="database">The database the table belongs to.</param>
         /// <param name="layout">Layout and name of the table.</param>
