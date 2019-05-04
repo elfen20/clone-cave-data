@@ -163,7 +163,7 @@ namespace Cave.Data.Mysql
         #endregion
 
         /// <summary>
-        /// Creates a new mysql table instance (checks layout against database).
+        /// Initializes a new instance of the <see cref="MySqlTable"/> class.
         /// </summary>
         /// <param name="database">The database the table belongs to.</param>
         /// <param name="layout">Layout of the table.</param>
@@ -173,7 +173,7 @@ namespace Cave.Data.Mysql
         }
 
         /// <summary>
-        /// Creates a new mysql table instance (retrieves layout from database).
+        /// Initializes a new instance of the <see cref="MySqlTable"/> class.
         /// </summary>
         /// <param name="database">The database the table belongs to.</param>
         /// <param name="table">Name of the table.</param>

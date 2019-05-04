@@ -49,7 +49,7 @@ namespace Cave.Data
         }
 
         /// <summary>Converts rows to structures.</summary>
-        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="T">Structure type.</typeparam>
         /// <param name="layout">The layout.</param>
         /// <param name="rows">The rows.</param>
         /// <returns>Returns a new <see cref="List{T}"/>.</returns>
@@ -60,7 +60,7 @@ namespace Cave.Data
         }
 
         /// <summary>Converts rows to structures.</summary>
-        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="T">Structure type.</typeparam>
         /// <param name="layout">The layout.</param>
         /// <param name="count">The count.</param>
         /// <param name="rows">The rows.</param>
@@ -282,6 +282,7 @@ namespace Cave.Data
         #region Sum
 
         /// <summary>Calculates the sum of the specified field name for all matching rows.</summary>
+        /// <remarks>For TimeSpan fields, the result is the number of seconds.</remarks>
         /// <param name="fieldName">Name of the field.</param>
         /// <param name="search">The search.</param>
         /// <returns></returns>
@@ -301,7 +302,7 @@ namespace Cave.Data
                 case DataType.TimeSpan:
                     foreach (Row row in GetRows(search))
                     {
-                        sum += Convert.ToDouble(((TimeSpan)row.GetValue(fieldNumber)).Ticks);
+                        sum += ((TimeSpan)row.GetValue(fieldNumber)).TotalSeconds;
                     }
                     break;
                 case DataType.Binary:
@@ -388,7 +389,7 @@ namespace Cave.Data
         }
 
         /// <summary>Obtains all different field values of a given field.</summary>
-        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="T">Structure type.</typeparam>
         /// <param name="field">The field.</param>
         /// <param name="includeNull">allow null value to be added to the results.</param>
         /// <param name="ids">The ids to check or null for any.</param>
