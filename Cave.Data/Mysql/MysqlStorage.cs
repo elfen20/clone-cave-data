@@ -368,7 +368,7 @@ namespace Cave.Data.Mysql
         protected override void InitializeInterOp(out Assembly dbAdapterAssembly, out Type dbConnectionType)
         {
             Trace.TraceInformation("Searching for mySQL interop libraries...");
-            dbConnectionType = AppDom.FindType("MySql.Data.MySqlClient.MySqlConnection", AppDom.LoadMode.LoadAssemblies);
+            dbConnectionType = AppDom.FindType("MySql.Data.MySqlClient.MySqlConnection", AppDom.LoadMode.None);
             dbAdapterAssembly = DbConnectionType.Assembly;
             var connection = (IDbConnection)Activator.CreateInstance(dbConnectionType);
             connection.Dispose();
