@@ -197,7 +197,7 @@ namespace Cave.Data.Mysql
                         {
                             case DateTimeType.Undefined:
                             case DateTimeType.Native:
-                                queryText.Append("TIMESPAN");
+                                queryText.Append("TIMESTAMP");
                                 break;
                             case DateTimeType.DoubleSeconds:
                                 queryText.Append("DOUBLE");
