@@ -591,11 +591,18 @@ namespace Cave.Data.Sql
                             case DateTimeType.Native:
                                 try
                                 {
-                                    ticks = ((DateTime)Convert.ChangeType(databaseValue, typeof(DateTime), CultureInfo.InvariantCulture)).Ticks;
+                                    if (databaseValue is IConvertible convertible)
+                                    {
+                                        ticks = ((DateTime)Convert.ChangeType(databaseValue, typeof(DateTime), CultureInfo.InvariantCulture)).Ticks;
+                                    }
+                                    else
+                                    {
+                                        ticks = DateTime.Parse(databaseValue.ToString()).Ticks;
+                                    }
                                 }
                                 catch
                                 {
-                                    ticks = 0;
+                                    throw new InvalidDataException($"Could not parse value {databaseValue} of {field}");
                                 }
                                 break;
 
