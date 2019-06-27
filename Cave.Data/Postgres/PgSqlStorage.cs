@@ -234,14 +234,10 @@ namespace Cave.Data.Postgres
         /// </summary>
         protected override bool DBConnectionCanChangeDataBase => true;
 
-        /// <summary>
-        /// Initializes the needed interop assembly and type.
-        /// </summary>
-        /// <param name="dbAdapterAssembly">Assembly containing all needed types.</param>
-        /// <param name="dbConnectionType">IDbConnection type used for the database.</param>
-        protected override void InitializeInterOp(out Assembly dbAdapterAssembly, out Type dbConnectionType)
+        /// <inheritdoc/>
+        protected override void InitializeInterOp(AppDom.LoadMode loadMode, out Assembly dbAdapterAssembly, out Type dbConnectionType)
         {
-            dbConnectionType = AppDom.FindType("Npgsql.NpgsqlConnection", AppDom.LoadMode.LoadAssemblies);
+            dbConnectionType = AppDom.FindType("Npgsql.NpgsqlConnection", loadMode);
             dbAdapterAssembly = dbConnectionType.Assembly;
             var connection = (IDbConnection)Activator.CreateInstance(dbConnectionType);
             connection.Dispose();

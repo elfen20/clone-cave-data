@@ -365,10 +365,10 @@ namespace Cave.Data.Mysql
         /// </summary>
         /// <param name="dbAdapterAssembly">Assembly containing all needed types.</param>
         /// <param name="dbConnectionType">IDbConnection type used for the database.</param>
-        protected override void InitializeInterOp(out Assembly dbAdapterAssembly, out Type dbConnectionType)
+        protected override void InitializeInterOp(AppDom.LoadMode loadMode, out Assembly dbAdapterAssembly, out Type dbConnectionType)
         {
             Trace.TraceInformation("Searching for mySQL interop libraries...");
-            dbConnectionType = AppDom.FindType("MySql.Data.MySqlClient.MySqlConnection", AppDom.LoadMode.None);
+            dbConnectionType = AppDom.FindType("MySql.Data.MySqlClient.MySqlConnection", loadMode);
             dbAdapterAssembly = DbConnectionType.Assembly;
             var connection = (IDbConnection)Activator.CreateInstance(dbConnectionType);
             connection.Dispose();
