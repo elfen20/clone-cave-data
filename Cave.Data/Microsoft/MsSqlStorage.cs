@@ -78,24 +78,24 @@ namespace Cave.Data.Microsoft
             }
             if (field.DataType == DataType.Decimal)
             {
-                double l_PreDecimal = 28;
-                double l_Decimal = 8;
+                double preDecimal = 28;
+                double valDecimal = 8;
                 if (field.MaximumLength != 0)
                 {
-                    l_PreDecimal = Math.Truncate(field.MaximumLength);
-                    l_Decimal = field.MaximumLength - l_PreDecimal;
+                    preDecimal = Math.Truncate(field.MaximumLength);
+                    valDecimal = field.MaximumLength - preDecimal;
                 }
-                var l_Max = (decimal)Math.Pow(10, l_PreDecimal - l_Decimal);
-                var l_LocalValue = (decimal)localValue;
+                var max = (decimal)Math.Pow(10, preDecimal - valDecimal);
+                var val = (decimal)localValue;
 
-                if (l_LocalValue >= l_Max)
+                if (val >= max)
                 {
-                    throw new ArgumentOutOfRangeException(field.Name, string.Format("Field {0} with value {1} is greater than the maximum of {2}!", field.Name, l_LocalValue, l_Max));
+                    throw new ArgumentOutOfRangeException(field.Name, string.Format("Field {0} with value {1} is greater than the maximum of {2}!", field.Name, localValue, max));
                 }
 
-                if (l_LocalValue <= -l_Max)
+                if (val <= -max)
                 {
-                    throw new ArgumentOutOfRangeException(field.Name, string.Format("Field {0} with value {1} is smaller than the minimum of {2}!", field.Name, l_LocalValue, -l_Max));
+                    throw new ArgumentOutOfRangeException(field.Name, string.Format("Field {0} with value {1} is smaller than the minimum of {2}!", field.Name, localValue, -max));
                 }
             }
             return base.GetDatabaseValue(field, localValue);
@@ -313,12 +313,8 @@ namespace Cave.Data.Microsoft
         /// </summary>
         protected override bool DBConnectionCanChangeDataBase => true;
 
-        /// <summary>
-        /// Initializes the needed interop assembly and type.
-        /// </summary>
-        /// <param name="dbAdapterAssembly">Assembly containing all needed types.</param>
-        /// <param name="dbConnectionType">IDbConnection type used for the database.</param>
-        protected override void InitializeInterOp(out Assembly dbAdapterAssembly, out Type dbConnectionType)
+        /// <inheritdoc/>
+        protected override void InitializeInterOp(AppDom.LoadMode loadMode, out Assembly dbAdapterAssembly, out Type dbConnectionType)
         {
             Trace.TraceInformation(string.Format("Searching for MS SQL interop libraries..."));
             dbConnectionType = AppDom.FindType("System.Data.SqlClient.SqlConnection", AppDom.LoadMode.LoadAssemblies);

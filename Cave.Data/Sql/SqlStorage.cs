@@ -227,14 +227,12 @@ namespace Cave.Data.Sql
         /// <summary>Creates a new <see cref="SqlStorage" /> with the specified ConnectionString.</summary>
         /// <param name="connectionString">the connection details.</param>
         /// <param name="options">The options.</param>
-        /// <exception cref="TypeLoadException">
-        /// </exception>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
         protected SqlStorage(ConnectionString connectionString, DbConnectionOptions options = DbConnectionOptions.None)
             : base(connectionString, options)
         {
             Trace.TraceInformation("Initializing native interop assemblies.");
-            InitializeInterOp(out DbAdapterAssembly, out DbConnectionType);
+            var loadMode = options.HasFlag(DbConnectionOptions.TryLoadAssemblies) ? AppDom.LoadMode.LoadAssemblies : AppDom.LoadMode.None;
+            InitializeInterOp(loadMode, out DbAdapterAssembly, out DbConnectionType);
             if (DbAdapterAssembly == null)
             {
                 throw new TypeLoadException(string.Format("{0} did not initialize {1} correctly!", "InitializeInterOp()", "DbAdapterAssembly"));
@@ -268,12 +266,13 @@ namespace Cave.Data.Sql
         /// <summary>
         /// Initializes the needed interop assembly and type.
         /// </summary>
+        /// <param name="loadMode">Assembly load mode.</param>
         /// <param name="dbAdapterAssembly">Assembly containing all needed types.</param>
         /// <param name="dbConnectionType">IDbConnection type used for the database.</param>
-        protected abstract void InitializeInterOp(out Assembly dbAdapterAssembly, out Type dbConnectionType);
+        protected abstract void InitializeInterOp(AppDom.LoadMode loadMode, out Assembly dbAdapterAssembly, out Type dbConnectionType);
 
         /// <summary>
-        /// Gets whether the db connections can change the database with the Sql92 "USE Database" command.
+        /// Gets a value indicating whether the db connections can change the database with the Sql92 "USE Database" command.
         /// </summary>
         protected abstract bool DBConnectionCanChangeDataBase { get; }
 

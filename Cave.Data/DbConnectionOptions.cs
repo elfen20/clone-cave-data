@@ -20,5 +20,10 @@ namespace Cave.Data
 
         /// <summary>Enable verbose logging</summary>
         VerboseLogging = 4,
+
+        /// <summary>
+        /// Allows to load assemblies.
+        /// </summary>
+        TryLoadAssemblies = 8,
     }
 }

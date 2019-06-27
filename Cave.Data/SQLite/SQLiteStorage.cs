@@ -86,18 +86,14 @@ namespace Cave.Data.SQLite
         /// </summary>
         protected override bool DBConnectionCanChangeDataBase => false;
 
-        /// <summary>
-        /// Initializes the needed interop assembly and type.
-        /// </summary>
-        /// <param name="dbAdapterAssembly">Assembly containing all needed types.</param>
-        /// <param name="dbConnectionType">IDbConnection type used for the database.</param>
-        protected override void InitializeInterOp(out Assembly dbAdapterAssembly, out Type dbConnectionType)
+        /// <inheritdoc/>
+        protected override void InitializeInterOp(AppDom.LoadMode loadMode, out Assembly dbAdapterAssembly, out Type dbConnectionType)
         {
             Trace.TraceInformation(string.Format("Searching for SQLite interop libraries..."));
             var types = new Type[]
             {
-                Type.GetType("System.Data.SQLite.SQLiteConnection, System.Data.SQLite", false),
-                Type.GetType("Mono.Data.SQLite.SQLiteConnection, Mono.Data.SQLite", false),
+                AppDom.FindType("System.Data.SQLite.SQLiteConnection", loadMode | AppDom.LoadMode.NoException),
+                AppDom.FindType("Mono.Data.SQLite.SQLiteConnection", loadMode | AppDom.LoadMode.NoException),
             };
             foreach (Type type in types)
             {
