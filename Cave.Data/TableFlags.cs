@@ -16,12 +16,15 @@ namespace Cave.Data
         None = 0,
 
         /// <summary>Allows creation of the table if it does not exist</summary>
-        AllowCreate = 0x1,
+        AllowCreate = 1 << 0,
 
         /// <summary>Always create the table</summary>
-        CreateNew = 0x2,
+        CreateNew = 1 << 1,
 
-        /// <summary>Tell the storage engine to use in memory table. This will throw an exception if the storage engine cannot store to memory.</summary>
-        InMemory = 0x4,
+        /// <summary>Tell the storage engine to use an in-memory-table. This will throw an exception if the storage engine cannot store to memory.</summary>
+        InMemory = 1 << 2,
+
+        /// <summary>Allows rows structures with missing fields.</summary>
+        IgnoreMissingFields = 1 << 3,
     }
 }

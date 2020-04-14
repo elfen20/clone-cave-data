@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using Cave.Data.Sql;
 using Cave.IO;
@@ -11,32 +12,8 @@ namespace Cave.Data.Microsoft
     /// </summary>
     public sealed class MsSqlDatabase : SqlDatabase
     {
-        /// <summary>Returns true assuming that no one else accesses the system memory.</summary>
-        /// <value><c>true</c>.</value>
-        public override bool IsSecure
-        {
-            get
-            {
-                var l_Error = false;
-                SqlConnection connection = SqlStorage.GetConnection(Name);
-                try
-                {
-                    return MsSqlStorage.RequireSSL && connection.ConnectionString.Contains("Encrypt=true");
-                }
-                catch
-                {
-                    l_Error = true;
-                    throw;
-                }
-                finally
-                {
-                    SqlStorage.ReturnConnection(ref connection, l_Error);
-                }
-            }
-        }
-
         /// <summary>
-        /// Creates a new MsSql database instance.
+        /// Initializes a new instance of the <see cref="MsSqlDatabase"/> class.
         /// </summary>
         /// <param name="storage">the MsSql storage engine.</param>
         /// <param name="name">the name of the database.</param>
@@ -45,91 +22,34 @@ namespace Cave.Data.Microsoft
         {
         }
 
-        /// <summary>
-        /// Gets the available table names.
-        /// </summary>
-        public override string[] TableNames
+        /// <inheritdoc/>
+        public override bool IsSecure
         {
             get
             {
-                var result = new List<string>();
-                List<Row> rows = SqlStorage.Query(null, Name, "stables", "EXEC stables @table_owner='dbo',@table_qualifier='" + Name + "';");
-                foreach (Row row in rows)
+                var error = false;
+                SqlConnection connection = SqlStorage.GetConnection(Name);
+                try
                 {
-                    var tableName = (string)row.GetValue(2);
-                    result.Add(tableName);
+                    var value = SqlStorage.QueryValue("SELECT encrypt_option FROM sys.dm_exec_connections WHERE session_id = @@SPID");
+                    return bool.Parse((string)value);
                 }
-                return result.ToArray();
-            }
-        }
-
-        /// <summary>
-        /// Gets whether the specified table exists or not.
-        /// </summary>
-        /// <param name="table">The name of the table.</param>
-        /// <returns></returns>
-        public override bool HasTable(string table)
-        {
-            if (table.HasInvalidChars(ASCII.Strings.SafeName))
-            {
-                throw new ArgumentException("Table name contains invalid chars!");
-            }
-            foreach (var name in TableNames)
-            {
-                if (string.Equals(table, name, StringComparison.CurrentCultureIgnoreCase))
+                catch (Exception ex)
                 {
-                    return true;
+                    error = true;
+                    throw new InvalidDataException("Could not retrieve connection state.", ex);
+                }
+                finally
+                {
+                    SqlStorage.ReturnConnection(ref connection, error);
                 }
             }
-            return false;
         }
 
-        /// <summary>
-        /// Opens and retrieves the existing table with the given layout.
-        /// </summary>
-        /// <typeparam name="T">Row structure type.</typeparam>
-        /// <param name="layout">Layout and name of the table.</param>
-        /// <returns>Returns a table instance.</returns>
-        protected override ITable<T> OpenTable<T>(RowLayout layout)
-        {
-            return new MsSqlTable<T>(this, layout);
-        }
+        /// <inheritdoc/>
+        public override ITable GetTable(string tableName, TableFlags flags) => MsSqlTable.Connect(this, flags, tableName);
 
-        /// <summary>
-        /// Opens the table with the specified name.
-        /// </summary>
-        /// <param name="table">TableName of the table.</param>
-        /// <returns>Returns an <see cref="ITable"/> instance for the specified table.</returns>
-        public override ITable GetTable(string table)
-        {
-            if (!HasTable(table))
-            {
-                throw new InvalidOperationException(string.Format("Table '{0}' does not exist!", table));
-            }
-
-            return new MsSqlTable(this, table);
-        }
-
-        /// <summary>
-        /// Adds a new table with the specified type.
-        /// </summary>
-        /// <typeparam name="T">The row struct to use for the table.</typeparam>
-        /// <param name="flags">The table creation flags.</param>
-        /// <param name="table">Name of the table to create (optional, use this to overwrite the default table name).</param>
-        /// <returns></returns>
-        public override ITable<T> CreateTable<T>(TableFlags flags, string table)
-        {
-            var layout = RowLayout.CreateTyped(typeof(T), table, Storage);
-            CreateTable(layout, flags);
-            return OpenTable<T>(layout);
-        }
-
-        /// <summary>
-        /// Adds a new table with the specified name.
-        /// </summary>
-        /// <param name="layout">Layout of the table.</param>
-        /// <param name="flags">The table creation flags.</param>
-        /// <returns>Returns an <see cref="ITable"/> instance for the specified table.</returns>
+        /// <inheritdoc/>
         public override ITable CreateTable(RowLayout layout, TableFlags flags)
         {
             if (layout == null)
@@ -150,7 +70,7 @@ namespace Cave.Data.Microsoft
             queryText.AppendFormat("CREATE TABLE {0} (", SqlStorage.FQTN(Name, layout.Name));
             for (var i = 0; i < layout.FieldCount; i++)
             {
-                FieldProperties fieldProperties = layout.GetProperties(i);
+                var fieldProperties = layout[i];
                 if (i > 0)
                 {
                     queryText.Append(",");
@@ -171,6 +91,7 @@ namespace Cave.Data.Microsoft
                                 queryText.Append("DATETIME");
                                 break;
                             case DateTimeType.DoubleSeconds:
+                            case DateTimeType.DoubleEpoch:
                                 queryText.Append("FLOAT(53)");
                                 break;
                             case DateTimeType.DecimalSeconds:
@@ -191,6 +112,7 @@ namespace Cave.Data.Microsoft
                             case DateTimeType.Native:
                                 queryText.Append("TIMESPAN");
                                 break;
+                            case DateTimeType.DoubleEpoch:
                             case DateTimeType.DoubleSeconds:
                                 queryText.Append("FLOAT(53)");
                                 break;
@@ -331,10 +253,10 @@ namespace Cave.Data.Microsoft
                 }
             }
             queryText.Append(")");
-            SqlStorage.Execute(Name, layout.Name, queryText.ToString());
+            SqlStorage.Execute(database: Name, table: layout.Name, cmd: queryText.ToString());
             for (var i = 0; i < layout.FieldCount; i++)
             {
-                FieldProperties fieldProperties = layout.GetProperties(i);
+                var fieldProperties = layout[i];
                 if ((fieldProperties.Flags & FieldFlags.ID) != 0)
                 {
                     continue;
@@ -343,10 +265,23 @@ namespace Cave.Data.Microsoft
                 if ((fieldProperties.Flags & FieldFlags.Index) != 0)
                 {
                     var command = string.Format("CREATE INDEX {0} ON {1} ({2})", SqlStorage.EscapeString("idx_" + layout.Name + "_" + fieldProperties.Name), SqlStorage.FQTN(Name, layout.Name), SqlStorage.EscapeFieldName(fieldProperties));
-                    SqlStorage.Execute(Name, layout.Name, command);
+                    SqlStorage.Execute(database: Name, table: layout.Name, cmd: command);
                 }
             }
             return GetTable(layout, TableFlags.None);
+        }
+
+        /// <inheritdoc/>
+        protected override string[] GetTableNames()
+        {
+            var result = new List<string>();
+            var rows = SqlStorage.Query("EXEC stables @table_owner='dbo',@table_qualifier='" + Name + "';");
+            foreach (Row row in rows)
+            {
+                var tableName = (string)row[2];
+                result.Add(tableName);
+            }
+            return result.ToArray();
         }
     }
 }

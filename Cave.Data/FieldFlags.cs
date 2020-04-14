@@ -1,6 +1,6 @@
 using System;
 
-namespace Cave
+namespace Cave.Data
 {
     /// <summary>
     /// Provides available field flags.
@@ -9,17 +9,12 @@ namespace Cave
     public enum FieldFlags
     {
         /// <summary>
-        /// Provides the mask for field equals checks (index and unique presence may not be detected on some database)
-        /// </summary>
-        MatchMask = ~(Index | Unique),
-
-        /// <summary>
         /// Default field type = no flags
         /// </summary>
         None = 0,
 
         /// <summary>
-        /// Field is an ID field (This is an exclusive flag!)
+        /// Field is an ID field
         /// </summary>
         ID = 1,
 

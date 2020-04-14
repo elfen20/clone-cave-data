@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using Cave.Collections.Generic;
-using Cave.Compression.Tar;
 
 namespace Cave.Data
 {
@@ -13,261 +12,15 @@ namespace Cave.Data
     /// Provides a table stored completely in memory.
     /// </summary>
     [DebuggerDisplay("{Name}")]
-    public class MemoryTable : Table, IMemoryTable
+    public class MemoryTable : Table
     {
-        #region static class
-
-        /// <summary>Searches the table for rows with given field value combinations.</summary>
-        /// <param name="layout">The layout.</param>
-        /// <param name="indices">The indices.</param>
-        /// <param name="table">The table.</param>
-        /// <param name="search">The search.</param>
-        /// <param name="resultOption">The result option.</param>
-        /// <param name="skipSearch">if set to <c>true</c> [skip search].</param>
-        /// <returns></returns>
-        /// <exception cref="ArgumentException">
-        /// </exception>
-        /// <exception cref="InvalidOperationException">
-        /// </exception>
-        /// <exception cref="NotSupportedException"></exception>
-        internal static IList<long> FindRows(RowLayout layout, IFieldIndex[] indices, ITable table, Search search, ResultOption resultOption, bool skipSearch = false)
-        {
-            if (resultOption == null)
-            {
-                resultOption = ResultOption.None;
-            }
-
-            if (search == null || search.Mode == SearchMode.None)
-            {
-                skipSearch = true;
-            }
-            else
-            {
-                search.LoadLayout(layout);
-            }
-
-            var grouping = new List<int>();
-            var sorting = new Set<int, ResultOptionMode>();
-
-            IEnumerable<long> sortedIDs = null;
-            var limit = -1;
-            var offset = -1;
-
-            if (resultOption != null)
-            {
-                foreach (ResultOption option in resultOption.ToArray())
-                {
-                    switch (option.Mode)
-                    {
-                        case ResultOptionMode.None: break;
-
-                        case ResultOptionMode.Group:
-                        {
-                            var fieldIndex = layout.GetFieldIndex(option.Parameter);
-                            if (fieldIndex < 0)
-                            {
-                                throw new ArgumentException(string.Format("Field '{0}' is not present!", resultOption.Parameter));
-                            }
-
-                            grouping.Add(fieldIndex);
-                        }
-                        break;
-
-                        case ResultOptionMode.SortAsc:
-                        case ResultOptionMode.SortDesc:
-                        {
-                            var fieldIndex = layout.GetFieldIndex(option.Parameter);
-                            if (fieldIndex < 0)
-                            {
-                                throw new ArgumentException(string.Format("Field '{0}' is not present!", option.Parameter));
-                            }
-
-                            if (fieldIndex == layout.IDFieldIndex)
-                            {
-                                sorting.Add(layout.GetFieldIndex(option.Parameter), option.Mode);
-                                if (sorting.Count == 1)
-                                {
-                                    sortedIDs = table.SortedIDs;
-                                    if (option.Mode == ResultOptionMode.SortDesc)
-                                    {
-                                        sortedIDs = sortedIDs.Reverse();
-                                    }
-                                }
-                                else
-                                {
-                                    sortedIDs = null;
-                                }
-                            }
-                            else
-                            {
-                                sorting.Add(layout.GetFieldIndex(option.Parameter), option.Mode);
-                                IFieldIndex index = indices?[fieldIndex];
-                                if (index != null)
-                                {
-                                    if (sorting.Count == 1)
-                                    {
-                                        sortedIDs = index.SortedIDs;
-                                        if (option.Mode == ResultOptionMode.SortDesc)
-                                        {
-                                            sortedIDs = sortedIDs.Reverse();
-                                        }
-                                    }
-                                    else
-                                    {
-                                        sortedIDs = null;
-                                    }
-                                }
-                                else
-                                {
-                                    sortedIDs = null;
-#if DEBUG
-                                    Debug.WriteLine(string.Format("Sorting of <yellow>{0}<default> requires slow result sort. Think about adding an index to field <yellow>{1}<default>!", resultOption, layout.GetProperties(fieldIndex)));
-#endif
-                                }
-                            }
-                        }
-                        break;
-
-                        case ResultOptionMode.Limit:
-                        {
-                            if (limit >= 0)
-                            {
-                                throw new InvalidOperationException(string.Format("Cannot set two different limits!"));
-                            }
-
-                            limit = Math.Abs(int.Parse(option.Parameter));
-                            break;
-                        }
-
-                        case ResultOptionMode.Offset:
-                        {
-                            if (offset >= 0)
-                            {
-                                throw new InvalidOperationException(string.Format("Cannot set two different offsets!"));
-                            }
-
-                            offset = Math.Abs(int.Parse(option.Parameter));
-                            break;
-                        }
-
-                        default: throw new NotSupportedException(string.Format("Option {0} is not supported!", option.Mode));
-                    }
-                }
-            }
-
-            IEnumerable<long> result;
-            if (skipSearch)
-            {
-                result = sortedIDs ?? table.IDs;
-            }
-            else
-            {
-                // simple ungrouped search
-                result = search.Scan(null, layout, indices, table);
-            }
-
-            // group by ?
-            if (grouping.Count > 0)
-            {
-                var groupedIDs = new Set<long>();
-                foreach (var groupField in grouping)
-                {
-                    var groupedValues = new Set<object>();
-                    foreach (var id in result)
-                    {
-                        var val = table.GetRow(id).GetValue(groupField);
-                        if (groupedValues.Contains(val))
-                        {
-                            continue;
-                        }
-
-                        groupedValues.Add(val);
-                        groupedIDs.Include(id);
-                    }
-                }
-                result = groupedIDs.ToList();
-            }
-
-            List<long> sorted = null;
-
-            // Sort by presorted ids
-            if (sortedIDs != null)
-            {
-                // no sort if we return only presorted ids
-                if (skipSearch)
-                {
-                    sorted = result.AsList();
-                }
-                else
-                {
-                    IItemSet<long> resultIDs = result.AsSet();
-                    sorted = new List<long>();
-                    foreach (var id in sortedIDs)
-                    {
-                        if (resultIDs.Contains(id))
-                        {
-                            sorted.Add(id);
-                        }
-                    }
-                }
-            }
-
-            // Manual sort
-            else if (sorting.Count > 0)
-            {
-                sorted = result.ToList();
-                if (sorting.Count > 1)
-                {
-                    sorting.Reverse();
-                }
-
-                foreach (ItemPair<int, ResultOptionMode> sort in sorting)
-                {
-                    var sorter = new TableSorter(table, sort.A, sort.B);
-                    sorted.Sort(sorter);
-                }
-            }
-
-            // no sort
-            else
-            {
-                sorted = result.AsList();
-            }
-
-            if (offset > -1 || limit > -1)
-            {
-                if (offset < 0)
-                {
-                    offset = 0;
-                }
-
-                if (offset >= sorted.Count)
-                {
-                    return new List<long>();
-                }
-
-                if (limit < 0)
-                {
-                    return sorted.SubRange(offset).ToList();
-                }
-
-                limit = Math.Min(limit, sorted.Count - offset);
-                return limit <= 0 ? new List<long>() : sorted.GetRange(offset, limit);
-            }
-            return sorted;
-        }
-        #endregion
-
-        #region private variables
+        #region fields
 
         /// <summary>Gets a value indicating whether this instance is readonly.</summary>
         bool isReadonly;
 
-        /// <summary>provides the next free id.</summary>
-        long nextFreeID = 1;
-
         /// <summary>The rows (id, row) dictionary.</summary>
-        FakeSortedDictionary<long, Row> items;
+        Dictionary<Identifier, object[]> rows = new Dictionary<Identifier, object[]>();
 
         /// <summary>The indices for fast lookups.</summary>
         FieldIndex[] indices;
@@ -280,31 +33,19 @@ namespace Cave.Data
         #region constructors
 
         /// <summary>
-        /// Creates an empty unbound memory table (within a new memory storage).
-        /// This is used by temporary tables and query results.
+        /// Initializes a new instance of the <see cref="MemoryTable"/> class.
         /// </summary>
-        public MemoryTable(RowLayout layout)
-            : this(MemoryDatabase.Default, layout)
+        protected MemoryTable()
         {
-        }
-
-        /// <summary>Creates a new empty MemoryTable for the specified database with the specified name.</summary>
-        /// <param name="database">The database the.</param>
-        /// <param name="layout">The layout of the table.</param>
-        /// <param name="options">The options.</param>
-        public MemoryTable(IDatabase database, RowLayout layout, MemoryTableOptions options = 0)
-            : base(database, layout)
-        {
-            items = new FakeSortedDictionary<long, Row>();
-            memoryTableOptions = options;
-            indices = CreateIndex(Layout, memoryTableOptions);
         }
 
         #endregion
 
+        #region properties
+
         #region IsReadonly
 
-        /// <summary>Gets a value indicating whether this instance is readonly.</summary>
+        /// <summary>Gets or sets a value indicating whether this instance is readonly.</summary>
         /// <value><c>true</c> if this instance is readonly; otherwise, <c>false</c>.</value>
         /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         /// <remarks>
@@ -324,6 +65,100 @@ namespace Cave.Data
                 isReadonly = value;
             }
         }
+        #endregion
+
+        #region RowCount
+
+        /// <inheritdoc/>
+        public override long RowCount => rows.Count;
+
+        #endregion
+
+        #endregion
+
+        #region functions
+
+        #region public static Create()
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MemoryTable"/> class.
+        /// </summary>
+        /// <param name="type">Table layout.</param>
+        /// <returns>Returns a new <see cref="MemoryTable"/> instance.</returns>
+        public static MemoryTable Create(Type type)
+        {
+            return Create(RowLayout.CreateTyped(type));
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MemoryTable"/> class.
+        /// </summary>
+        /// <param name="layout">Table layout.</param>
+        /// <returns>Returns a new <see cref="MemoryTable"/> instance.</returns>
+        public static MemoryTable Create(RowLayout layout)
+        {
+            return Create(MemoryDatabase.Default, layout);
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MemoryTable"/> class.
+        /// </summary>
+        /// <param name="database">The database the.</param>
+        /// <param name="layout">The layout of the table.</param>
+        /// <param name="options">The options.</param>
+        /// <returns>Returns a new <see cref="MemoryTable"/> instance.</returns>
+        public static MemoryTable Create(IDatabase database, RowLayout layout, MemoryTableOptions options = 0)
+        {
+            var result = new MemoryTable
+            {
+                memoryTableOptions = options,
+            };
+            result.Connect(database, default, layout);
+            return result;
+        }
+
+        #endregion
+
+        #region public static CreateIndex()
+
+        /// <summary>Creates a memory index for the specified layout.</summary>
+        /// <param name="layout">The layout.</param>
+        /// <param name="options">The options.</param>
+        /// <returns>Returns a field index array or null.</returns>
+        public static FieldIndex[] CreateIndex(RowLayout layout, MemoryTableOptions options = 0)
+        {
+            if ((options & MemoryTableOptions.DisableIndex) == 0)
+            {
+                var indexCount = 0;
+                var indices = new FieldIndex[layout.FieldCount];
+                for (var i = 0; i < indices.Length; i++)
+                {
+                    var field = layout[i];
+                    if ((field.Flags & (FieldFlags.Index | FieldFlags.ID)) != 0)
+                    {
+                        indices[i] = new FieldIndex();
+                        indexCount++;
+                    }
+                }
+                if (indexCount > 0)
+                {
+                    return indices;
+                }
+            }
+            return null;
+        }
+
+        #endregion
+
+        #region Initialize()
+
+        /// <inheritdoc/>
+        public override void Connect(IDatabase database, TableFlags flags, RowLayout layout)
+        {
+            base.Connect(database, flags, layout);
+            indices = CreateIndex(Layout, memoryTableOptions);
+        }
+
         #endregion
 
         #region Load Table
@@ -349,36 +184,44 @@ namespace Cave.Data
                 search = Search.None;
             }
 
-            lock (this)
+            Clear();
+            int offset = 0;
+            var rowCount = table.RowCount;
+
+            if (rowCount == 0)
             {
-                Clear();
-                long startID = 0;
-                var rowCount = table.RowCount;
-                while (true)
+                return;
+            }
+
+            while (true)
+            {
+                var rows = table.GetRows(search, ResultOption.Limit(Storage.TransactionRowCount) + ResultOption.Offset(offset));
+
+                var nextOffset = offset + rows.Count;
+                Insert(rows);
+                if (callback != null)
                 {
-                    var rows = table.GetRows(search & Search.FieldGreater(table.Layout.IDField.Name, startID), ResultOption.SortAscending("ID") + ResultOption.Limit(CaveSystemData.TransactionRowCount));
-                    if (rows.Count == 0)
+                    var e = new ProgressEventArgs(userItem, RowCount, rows.Count, rowCount, true);
+                    callback.Invoke(this, e);
+                    if (e.Break)
                     {
                         break;
                     }
+                }
+                else
+                {
+                    var progress = RowCount * 100f / rowCount;
+                    Trace.TraceInformation(string.Format("Loaded {0} rows from table {1} starting with offset {2} to {3} ({4:N}%)", rows.Count, table, offset, nextOffset, progress));
+                }
+                offset = nextOffset;
 
-                    var endID = Layout.GetID(rows[rows.Count - 1]);
-                    Insert(rows, false);
-                    if (callback != null)
+                if (rows.Count < Storage.TransactionRowCount)
+                {
+                    if (rowCount != RowCount)
                     {
-                        var e = new ProgressEventArgs(userItem, RowCount, rows.Count, rowCount, true);
-                        callback.Invoke(this, e);
-                        if (e.Break)
-                        {
-                            break;
-                        }
+                        throw new Exception();
                     }
-                    else
-                    {
-                        var progress = RowCount * 100f / rowCount;
-                        Trace.TraceInformation(string.Format("Loaded {0} rows from table {1} starting with ID {2} to {3} ({4:N}%)", rows.Count, table, startID, endID, progress));
-                    }
-                    startID = endID;
+                    break;
                 }
             }
         }
@@ -387,8 +230,8 @@ namespace Cave.Data
 
         #region SetRows
 
-        /// <summary>Replaces the whole data at the table with the specified one without writing transactions.</summary>
-        /// <param name="rows"></param>
+        /// <summary>Replaces the whole data at the table with the specified one.</summary>
+        /// <param name="rows">The rows to insert.</param>
         /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         /// <exception cref="ArgumentNullException">rows.</exception>
         public void SetRows(IEnumerable<Row> rows)
@@ -404,132 +247,62 @@ namespace Cave.Data
             }
 
             Clear();
-            foreach (Row item in rows)
+            foreach (Row row in rows)
             {
-                Insert(item, false);
+                Insert(row);
             }
         }
 
         #endregion
 
-        #region GetRow
+        #region GetRowAt
 
         /// <summary>
         /// This function does a lookup on the ids of the table and returns the row with the n-th ID where n is the given index.
         /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
-        /// <param name="index">The index of the row to be fetched</param>
         /// </summary>
+        /// <param name="index">The index of the row to be fetched.</param>
         /// <returns>Returns the row.</returns>
-        public override Row GetRowAt(int index)
-        {
-            var id = items.SortedKeys.ElementAt(index);
-            if (Database.Storage.LogVerboseMessages)
-            {
-                Trace.TraceInformation("IndexOf {0} is ID {1} at {2}", index, id, this);
-            }
-
-            return items[id];
-        }
-
-        /// <summary>
-        /// Gets a row from the table.
-        /// </summary>
-        /// <param name="id">The ID of the row to be fetched.</param>
-        /// <returns>Returns the row.</returns>
-        public override Row GetRow(long id)
-        {
-            return items[id];
-        }
-
-        /// <summary>
-        /// Gets an array containing all rows of the memory table.
-        /// </summary>
-        /// <returns></returns>
-        public override IList<Row> GetRows()
-        {
-            return items.Values;
-        }
-
-        /// <summary>Obtains the rows with the given ids.</summary>
-        /// <param name="ids">IDs of the rows to fetch from the table.</param>
-        /// <returns>Returns the rows.</returns>
-        public override IList<Row> GetRows(IEnumerable<long> ids)
-        {
-            var rows = new List<Row>();
-            foreach (var id in ids)
-            {
-                rows.Add(items[id]);
-            }
-            return rows;
-        }
+        public override Row GetRowAt(int index) => new Row(Layout, rows.Values.ElementAt(index), true);
 
         #endregion
 
         #region Exist
 
-        /// <summary>
-        /// Checks a given ID for existance.
-        /// </summary>
-        /// <param name="id">The dataset ID to look for.</param>
-        /// <returns>Returns whether the dataset exists or not.</returns>
-        public override bool Exist(long id)
+        /// <inheritdoc/>
+        public override bool Exist(Search search)
         {
-            return items.ContainsKey(id);
+            search.LoadLayout(Layout);
+            return rows.Values.Any(row => search.Check(row));
         }
+
+        /// <inheritdoc/>
+        public override bool Exist(Row row) => Exist(new Identifier(Layout, row));
 
         #endregion
 
         #region Replace
 
-        /// <summary>
-        /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
-        /// </summary>
-        /// <param name="row">The row to replace (valid ID needed).</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
+        /// <inheritdoc/>
         public override void Replace(Row row)
         {
-            Replace(row, TransactionLog != null);
-        }
-
-        /// <summary>
-        /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
-        /// </summary>
-        /// <param name="row">The row to replace (valid ID needed).</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
-        public void Replace(Row row, bool writeTransaction)
-        {
-            var id = Layout.GetID(row);
-            if (id <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(row), "Invalid ID!");
-            }
-
+            var id = new Identifier(Layout, row);
             if (Exist(id))
             {
-                Update(row, writeTransaction);
+                Update(row, id);
             }
             else
             {
-                id = Insert(row, writeTransaction);
-            }
-            if (writeTransaction)
-            {
-                TransactionLog?.AddReplaced(id, row.SetID(Layout.IDFieldIndex, id));
+                Insert(row, id);
             }
         }
 
-        /// <summary>
-        /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
-        /// </summary>
-        /// <param name="rows">The rows to replace (valid ID needed).</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
-        public void Replace(IEnumerable<Row> rows, bool writeTransaction)
+        /// <inheritdoc/>
+        public override void Replace(IEnumerable<Row> rows)
         {
-            foreach (Row row in rows)
+            foreach (var row in rows)
             {
-                Replace(row, writeTransaction);
+                Replace(row);
             }
         }
 
@@ -537,58 +310,68 @@ namespace Cave.Data
 
         #region Insert
 
-        /// <summary>
-        /// Inserts a row to the table. If an ID &lt; 0 is given an automatically generated ID will be used to add the dataset.
-        /// </summary>
-        /// <param name="row">The row to insert. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.</param>
-        /// <returns>Returns the ID of the inserted dataset.</returns>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
-        public override long Insert(Row row)
+        /// <inheritdoc/>
+        public override Row Insert(Row row)
         {
-            return Insert(row, TransactionLog != null);
+            var id = new Identifier(Layout, row);
+            return Insert(row, id);
         }
 
-        /// <summary>
-        /// Inserts a row to the table. If an ID &lt; 0 is given an automatically generated ID will be used to add the dataset.
-        /// </summary>
-        /// <param name="row">The row to insert. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
-        /// <returns>Returns the ID of the inserted dataset.</returns>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
-        public long Insert(Row row, bool writeTransaction)
+        /// <inheritdoc/>
+        public override void Insert(IEnumerable<Row> rows)
+        {
+            foreach (var row in rows)
+            {
+                Insert(row);
+            }
+        }
+
+        #endregion
+
+        #region Update
+
+        /// <inheritdoc/>
+        public override void Update(Row row)
+        {
+            var id = new Identifier(Layout, row);
+            Update(row, id);
+        }
+
+        /// <inheritdoc/>
+        public override void Update(IEnumerable<Row> rows)
+        {
+            foreach (var row in rows)
+            {
+                Update(row);
+            }
+        }
+
+        #endregion
+
+        #region Delete
+
+        /// <inheritdoc/>
+        public override void Delete(Row row)
         {
             if (isReadonly)
             {
                 throw new ReadOnlyException(string.Format("Table {0} is readonly!", this));
             }
 
-            var id = Layout.GetID(row);
             if (Database.Storage.LogVerboseMessages)
             {
-                Trace.TraceInformation("Insert {0} ID {1} at {2}", row, id, this);
+                Trace.TraceInformation("Delete {0} at {1}", row, this);
             }
 
-            if (id <= 0)
+            var id = new Identifier(Layout, row);
+            if (!rows.Remove(id))
             {
-                id = nextFreeID++;
-                row = row.SetID(Layout.IDFieldIndex, id);
-                items.Add(id, row);
+                throw new ArgumentException(string.Format("Row {0} not found at table {1}!", row, Name));
             }
-            else
-            {
-                items.Add(id, row);
-                if (nextFreeID <= id)
-                {
-                    nextFreeID = id + 1;
-                }
-            }
-            if (writeTransaction)
-            {
-                TransactionLog?.AddInserted(id, row);
-            }
+
             if (indices != null)
             {
-                for (var i = 0; i < FieldCount; i++)
+                for (var i = 0; i < Layout.FieldCount; i++)
                 {
                     FieldIndex index = indices[i];
                     if (index == null)
@@ -596,7 +379,320 @@ namespace Cave.Data
                         continue;
                     }
 
-                    index.Add(id, row.GetValue(i));
+                    index.Delete(row.Values, i);
+#if DEBUG
+                    if (index.Count != RowCount)
+                    {
+                        throw new Exception(string.Format("BFDE: Operation: {0}, index.Count {1}, RowCount {2}", "Delete", index.Count, RowCount));
+                    }
+#endif
+                }
+            }
+            IncreaseSequenceNumber();
+        }
+
+        /// <inheritdoc/>
+        public override void Delete(IEnumerable<Row> rows)
+        {
+            foreach (var row in rows)
+            {
+                Delete(row);
+            }
+        }
+
+        /// <summary>Removes all rows from the table matching the specified search.</summary>
+        /// <param name="search">The Search used to identify rows for removal.</param>
+        /// <returns>Returns the number of dataset deleted.</returns>
+        public override int TryDelete(Search search)
+        {
+            if (search == null)
+            {
+                search = Search.None;
+            }
+
+            var rows = search.Scan(null, Layout, indices, this);
+            var count = 0;
+            foreach (var row in rows)
+            {
+                Delete(row);
+                count++;
+            }
+            return count;
+        }
+
+        #endregion
+
+        #region Clear
+
+        /// <inheritdoc/>
+        public override void Clear()
+        {
+            if (isReadonly)
+            {
+                throw new ReadOnlyException(string.Format("Table {0} is readonly!", this));
+            }
+
+            if (Database.Storage.LogVerboseMessages)
+            {
+                Trace.TraceInformation("Clear {0}", this);
+            }
+
+            rows = new Dictionary<Identifier, object[]>();
+            indices = CreateIndex(Layout, memoryTableOptions);
+            IncreaseSequenceNumber();
+        }
+
+        #endregion
+
+        #region Count
+
+        /// <inheritdoc/>
+        public override long Count(Search search = null, ResultOption resultOption = null) => GetRows(search, resultOption, false).Count;
+
+        #endregion
+
+        #region GetRows()
+
+        /// <inheritdoc/>
+        public override IList<Row> GetRows() => rows.Values.Select(r => new Row(Layout, r, true)).ToList();
+
+        #endregion
+
+        #region GetRows
+
+        /// <inheritdoc/>
+        public override IList<Row> GetRows(Search search = null, ResultOption resultOption = null) => GetRows(search, resultOption, false);
+
+        #endregion
+
+        #region GetRow
+
+        /// <inheritdoc/>
+        public override Row GetRow(Search search = null, ResultOption resultOption = null) => GetRows(search, resultOption).Single();
+
+        #endregion
+
+        #region additional functionality
+
+        /// <summary>
+        /// Checks an identififer for existance.
+        /// </summary>
+        /// <param name="id">The identifier.</param>
+        /// <returns>True if the id is found at the table, false otherwise.</returns>
+        public bool Exist(Identifier id) => rows.ContainsKey(id);
+
+        /// <summary>
+        /// Gets a row from the table.
+        /// </summary>
+        /// <param name="id">The identifier of the row to be fetched.</param>
+        /// <returns>Returns the row.</returns>
+        public Row GetRow(Identifier id)
+        {
+            return new Row(Layout, rows[id], true);
+        }
+
+        /// <summary>Obtains the rows with the given ids.</summary>
+        /// <param name="ids">Identifiers of the rows to fetch from the table.</param>
+        /// <returns>Returns the rows.</returns>
+        public IList<Row> GetRows(IEnumerable<Identifier> ids)
+        {
+            var result = new List<Row>();
+            foreach (var id in ids)
+            {
+                result.Add(new Row(Layout, rows[id], true));
+            }
+            return result;
+        }
+
+        /// <summary>Searches the table for rows with given field value combinations.</summary>
+        /// <param name="search">The search.</param>
+        /// <param name="resultOption">The result option.</param>
+        /// <param name="skipSearch">if set to <c>true</c> [skip search].</param>
+        /// <returns>A list of rows matching the specified criteria.</returns>
+        /// <exception cref="ArgumentException">Field '{Parameter}' is not present!.</exception>
+        /// <exception cref="InvalidOperationException">Cannot set two different limits or offsets!.</exception>
+        /// <exception cref="NotSupportedException">Option {option.Mode} is not supported!.</exception>
+        IList<Row> GetRows(Search search, ResultOption resultOption, bool skipSearch = false)
+        {
+            if (resultOption == null)
+            {
+                resultOption = ResultOption.None;
+            }
+
+            if (search == null || search.Mode == SearchMode.None)
+            {
+                skipSearch = true;
+            }
+            else
+            {
+                search.LoadLayout(Layout);
+            }
+
+            var grouping = new List<int>();
+            var sorting = new Set<int, ResultOptionMode>();
+            var limit = -1;
+            var offset = -1;
+
+            if (resultOption != null)
+            {
+                foreach (ResultOption option in resultOption.ToArray())
+                {
+                    switch (option.Mode)
+                    {
+                        case ResultOptionMode.None: break;
+
+                        case ResultOptionMode.Group:
+                        {
+                            var fieldIndex = Layout.GetFieldIndex(option.Parameter, true);
+                            grouping.Add(fieldIndex);
+                        }
+                        break;
+
+                        case ResultOptionMode.SortAsc:
+                        case ResultOptionMode.SortDesc:
+                        {
+                            var fieldIndex = Layout.GetFieldIndex(option.Parameter, true);
+                            sorting.Add(fieldIndex, option.Mode);
+                        }
+                        break;
+
+                        case ResultOptionMode.Limit:
+                        {
+                            if (limit >= 0)
+                            {
+                                throw new InvalidOperationException("Cannot set two different limits!");
+                            }
+
+                            limit = Math.Abs(int.Parse(option.Parameter));
+                            break;
+                        }
+
+                        case ResultOptionMode.Offset:
+                        {
+                            if (offset >= 0)
+                            {
+                                throw new InvalidOperationException("Cannot set two different offsets!");
+                            }
+
+                            offset = Math.Abs(int.Parse(option.Parameter));
+                            break;
+                        }
+
+                        default: throw new NotSupportedException($"Option {option.Mode} is not supported!");
+                    }
+                }
+            }
+            IEnumerable<Row> result;
+            if (skipSearch)
+            {
+                result = rows.Values.Select(r => new Row(Layout, r, true));
+            }
+            else
+            {
+                // simple ungrouped search
+                result = search.Scan(null, Layout, indices, this);
+            }
+
+            // group by ?
+            if (grouping.Count > 0)
+            {
+                var groupedRows = new List<Row>();
+                foreach (var groupField in grouping)
+                {
+                    var groupedValues = new Set<object>();
+                    foreach (var row in result)
+                    {
+                        var val = row[groupField];
+                        if (groupedValues.Contains(val))
+                        {
+                            continue;
+                        }
+
+                        groupedValues.Add(val);
+                        groupedRows.Add(row);
+                    }
+                }
+                result = groupedRows;
+            }
+
+            List<Row> sorted = null;
+            if (sorting.Count > 0)
+            {
+                sorted = result.ToList();
+                if (sorting.Count > 1)
+                {
+                    sorting.Reverse();
+                }
+
+                foreach (ItemPair<int, ResultOptionMode> sort in sorting)
+                {
+                    var sorter = new TableSorter(Layout[sort.A], sort.B);
+                    sorted.Sort(sorter);
+                }
+            }
+            else
+            {
+                // no sort
+                sorted = result.AsList();
+            }
+
+            if (offset > -1 || limit > -1)
+            {
+                if (offset < 0)
+                {
+                    offset = 0;
+                }
+
+                if (offset >= sorted.Count)
+                {
+                    return new Row[0];
+                }
+
+                if (limit < 0)
+                {
+                    return sorted.SubRange(offset).ToList();
+                }
+
+                limit = Math.Min(limit, sorted.Count - offset);
+                return limit <= 0 ? new Row[0] : (IList<Row>)sorted.GetRange(offset, limit);
+            }
+            return sorted;
+        }
+        #endregion
+
+        #region private functions
+
+        Row Insert(Row row, Identifier id)
+        {
+            if (isReadonly)
+            {
+                throw new ReadOnlyException(string.Format("Table {0} is readonly!", this));
+            }
+
+            if (Database.Storage.LogVerboseMessages)
+            {
+                Trace.TraceInformation("Insert {0} at {1}", row, this);
+            }
+
+            var autoinc = Layout.Identifier.Where(f => f.Flags.HasFlag(FieldFlags.AutoIncrement));
+            if (autoinc.Any())
+            {
+                GetAutoIncrement(ref row, ref id, autoinc);
+            }
+
+            var values = row.CopyValues();
+            rows.Add(id, values);
+            if (indices != null)
+            {
+                for (var i = 0; i < Layout.FieldCount; i++)
+                {
+                    FieldIndex index = indices[i];
+                    if (index == null)
+                    {
+                        continue;
+                    }
+
+                    index.Add(values, i);
 #if DEBUG
                     if (index.Count != RowCount)
                     {
@@ -606,79 +702,103 @@ namespace Cave.Data
                 }
             }
             IncreaseSequenceNumber();
-            return id;
+            return row;
         }
 
-        /// <summary>
-        /// Inserts rows into the table using a transaction.
-        /// </summary>
-        /// <param name="rows">The rows to insert.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
-        public void Insert(IEnumerable<Row> rows, bool writeTransaction)
+        void GetAutoIncrement(ref Row row, ref Identifier id, IEnumerable<IFieldProperties> autoinc)
         {
-            if (rows == null)
+            var values = row.CopyValues();
+
+            // only fields that are not already set
+            var fields = autoinc.Where(f => values[f.Index] == null).ToArray();
+            if (!fields.Any())
             {
-                throw new ArgumentNullException("Rows");
+                return;
             }
 
-            foreach (Row row in rows)
+            for (int i = 0; i < 10; i++)
             {
-                Insert(row, writeTransaction);
+                foreach (var field in fields)
+                {
+                    switch (field.DataType)
+                    {
+                        default:
+                            throw new NotSupportedException($"Autoincrement field {field} not supported!");
+                        case DataType.DateTime:
+                            values[field.Index] = DateTime.UtcNow;
+                            break;
+                        case DataType.User:
+                            if (field.ValueType == typeof(Guid))
+                            {
+                                values[field.Index] = Guid.NewGuid();
+                            }
+                            else
+                            {
+                                throw new NotSupportedException($"Autoincrement field {field} not supported!");
+                            }
+                            break;
+                        case DataType.Int8:
+                            values[field.Index] = Maximum<sbyte>(field.Name) ?? 0 + 1;
+                            break;
+                        case DataType.UInt8:
+                            values[field.Index] = Maximum<byte>(field.Name) ?? 0 + 1;
+                            break;
+                        case DataType.Int16:
+                            values[field.Index] = Maximum<short>(field.Name) ?? 0 + 1;
+                            break;
+                        case DataType.UInt16:
+                            values[field.Index] = Maximum<ushort>(field.Name) ?? 0 + 1;
+                            break;
+                        case DataType.Int32:
+                            values[field.Index] = Maximum<int>(field.Name) ?? 0 + 1;
+                            break;
+                        case DataType.UInt32:
+                            values[field.Index] = Maximum<uint>(field.Name) ?? 0 + 1;
+                            break;
+                        case DataType.Int64:
+                            values[field.Index] = Maximum<long>(field.Name) ?? 0 + 1;
+                            break;
+                        case DataType.UInt64:
+                            values[field.Index] = Maximum<ulong>(field.Name) ?? 0 + 1;
+                            break;
+                    }
+                }
+
+                var newRow = new Row(Layout, values, false);
+                var newId = new Identifier(Layout, newRow);
+                if (!Exist(newId))
+                {
+                    id = newId;
+                    row = newRow;
+                    return;
+                }
             }
+
+            throw new InvalidDataException("Could not create autoincrement identifier!");
         }
 
-        #endregion
-
-        #region Update
-
-        /// <summary>
-        /// Updates a row to the table. The row must exist already!.
-        /// </summary>
-        /// <param name="row">The row to update.</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
-        public override void Update(Row row)
+        void Update(Row row, Identifier id)
         {
-            Update(row, TransactionLog != null);
-        }
-
-        /// <summary>
-        /// Updates a row to the table. The row must exist already!.
-        /// </summary>
-        /// <param name="row">The row to update.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
-        public void Update(Row row, bool writeTransaction)
-        {
+            object[] values = row.CopyValues();
             if (isReadonly)
             {
                 throw new ReadOnlyException(string.Format("Table {0} is readonly!", this));
             }
 
-            var id = Layout.GetID(row);
             if (Database.Storage.LogVerboseMessages)
             {
-                Trace.TraceInformation("Update {0} ID {1} at {2}", row, id, this);
+                Trace.TraceInformation("Update {0} ID {1} at {2}", values, id, this);
             }
 
-            if (id <= 0)
-            {
-                throw new ArgumentException("Row ID is out of range", nameof(row));
-            }
-
-            if (!items.TryGetValue(id, out Row oldRow))
+            if (!rows.TryGetValue(id, out object[] oldValues))
             {
                 throw new KeyNotFoundException("ID not present!");
             }
 
-            items[id] = row;
-            if (writeTransaction)
-            {
-                TransactionLog?.AddUpdated(id, row);
-            }
+            rows[id] = values;
             if (indices != null)
             {
-                for (var i = 0; i < FieldCount; i++)
+                for (var i = 0; i < Layout.FieldCount; i++)
                 {
                     FieldIndex index = indices[i];
                     if (index == null)
@@ -686,7 +806,7 @@ namespace Cave.Data
                         continue;
                     }
 
-                    index.Replace(id, oldRow.GetValue(i), row.GetValue(i));
+                    index.Replace(oldValues, values, i);
 #if DEBUG
                     if (index.Count != RowCount)
                     {
@@ -698,278 +818,8 @@ namespace Cave.Data
             IncreaseSequenceNumber();
         }
 
-        /// <summary>
-        /// Updates rows at the table. The rows must exist already!.
-        /// </summary>
-        /// <param name="rows">The rows to update.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
-        public void Update(IEnumerable<Row> rows, bool writeTransaction)
-        {
-            if (rows == null)
-            {
-                throw new ArgumentNullException("Rows");
-            }
-
-            foreach (Row r in rows)
-            {
-                Update(r, writeTransaction);
-            }
-        }
-
         #endregion
 
-        #region Delete
-
-        /// <summary>
-        /// Removes a row from the table.
-        /// </summary>
-        /// <param name="id">The dataset ID to remove.</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
-        public override void Delete(long id)
-        {
-            Delete(id, TransactionLog != null);
-        }
-
-        /// <summary>
-        /// Removes a row from the table.
-        /// </summary>
-        /// <param name="id">The dataset ID to remove.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog"/>.</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
-        public void Delete(long id, bool writeTransaction = true)
-        {
-            if (isReadonly)
-            {
-                throw new ReadOnlyException(string.Format("Table {0} is readonly!", this));
-            }
-
-            if (Database.Storage.LogVerboseMessages)
-            {
-                Trace.TraceInformation("Delete {0} at {1}", id, this);
-            }
-
-            Row row = null;
-            if (indices != null)
-            {
-                row = GetRow(id);
-            }
-
-            if (!items.Remove(id))
-            {
-                throw new ArgumentException(string.Format("ID {0} not found at table {1}!", id, Name));
-            }
-
-            if (indices != null)
-            {
-                for (var i = 0; i < FieldCount; i++)
-                {
-                    FieldIndex index = indices[i];
-                    if (index == null)
-                    {
-                        continue;
-                    }
-
-                    index.Delete(id, row.GetValue(i));
-#if DEBUG
-                    if (index.Count != RowCount)
-                    {
-                        throw new Exception(string.Format("BFDE: Operation: {0}, index.Count {1}, RowCount {2}", "Delete", index.Count, RowCount));
-                    }
-#endif
-                }
-            }
-            if (writeTransaction)
-            {
-                TransactionLog?.AddDeleted(id);
-            }
-            IncreaseSequenceNumber();
-        }
-
-        /// <summary>Removes a row from the table.</summary>
-        /// <param name="ids">The ids.</param>
-        /// <param name="writeTransaction">If true a transaction is generated at the <see cref="TransactionLog" />.</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
-        public void Delete(IEnumerable<long> ids, bool writeTransaction = true)
-        {
-            foreach (var id in ids)
-            {
-                Delete(id, writeTransaction);
-            }
-        }
-
-        /// <summary>Removes all rows from the table matching the specified search.</summary>
-        /// <param name="search">The Search used to identify rows for removal.</param>
-        /// <returns>Returns the number of dataset deleted.</returns>
-        public override int TryDelete(Search search)
-        {
-            return TryDelete(search, TransactionLog != null);
-        }
-
-        /// <summary>Removes all rows from the table matching the specified search.</summary>
-        /// <param name="search">The Search used to identify rows for removal.</param>
-        /// <param name="writeTransaction">if set to <c>true</c> [write transaction].</param>
-        /// <returns>Returns the number of dataset deleted.</returns>
-        public int TryDelete(Search search, bool writeTransaction)
-        {
-            if (search == null)
-            {
-                search = Search.None;
-            }
-
-            IEnumerable<long> ids = search.Scan(null, Layout, indices, this);
-            var count = 0;
-            foreach (var id in ids)
-            {
-                Delete(id, writeTransaction);
-                count++;
-            }
-            return count;
-        }
-
         #endregion
-
-        #region Clear
-
-        /// <summary>
-        /// Clears all rows of the table (this operation will not write anything to the transaction log).
-        /// </summary>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
-        public override void Clear()
-        {
-            Clear(true);
-        }
-
-        /// <summary>
-        /// Clears all rows of the table (this operation will not write anything to the transaction log).
-        /// </summary>
-        /// <param name="resetIDs">if set to <c>true</c> [the next insert will get id 1].</param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
-        public void Clear(bool resetIDs)
-        {
-            if (isReadonly)
-            {
-                throw new ReadOnlyException(string.Format("Table {0} is readonly!", this));
-            }
-
-            if (resetIDs)
-            {
-                nextFreeID = 1;
-            }
-
-            if (Database.Storage.LogVerboseMessages)
-            {
-                Trace.TraceInformation("Clear {0}", this);
-            }
-
-            items = new FakeSortedDictionary<long, Row>();
-            indices = CreateIndex(Layout, memoryTableOptions);
-            IncreaseSequenceNumber();
-        }
-
-        #endregion
-
-        #region FindRows
-
-        /// <summary>
-        /// Searches the table for rows with given field value combinations.
-        /// </summary>
-        /// <param name="search">The search to run.</param>
-        /// <param name="resultOption">Options for the search and the result set.</param>
-        /// <returns>Returns the ID of the row found or -1.</returns>
-        public override IList<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
-        {
-            return FindRows(Layout, indices, this, search, resultOption);
-        }
-
-        #endregion
-
-        #region Properties
-
-        /// <summary>
-        /// Gets the RowCount.
-        /// </summary>
-        public override long RowCount => items.Count;
-
-        #region IDs
-
-        /// <inheritdoc />
-        public override IList<long> IDs => items.UnsortedKeys.ToList();
-
-        /// <inheritdoc />
-        public override IList<long> SortedIDs => items.SortedKeys;
-
-        #endregion
-
-        /// <summary>
-        /// Gets/sets the transaction log used to store all changes. The user has to create it, dequeue the items and
-        /// dispose it after usage!.
-        /// </summary>
-        public TransactionLog TransactionLog { get; set; }
-
-        #endregion
-
-        #region Used / Free IDs
-
-        /// <summary>
-        /// Gets the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!).
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public override long GetNextUsedID(long id)
-        {
-            foreach (var index in items.SortedKeys)
-            {
-                if (index > id)
-                {
-                    return index;
-                }
-            }
-            return -1;
-        }
-
-        /// <summary>
-        /// Gets the next free ID at the table.
-        /// </summary>
-        /// <returns></returns>
-        public override long GetNextFreeID()
-        {
-            return nextFreeID;
-        }
-
-        /// <summary>
-        /// Tries to set the next free id used at inserts.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
-        public void SetNextFreeID(long id)
-        {
-            if (isReadonly)
-            {
-                throw new ReadOnlyException(string.Format("Table {0} is readonly!", this));
-            }
-
-            if (id < nextFreeID)
-            {
-                throw new InvalidOperationException(string.Format("Cannot set NextFreeID to a value in range of existant IDs!"));
-            }
-
-            nextFreeID = id;
-        }
-
-        #endregion
-
-        /// <summary>Saves the table to a tar file.</summary>
-        /// <param name="file">The file.</param>
-        public void SaveTo(TarWriter file)
-        {
-            using (var stream = new MemoryStream())
-            {
-                var writer = new DatWriter(Layout, stream);
-                writer.WriteTable(this);
-                stream.Position = 0;
-                file.AddFile(Database.Name + "/" + Name, stream, (int)stream.Length);
-            }
-        }
     }
 }

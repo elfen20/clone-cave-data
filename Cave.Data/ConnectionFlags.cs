@@ -3,10 +3,10 @@
 namespace Cave.Data
 {
     /// <summary>
-    /// Database connection options.
+    /// Database connection flags.
     /// </summary>
     [Flags]
-    public enum DbConnectionOptions
+    public enum ConnectionFlags
     {
         /// <summary>No options</summary>
         None = 0,
@@ -20,10 +20,5 @@ namespace Cave.Data
 
         /// <summary>Enable verbose logging</summary>
         VerboseLogging = 4,
-
-        /// <summary>
-        /// Allows to load assemblies.
-        /// </summary>
-        TryLoadAssemblies = 8,
     }
 }

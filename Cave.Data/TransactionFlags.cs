@@ -14,9 +14,6 @@ namespace Cave.Data
         /// <summary>Throw exceptions</summary>
         ThrowExceptions = 1,
 
-        /// <summary>Allow requing of failed transactions</summary>
-        AllowRequeue = 2,
-
         /// <summary>The default settings</summary>
         Default = 0xFFFF,
     }

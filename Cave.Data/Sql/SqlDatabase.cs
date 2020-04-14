@@ -10,12 +10,7 @@ namespace Cave.Data.Sql
         bool closed = false;
 
         /// <summary>
-        /// Gets whether this instance was closed.
-        /// </summary>
-        public override bool Closed => closed;
-
-        /// <summary>
-        /// Creates a new SqlDatabase instance.
+        /// Initializes a new instance of the <see cref="SqlDatabase"/> class.
         /// </summary>
         /// <param name="storage">The storage engine the database belongs to.</param>
         /// <param name="name">The name of the database.</param>
@@ -30,27 +25,27 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
+        /// Gets a value indicating whether this instance was closed.
+        /// </summary>
+        public override bool IsClosed => closed;
+
+        /// <summary>
         /// Gets the underlying SqlStorage engine.
         /// </summary>
         protected SqlStorage SqlStorage { get; private set; }
 
         #region IDatabase Member
 
-        /// <summary>
-        /// Removes a table from the database.
-        /// </summary>
-        /// <param name="table"></param>
+        /// <inheritdoc/>
         public override void DeleteTable(string table)
         {
-            SqlStorage.Execute(Name, table, "DROP TABLE " + SqlStorage.FQTN(Name, table));
+            SqlStorage.Execute(database: Name, table: table, cmd: "DROP TABLE " + SqlStorage.FQTN(Name, table));
         }
 
-        /// <summary>
-        /// Closes the instance and flushes all cached data.
-        /// </summary>
+        /// <inheritdoc/>
         public override void Close()
         {
-            if (Closed)
+            if (IsClosed)
             {
                 throw new ObjectDisposedException(Name);
             }
@@ -59,14 +54,5 @@ namespace Cave.Data.Sql
         }
 
         #endregion
-
-        /// <summary>
-        /// Gets the name database.
-        /// </summary>
-        /// <returns></returns>
-        public override string ToString()
-        {
-            return Name;
-        }
     }
 }

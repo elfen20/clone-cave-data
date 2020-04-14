@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Linq;
 using Cave.Data.Sql;
 
 namespace Cave.Data.Postgres
@@ -8,60 +8,49 @@ namespace Cave.Data.Postgres
     /// </summary>
     public class PgSqlTable : SqlTable
     {
-        #region PgSql specific overrides
-
-        /// <summary>Creates the replace.</summary>
-        /// <param name="cb">The cb.</param>
-        /// <param name="row">The row.</param>
-        protected override void CreateReplace(SqlCommandBuilder cb, Row row)
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PgSqlTable"/> class.
+        /// </summary>
+        protected PgSqlTable()
         {
-            throw new NotImplementedException();
         }
 
         /// <summary>
-        /// This function does a lookup on the ids of the table and returns the row with the n-th ID where n is the specified index.
-        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
-        /// <param name="index">The index of the row to be fetched</param>
+        /// Connects to the specified database and tablename.
         /// </summary>
-        /// <returns>Returns the row.</returns>
-        public override Row GetRowAt(int index)
+        /// <param name="database">Database to connect to.</param>
+        /// <param name="flags">Flags used to connect to the table.</param>
+        /// <param name="tableName">The table to connect to.</param>
+        /// <returns>Returns a new <see cref="PgSqlTable"/> instance.</returns>
+        public static PgSqlTable Connect(PgSqlDatabase database, TableFlags flags, string tableName)
         {
-            var id = (long)SqlStorage.QueryValue(Database.Name, Name, "SELECT ID FROM " + FQTN + " ORDER BY ID LIMIT " + index + ",1");
-            return GetRow(id);
+            var table = new PgSqlTable();
+            table.Initialize(database, flags, tableName);
+            return table;
         }
 
         /// <summary>
-        /// Gets the command to retrieve the last inserted row.
+        /// Connects to the specified database and tablename.
         /// </summary>
-        /// <param name="row">The row to be inserted.</param>
-        /// <returns></returns>
-        protected override string GetLastInsertedIDCommand(Row row)
+        /// <param name="database">Database to connect to.</param>
+        /// <param name="flags">Flags used to connect to the table.</param>
+        /// <param name="layout">The table layout.</param>
+        /// <returns>Returns a new <see cref="PgSqlTable"/> instance.</returns>
+        public static PgSqlTable Connect(PgSqlDatabase database, TableFlags flags, RowLayout layout)
         {
-            return "SELECT LASTVAL();";
+            var table = new PgSqlTable();
+            table.Connect((IDatabase)database, flags, layout);
+            return table;
         }
 
-        #endregion
+        /// <inheritdoc/>
+        public override Row GetRowAt(int index) => QueryRow("SELECT * FROM " + FQTN + " LIMIT " + index + ",1");
 
-        /// <summary>
-        /// Creates a new postgre sql table instance (checks layout against database).
-        /// </summary>
-        /// <param name="database">The database the table belongs to.</param>
-        /// <param name="layout">Layout of the table.</param>
-        public PgSqlTable(PgSqlDatabase database, RowLayout layout)
-            : base(database, layout)
+        /// <inheritdoc/>
+        protected override void CreateLastInsertedRowCommand(SqlCommandBuilder commandBuilder, Row row)
         {
-            AutoIncrementValue = "DEFAULT";
-        }
-
-        /// <summary>
-        /// Creates a new postgre sql table instance (retrieves layout from database).
-        /// </summary>
-        /// <param name="database">The database the table belongs to.</param>
-        /// <param name="table">Name of the table.</param>
-        public PgSqlTable(PgSqlDatabase database, string table)
-            : base(database, table)
-        {
-            AutoIncrementValue = "DEFAULT";
+            var idField = Layout.Identifier.Single();
+            commandBuilder.AppendLine($"SELECT * FROM {FQTN} WHERE {Storage.EscapeFieldName(idField)} = LASTVAL();");
         }
     }
 }

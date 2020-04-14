@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Linq;
 using Cave;
 using Cave.Collections;
 using Cave.Data;
@@ -42,6 +43,8 @@ namespace Test.Cave
     [Table("TestStructBug")]
     struct TestStructBug
     {
+        static Environment.SpecialFolder[] enumValues = Enum.GetValues(typeof(Environment.SpecialFolder)).Cast<Environment.SpecialFolder>().ToArray();
+
         public static TestStructBug Create(int i)
         {
             var t = new TestStructBug()
@@ -52,7 +55,7 @@ namespace Test.Cave
                 BuggyField = i.ToString(),
                 IndexedField = (uint)i,
                 NoField = i.ToString(),
-                SomeEnum = (PlatformType)i,
+                SomeEnum = enumValues[i % enumValues.Length],
                 UniqueIndexedField = (sbyte)(-i / 10),
                 UniqueField = (short)i,
                 AutoIncField = (ushort)i,
@@ -90,7 +93,7 @@ namespace Test.Cave
 
         [Field(Name = "Field8", Length = 8)]
         [Description("Fabulous Field H")]
-        public PlatformType SomeEnum;
+        public Environment.SpecialFolder SomeEnum;
 
         public string NoField;
 

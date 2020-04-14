@@ -116,14 +116,13 @@ namespace Test
             t3.Init(DateTime.Now.TimeOfDay);
 
             var ms = new MemoryStream();
-            CSVWriter w = new CSVWriter(ms);
-            w.SetLayout(layout);
+            CsvWriter w = new CsvWriter(layout, ms);
             w.Write(t1);
             w.Write(t2);
             w.Write(t3);
             w.Close();
             var ms2 = new MemoryStream(ms.ToArray());
-            CSVReader r = new CSVReader(layout, ms2);
+            CsvReader r = new CsvReader(layout, ms2);
             var list = r.ReadList<TestStruct>();
             Assert.AreEqual(3, list.Count);
             Assert.AreEqual(t1, list[0]);

@@ -8,11 +8,11 @@ namespace Cave.Data.SQLite
         string[] data;
 
         /// <summary>
-        /// Creates a new <see cref="SubversionEntry"/> from the specified cdata.
+        /// Initializes a new instance of the <see cref="SubversionEntry"/> class.
         /// </summary>
-        /// <param name="data"></param>
-        /// <param name="version"></param>
-        public SubversionEntry(string[] data, int version)
+        /// <param name="data">Lines.</param>
+        /// <param name="version">Version code.</param>
+        internal SubversionEntry(string[] data, int version)
         {
             Version = version;
             this.data = data;
@@ -69,19 +69,13 @@ namespace Cave.Data.SQLite
             }
         }
 
-        /// <summary>
-        /// Provides a Name and Type string.
-        /// </summary>
-        /// <returns></returns>
+        /// <inheritdoc/>
         public override string ToString()
         {
             return Name + " " + Type;
         }
 
-        /// <summary>
-        /// Provides a hascode for this instance.
-        /// </summary>
-        /// <returns></returns>
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
             return ToString().GetHashCode();

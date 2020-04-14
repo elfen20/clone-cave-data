@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,8 +9,59 @@ namespace Cave.Data
     /// <summary>
     /// Provides resultset options for search, sort and grouping functions.
     /// </summary>
-    public sealed class ResultOption
+    public sealed class ResultOption : IEnumerable<ResultOption>
     {
+        readonly IEnumerable<ResultOption> list;
+
+        ResultOption(IEnumerable<ResultOption> list)
+        {
+            var copy = list.First();
+            Mode = copy.Mode;
+            Parameter = copy.Parameter;
+            this.list = list;
+        }
+
+        ResultOption(ResultOptionMode mode, string parameter)
+        {
+            Mode = mode;
+            Parameter = parameter;
+        }
+
+        /// <summary>
+        /// Gets no option.
+        /// </summary>
+        public static ResultOption None { get; } = new ResultOption(ResultOptionMode.None, null);
+
+        /// <summary>Gets the mode.</summary>
+        /// <value>The mode.</value>
+        public ResultOptionMode Mode { get; private set; }
+
+        /// <summary>Gets the parameter name.</summary>
+        /// <value>The parameter name.</value>
+        public string Parameter { get; private set; }
+
+        /// <summary>Gets the field names.</summary>
+        /// <value>The field names.</value>
+        public string[] FieldNames
+        {
+            get
+            {
+                var result = new List<string>();
+                foreach (ResultOption option in this)
+                {
+                    switch (option.Mode)
+                    {
+                        case ResultOptionMode.SortAsc:
+                        case ResultOptionMode.SortDesc:
+                        case ResultOptionMode.Group:
+                            result.Add(option.Parameter);
+                            break;
+                    }
+                }
+                return result.ToArray();
+            }
+        }
+
         /// <summary>Implements the operator ==.</summary>
         /// <param name="left">The first item.</param>
         /// <param name="right">The second item.</param>
@@ -36,30 +88,19 @@ namespace Cave.Data
         /// <summary>
         /// Combines two <see cref="ResultOption"/>s with AND.
         /// </summary>
-        /// <param name="left"></param>
-        /// <param name="right"></param>
-        /// <returns></returns>
+        /// <param name="left">The first item.</param>
+        /// <param name="right">The second item.</param>
+        /// <returns>The result of the operator.</returns>
         public static ResultOption operator +(ResultOption left, ResultOption right)
         {
-            if (left == null)
-            {
-                throw new ArgumentNullException("A");
-            }
-
-            left.Add(right);
-            return left;
+            return new ResultOption(left.Concat(right));
         }
-
-        /// <summary>
-        /// No option.
-        /// </summary>
-        public static ResultOption None { get; } = new ResultOption(ResultOptionMode.None, null);
 
         /// <summary>
         /// Sort ascending by the specified fieldname.
         /// </summary>
-        /// <param name="field"></param>
-        /// <returns></returns>
+        /// <param name="field">The field to sort.</param>
+        /// <returns>A new <see cref="ResultOption"/> instance.</returns>
         public static ResultOption SortAscending(string field)
         {
             return new ResultOption(ResultOptionMode.SortAsc, field);
@@ -68,18 +109,50 @@ namespace Cave.Data
         /// <summary>
         /// Sort descending by the specified fieldname.
         /// </summary>
-        /// <param name="field"></param>
-        /// <returns></returns>
+        /// <param name="field">The field to sort.</param>
+        /// <returns>A new <see cref="ResultOption"/> instance.</returns>
         public static ResultOption SortDescending(string field)
         {
             return new ResultOption(ResultOptionMode.SortDesc, field);
         }
 
         /// <summary>
+        /// Sort ascending by the specified fieldname.
+        /// </summary>
+        /// <param name="fields">The fields to sort.</param>
+        /// <returns>A new <see cref="ResultOption"/> instance.</returns>
+        public static ResultOption SortAscending(params string[] fields)
+        {
+            ResultOption result = None;
+            foreach (var field in fields)
+            {
+                result += SortAscending(field);
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Sort descending by the specified fieldname.
+        /// </summary>
+        /// <param name="fields">The fields to sort.</param>
+        /// <returns>A new <see cref="ResultOption"/> instance.</returns>
+        public static ResultOption SortDescending(params string[] fields)
+        {
+            ResultOption result = None;
+            foreach (var field in fields)
+            {
+                result += SortDescending(field);
+            }
+
+            return result;
+        }
+
+        /// <summary>
         /// Limit the number of result sets.
         /// </summary>
-        /// <param name="resultCount"></param>
-        /// <returns></returns>
+        /// <param name="resultCount">Number of results to fetch.</param>
+        /// <returns>A new <see cref="ResultOption"/> instance.</returns>
         public static ResultOption Limit(int resultCount)
         {
             if (resultCount < 0)
@@ -93,8 +166,8 @@ namespace Cave.Data
         /// <summary>
         /// Set start offset of result sets.
         /// </summary>
-        /// <param name="offset"></param>
-        /// <returns></returns>
+        /// <param name="offset">Offset at the result list.</param>
+        /// <returns>A new <see cref="ResultOption"/> instance.</returns>
         public static ResultOption Offset(int offset)
         {
             if (offset < 0)
@@ -108,49 +181,11 @@ namespace Cave.Data
         /// <summary>
         /// Group the fields with the specified fieldname.
         /// </summary>
-        /// <param name="field"></param>
-        /// <returns></returns>
+        /// <param name="field">Field to group.</param>
+        /// <returns>A new <see cref="ResultOption"/> instance.</returns>
         public static ResultOption Group(string field)
         {
             return new ResultOption(ResultOptionMode.Group, field);
-        }
-
-        List<ResultOption> parentList = new List<ResultOption>();
-
-        ResultOption(ResultOptionMode mode, string parameter)
-        {
-            Mode = mode;
-            Parameter = parameter;
-            parentList.Add(this);
-        }
-
-        /// <summary>Gets the mode.</summary>
-        /// <value>The mode.</value>
-        public ResultOptionMode Mode { get; private set; }
-
-        /// <summary>Gets the parameter name.</summary>
-        /// <value>The parameter name.</value>
-        public string Parameter { get; private set; }
-
-        /// <summary>Adds the specified option.</summary>
-        /// <param name="option">The option.</param>
-        /// <exception cref="InvalidOperationException"></exception>
-        public void Add(ResultOption option)
-        {
-            if (option.parentList == parentList)
-            {
-                throw new InvalidOperationException();
-            }
-
-            parentList.AddRange(option.parentList);
-            option.parentList = parentList;
-        }
-
-        /// <summary>Returns an array with all options.</summary>
-        /// <returns>Returns an array with all options.</returns>
-        public ResultOption[] ToArray()
-        {
-            return parentList.Where(i => i.Mode != ResultOptionMode.None).ToArray();
         }
 
         /// <summary>Returns an array with all options with the specified modes.</summary>
@@ -159,7 +194,7 @@ namespace Cave.Data
         public ResultOption[] ToArray(params ResultOptionMode[] modes)
         {
             var results = new List<ResultOption>();
-            foreach (ResultOption option in parentList)
+            foreach (ResultOption option in this)
             {
                 if (Array.IndexOf(modes, option.Mode) > -1)
                 {
@@ -174,7 +209,7 @@ namespace Cave.Data
         /// <returns><c>true</c> if [contains] [the specified modes]; otherwise, <c>false</c>.</returns>
         public bool Contains(params ResultOptionMode[] modes)
         {
-            foreach (ResultOption option in parentList)
+            foreach (ResultOption option in this)
             {
                 if (Array.IndexOf(modes, option.Mode) > -1)
                 {
@@ -184,36 +219,11 @@ namespace Cave.Data
             return false;
         }
 
-        /// <summary>Gets the field names.</summary>
-        /// <value>The field names.</value>
-        public string[] FieldNames
-        {
-            get
-            {
-                var result = new List<string>();
-                foreach (ResultOption option in ToArray())
-                {
-                    switch (option.Mode)
-                    {
-                        case ResultOptionMode.SortAsc:
-                        case ResultOptionMode.SortDesc:
-                        case ResultOptionMode.Group:
-                            result.Add(option.Parameter);
-                            break;
-                    }
-                }
-                return result.ToArray();
-            }
-        }
-
-        /// <summary>
-        /// Gets a string describing this instance.
-        /// </summary>
-        /// <returns></returns>
+        /// <inheritdoc/>
         public override string ToString()
         {
             var result = new StringBuilder();
-            foreach (ResultOption option in ToArray())
+            foreach (ResultOption option in this)
             {
                 if (result.Length > 0)
                 {
@@ -231,22 +241,29 @@ namespace Cave.Data
             return result.ToString();
         }
 
-        /// <summary>Determines whether the specified <see cref="object" />, is equal to this instance.</summary>
-        /// <param name="obj">The <see cref="object" /> to compare with this instance.</param>
-        /// <returns><c>true</c> if the specified <see cref="object" /> is equal to this instance; otherwise, <c>false</c>.</returns>
+        /// <inheritdoc/>
         public override bool Equals(object obj)
         {
             var o = obj as ResultOption;
             return o == null ? false : o.Mode == Mode && o.Parameter == Parameter;
         }
 
-        /// <summary>
-        /// Gets the hashcode for this instance.
-        /// </summary>
-        /// <returns></returns>
+        /// <inheritdoc/>
         public override int GetHashCode()
         {
             return ToString().GetHashCode();
+        }
+
+        /// <inheritdoc/>
+        public IEnumerator<ResultOption> GetEnumerator()
+        {
+            return (list ?? new[] { this }).Where(i => i.Mode != ResultOptionMode.None).GetEnumerator();
+        }
+
+        /// <inheritdoc/>
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return (list ?? new[] { this }).Where(i => i.Mode != ResultOptionMode.None).GetEnumerator();
         }
     }
 }

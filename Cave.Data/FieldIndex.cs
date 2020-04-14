@@ -1,10 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using Cave.Collections.Generic;
 
 namespace Cave.Data
 {
@@ -13,6 +9,143 @@ namespace Cave.Data
     /// </summary>
     public sealed class FieldIndex : IFieldIndex
     {
+#if USE_BOXING
+        /// <summary>
+        /// resolves value to IDs
+        /// </summary>
+        SortedDictionary<BoxedValue, Set<string>> index;
+#else
+        /// <summary>
+        /// resolves value to IDs.
+        /// </summary>
+        FakeSortedDictionary<object, List<object[]>> index;
+
+#pragma warning disable SA1214 // Readonly fields should appear before non-readonly fields
+        readonly object nullValue = new BoxedValue(null);
+#pragma warning restore SA1214 // Readonly fields should appear before non-readonly fields
+#endif
+
+        /// <summary>Initializes a new instance of the <see cref="FieldIndex"/> class.</summary>
+        public FieldIndex()
+        {
+#if USE_BOXING
+            index = new FakeSortedDictionary<BoxedValue, List<object[]>>();
+#else
+            index = new FakeSortedDictionary<object, List<object[]>>();
+#endif
+        }
+
+        /// <summary>Gets the id count.</summary>
+        /// <value>The id count.</value>
+        public int Count { get; private set; }
+
+        /// <summary>Obtains all IDs with the specified hashcode.</summary>
+        /// <param name="value">The value.</param>
+        /// <returns>Returns the rows.</returns>
+        public IEnumerable<object[]> Find(object value)
+        {
+#if USE_BOXING
+            BoxedValue obj = new BoxedValue(value);
+#else
+            var obj = value == null ? nullValue : value;
+#endif
+            return index.ContainsKey(obj) ? index[obj].ToArray() : new object[][] { };
+        }
+
+        /// <summary>
+        /// Clears the index.
+        /// </summary>
+        internal void Clear()
+        {
+            index.Clear();
+            Count = 0;
+        }
+
+        /// <summary>
+        /// Adds an ID, object combination to the index.
+        /// </summary>
+        internal void Add(object[] row, int fieldNumber)
+        {
+            var value = row.GetValue(fieldNumber);
+#if USE_BOXING
+            BoxedValue obj = new BoxedValue(value);
+#else
+            var obj = value == null ? nullValue : value;
+#endif
+            if (index.ContainsKey(obj))
+            {
+                index[obj].Add(row);
+            }
+            else
+            {
+                index[obj] = new List<object[]> { row, };
+            }
+            Count++;
+        }
+
+        /// <summary>Replaces a row at the index.</summary>
+        /// <param name="oldRow">Row to remove.</param>
+        /// <param name="newRow">Row to add.</param>
+        /// <param name="fieldNumber">Fieldnumber.</param>
+        /// <exception cref="ArgumentException">Value {value} is not present at index (equals check {index})!
+        /// or
+        /// Row {row} is not present at index! (Present: {value} => {rows})!
+        /// or
+        /// Could not remove row {row} value {value}!.
+        /// </exception>
+        internal void Replace(object[] oldRow, object[] newRow, int fieldNumber)
+        {
+            if (Equals(oldRow, newRow))
+            {
+                return;
+            }
+
+            Delete(oldRow, fieldNumber);
+            Add(newRow, fieldNumber);
+        }
+
+        /// <summary>Removes a row from the index.</summary>
+        /// <param name="row">The row.</param>
+        /// <param name="fieldNumber">The fieldnumber.</param>
+        /// <exception cref="ArgumentException">Value {value} is not present at index (equals check {index})!
+        /// or
+        /// Row {row} is not present at index! (Present: {value} => {rows})!
+        /// or
+        /// Could not remove row {row} value {value}!.
+        /// </exception>
+        internal void Delete(object[] row, int fieldNumber)
+        {
+            var value = row.GetValue(fieldNumber);
+#if USE_BOXING
+            BoxedValue obj = new BoxedValue(value);
+#else
+            var obj = value == null ? nullValue : value;
+#endif
+
+            // remove ID from old hash
+            if (!index.TryGetValue(obj, out List<object[]> rows))
+            {
+                throw new ArgumentException($"Value {value} is not present at index (equals check {index.Join(",")})!");
+            }
+            if (!rows.Contains(row))
+            {
+                throw new KeyNotFoundException($"Row {row} is not present at index! (Present: {value} => {rows.Join(",")})!");
+            }
+
+            if (rows.Count > 1)
+            {
+                rows.Remove(row);
+            }
+            else
+            {
+                if (!index.Remove(obj))
+                {
+                    throw new ArgumentException($"Could not remove row {row} value {value}!");
+                }
+            }
+            Count--;
+        }
+
         class BoxedValue : IComparable<BoxedValue>, IEquatable<BoxedValue>, IComparable
         {
             object val;
@@ -50,217 +183,6 @@ namespace Cave.Data
             public int CompareTo(object obj)
             {
                 return obj is BoxedValue ? CompareTo((BoxedValue)obj) : Comparer.Default.Compare(val, obj);
-            }
-        }
-
-#if USE_BOXING
-        /// <summary>
-        /// resolves value to IDs
-        /// </summary>
-        SortedDictionary<BoxedValue, Set<long>> index;
-#else
-        /// <summary>
-        /// resolves value to IDs.
-        /// </summary>
-        FakeSortedDictionary<object, Set<long>> index;
-
-#pragma warning disable SA1214 // Readonly fields should appear before non-readonly fields
-        readonly object nullValue = new BoxedValue(null);
-#pragma warning restore SA1214 // Readonly fields should appear before non-readonly fields
-#endif
-
-        /// <summary>Gets the id count.</summary>
-        /// <value>The id count.</value>
-        public int Count { get; private set; }
-
-        /// <summary>Initializes a new instance of the <see cref="FieldIndex"/> class.</summary>
-        public FieldIndex()
-        {
-#if USE_BOXING
-            index = new FakeSortedDictionary<BoxedValue, Set<long>>();
-#else
-            index = new FakeSortedDictionary<object, Set<long>>();
-#endif
-        }
-
-        /// <summary>
-        /// Adds an ID, object combination to the index.
-        /// </summary>
-        /// <param name="id"></param>
-        /// <param name="value"></param>
-        internal void Add(long id, object value)
-        {
-#if USE_BOXING
-            BoxedValue obj = new BoxedValue(value);
-#else
-            var obj = value == null ? nullValue : value;
-#endif
-            if (index.ContainsKey(obj))
-            {
-                index[obj].Add(id);
-            }
-            else
-            {
-                var list = new Set<long>
-                {
-                    id,
-                };
-                index[obj] = list;
-            }
-            Count++;
-        }
-
-        /// <summary>Replaces the object for the specified identifier.</summary>
-        /// <param name="id">The identifier.</param>
-        /// <param name="oldObj">The old object.</param>
-        /// <param name="newObj">The new object.</param>
-        /// <exception cref="ArgumentException">
-        /// </exception>
-        internal void Replace(long id, object oldObj, object newObj)
-        {
-            if (Comparer.Default.Compare(oldObj, newObj) == 0)
-            {
-                return;
-            }
-
-            Delete(id, oldObj);
-            Add(id, newObj);
-        }
-
-        /// <summary>Removes an ID from the index.</summary>
-        /// <param name="id">The identifier.</param>
-        /// <param name="value">The value.</param>
-        /// <exception cref="ArgumentException">
-        /// </exception>
-        internal void Delete(long id, object value)
-        {
-#if USE_BOXING
-            BoxedValue obj = new BoxedValue(value);
-#else
-            var obj = value == null ? nullValue : value;
-#endif
-
-            // remove ID from old hash
-            if (!index.TryGetValue(obj, out Set<long> ids))
-            {
-                throw new ArgumentException(string.Format("Object {0} is not present at index (equals check {1})!", obj, index.Join(",")));
-            }
-            if (!ids.Contains(id))
-            {
-                throw new KeyNotFoundException(string.Format("ID {0} is not present at index! (Present: {1} => {2})", id, obj, ids.Join(",")));
-            }
-
-            if (ids.Count > 1)
-            {
-                ids.Remove(id);
-            }
-            else
-            {
-                if (!index.Remove(obj))
-                {
-                    throw new ArgumentException(string.Format("Could not remove id {0} object {1} could not be removed!", id, obj));
-                }
-            }
-            Count--;
-        }
-
-        /// <summary>
-        /// Clears the index.
-        /// </summary>
-        internal void Clear()
-        {
-            index.Clear();
-            Count = 0;
-        }
-
-        /// <summary>Obtains all IDs with the specified hashcode.</summary>
-        /// <param name="value">The value.</param>
-        /// <returns></returns>
-        public IItemSet<long> Find(object value)
-        {
-#if USE_BOXING
-            BoxedValue obj = new BoxedValue(value);
-#else
-            var obj = value == null ? nullValue : value;
-#endif
-            return index.ContainsKey(obj) ? new ReadOnlySet<long>(index[obj]) : (IItemSet<long>)new Set<long>();
-        }
-
-        /// <summary>Gets the sorted identifiers.</summary>
-        /// <value>The sorted identifiers.</value>
-        public IEnumerable<long> SortedIDs =>
-#if USE_BOXING
-                return new FieldIndexEnumeration<BoxedValue>(m_Index);
-#else
-                new FieldIndexEnumeration<object>(index);
-#endif
-
-        class FieldIndexEnumeration<T> : IEnumerable<long>
-        {
-            FakeSortedDictionary<T, Set<long>> idx;
-
-            public FieldIndexEnumeration(FakeSortedDictionary<T, Set<long>> idx)
-            {
-                this.idx = idx;
-            }
-
-            public IEnumerator<long> GetEnumerator()
-            {
-                return new FieldIndexEnumerator<T>(idx);
-            }
-
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                return new FieldIndexEnumerator<T>(idx);
-            }
-        }
-
-        class FieldIndexEnumerator<T> : IEnumerator<long>
-        {
-            FakeSortedDictionary<T, Set<long>> idx;
-            IEnumerator outer;
-            IEnumerator inner;
-
-            public FieldIndexEnumerator(FakeSortedDictionary<T, Set<long>> idx)
-            {
-                this.idx = idx;
-                Reset();
-            }
-
-            public long Current => (long)inner.Current;
-
-            object IEnumerator.Current => inner.Current;
-
-            public void Dispose()
-            {
-            }
-
-            public bool MoveNext()
-            {
-                if (inner != null)
-                {
-                    if (inner.MoveNext())
-                    {
-                        return true;
-                    }
-                }
-                while (outer.MoveNext())
-                {
-                    var keyValuePair = (KeyValuePair<T, Set<long>>)outer.Current;
-                    inner = keyValuePair.Value.GetEnumerator();
-                    if (inner.MoveNext())
-                    {
-                        return true;
-                    }
-                }
-                return false;
-            }
-
-            public void Reset()
-            {
-                outer = idx.GetEnumerator();
-                outer.Reset();
-                inner = null;
             }
         }
     }

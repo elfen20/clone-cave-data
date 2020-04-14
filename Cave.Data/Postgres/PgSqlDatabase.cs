@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using Cave.Data.Sql;
 
@@ -11,12 +12,17 @@ namespace Cave.Data.Postgres
     /// </summary>
     public sealed class PgSqlDatabase : SqlDatabase
     {
-        PgSqlStorage pgSqlStorage;
+        /// <summary>
+        /// Initializes a new instance of the <see cref="PgSqlDatabase"/> class.
+        /// </summary>
+        /// <param name="storage">the postgre sql storage engine.</param>
+        /// <param name="name">the name of the database.</param>
+        public PgSqlDatabase(PgSqlStorage storage, string name)
+            : base(storage, PgSqlStorage.GetObjectName(name))
+        {
+        }
 
-        /// <summary>Gets a value indicating whether this instance is using a secure connection to the storage.</summary>
-        /// <value>
-        /// <c>true</c> if this instance is using a secure connection; otherwise, <c>false</c>.
-        /// </value>
+        /// <inheritdoc/>
         public override bool IsSecure
         {
             get
@@ -39,81 +45,8 @@ namespace Cave.Data.Postgres
             }
         }
 
-        /// <summary>
-        /// Creates a new postgre sql database instance.
-        /// </summary>
-        /// <param name="storage">the postgre sql storage engine.</param>
-        /// <param name="name">the name of the database.</param>
-        public PgSqlDatabase(PgSqlStorage storage, string name)
-            : base(storage, storage.GetObjectName(name))
-        {
-            pgSqlStorage = storage;
-        }
-
-        /// <summary>
-        /// Gets the available table names.
-        /// </summary>
-        public override string[] TableNames
-        {
-            get
-            {
-                var result = new List<string>();
-                List<Row> rows = SqlStorage.Query(null, Name, "pg_tables", "SELECT tablename FROM pg_tables"); // where pg_tables.schemaname = " + SqlStorage.EscapeString(Name));
-                foreach (Row row in rows)
-                {
-                    result.Add((string)row.GetValue(0));
-                }
-                return result.ToArray();
-            }
-        }
-
-        /// <summary>
-        /// Gets whether the specified table exists or not.
-        /// </summary>
-        /// <param name="table">The name of the table.</param>
-        /// <returns></returns>
-        public override bool HasTable(string table)
-        {
-            var value = SqlStorage.QueryValue(Name, "pg_tables", "SELECT COUNT(*) FROM pg_tables WHERE tablename LIKE " + SqlStorage.EscapeString(pgSqlStorage.GetObjectName(table)));
-            return Convert.ToInt32(value) > 0;
-        }
-
-        /// <summary>
-        /// Opens the table with the specified name.
-        /// </summary>
-        /// <param name="table">Name of the table.</param>
-        /// <returns>Returns an <see cref="ITable"/> instance for the specified table.</returns>
-        public override ITable GetTable(string table)
-        {
-            if (!HasTable(table))
-            {
-                throw new InvalidOperationException(string.Format("Table '{0}' does not exist!", table));
-            }
-
-            return new PgSqlTable(this, table);
-        }
-
-        /// <summary>
-        /// Opens the table with the specified name.
-        /// </summary>
-        protected override ITable<T> OpenTable<T>(RowLayout layout)
-        {
-            return new PgSqlTable<T>(this, layout);
-        }
-
-        /// <summary>
-        /// Adds a new table with the specified name.
-        /// </summary>
-        /// <typeparam name="T">The row struct to use for the table.</typeparam>
-        /// <param name="flags">The flags for table creation.</param>
-        /// <param name="table">Name of the table to create (optional, use this to overwrite the default table name).</param>
-        /// <returns></returns>
-        public override ITable<T> CreateTable<T>(TableFlags flags, string table)
-        {
-            var layout = RowLayout.CreateTyped(typeof(T), table, Storage);
-            CreateTable(layout, flags);
-            return OpenTable<T>(layout);
-        }
+        /// <inheritdoc/>
+        public override ITable GetTable(string table, TableFlags flags = default) => PgSqlTable.Connect(this, flags, table);
 
         /// <summary>
         /// Adds a new table with the specified name.
@@ -121,7 +54,7 @@ namespace Cave.Data.Postgres
         /// <param name="layout">Layout of the table.</param>
         /// <param name="flags">The flags for table creation.</param>
         /// <returns>Returns an <see cref="ITable"/> instance for the specified table.</returns>
-        public override ITable CreateTable(RowLayout layout, TableFlags flags)
+        public override ITable CreateTable(RowLayout layout, TableFlags flags = default)
         {
             if (layout == null)
             {
@@ -142,7 +75,7 @@ namespace Cave.Data.Postgres
             queryText.AppendFormat("TABLE {0} (", SqlStorage.FQTN(Name, layout.Name));
             for (var i = 0; i < layout.FieldCount; i++)
             {
-                FieldProperties fieldProperties = layout.GetProperties(i);
+                var fieldProperties = layout[i];
                 if (i > 0)
                 {
                     queryText.Append(",");
@@ -367,10 +300,10 @@ namespace Cave.Data.Postgres
                 }
             }
             queryText.Append(")");
-            SqlStorage.Execute(Name, layout.Name, queryText.ToString());
+            SqlStorage.Execute(database: Name, table: layout.Name, cmd: queryText.ToString());
             for (var i = 0; i < layout.FieldCount; i++)
             {
-                FieldProperties fieldProperties = layout.GetProperties(i);
+                var fieldProperties = layout[i];
                 if ((fieldProperties.Flags & FieldFlags.ID) != 0)
                 {
                     continue;
@@ -378,12 +311,16 @@ namespace Cave.Data.Postgres
 
                 if ((fieldProperties.Flags & FieldFlags.Index) != 0)
                 {
-                    var name = pgSqlStorage.GetObjectName($"idx_{layout.Name}_{fieldProperties.Name}");
+                    var name = PgSqlStorage.GetObjectName($"idx_{layout.Name}_{fieldProperties.Name}");
                     var cmd = $"CREATE INDEX {name} ON {SqlStorage.FQTN(Name, layout.Name)} ({SqlStorage.EscapeFieldName(fieldProperties)})";
-                    SqlStorage.Execute(Name, layout.Name, cmd);
+                    SqlStorage.Execute(database: Name, table: layout.Name, cmd: cmd);
                 }
             }
             return GetTable(layout, TableFlags.None);
         }
+
+        /// <inheritdoc/>
+        protected override string[] GetTableNames() =>
+            SqlStorage.Query(database: Name, table: "pg_tables", cmd: "SELECT tablename FROM pg_tables").Select(r => r[0].ToString()).ToArray();
     }
 }

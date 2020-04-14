@@ -6,12 +6,12 @@ namespace Cave.Data
     public interface IDatabaseParameter
     {
         /// <summary>
-        /// Gets/sets the name of the <see cref="IDatabaseParameter"/>.
+        /// Gets the name of the <see cref="IDatabaseParameter"/>.
         /// </summary>
         string Name { get; }
 
         /// <summary>
-        /// Gets/sets the value of the <see cref="IDatabaseParameter"/>.
+        /// Gets the value of the <see cref="IDatabaseParameter"/>.
         /// </summary>
         object Value { get; }
     }

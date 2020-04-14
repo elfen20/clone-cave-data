@@ -8,115 +8,42 @@ namespace Cave.Data
     /// <summary>
     /// Provides properties for CSV files.
     /// </summary>
-    public struct CSVProperties : IEquatable<CSVProperties>
+    public struct CsvProperties : IEquatable<CsvProperties>
     {
+        #region public fields
+
         /// <summary>
-        /// Gets <see cref="CSVProperties"/> with default settings:
-        /// Encoding=UTF8, Compression=None, Separator=';', StringMarker='"'.
+        /// Gets or sets the format provider used to en/decode values.
         /// </summary>
-        public static CSVProperties Default
-        {
-            get
-            {
-                var result = new CSVProperties
-                {
-                    Culture = CultureInfo.InvariantCulture,
-                    Compression = CompressionType.None,
-                    Encoding = StringEncoding.UTF8,
-                    NewLineMode = NewLineMode.LF,
-                    Separator = ';',
-                    StringMarker = '"',
-                    DateTimeFormat = StringExtensions.InterOpDateTimeFormat,
-                    AllowFieldMatching = false,
-                };
-                return result;
-            }
-        }
+        public IFormatProvider Format;
 
         /// <summary>
-        /// Gets <see cref="CSVProperties"/> with default settings for Microsoft Excel:
-        /// Encoding=Current System Default, Compression=None, Separator='Tab', StringMarker='"'.
-        /// </summary>
-        public static CSVProperties Excel
-        {
-            get
-            {
-                var result = new CSVProperties
-                {
-                    SaveDefaultValues = true,
-                    Culture = CultureInfo.CurrentUICulture,
-                    Compression = CompressionType.None,
-                    Encoding = StringEncoding.UTF16,
-                    NewLineMode = NewLineMode.CRLF,
-                    Separator = '\t',
-                    StringMarker = '"',
-                    DateTimeFormat = "yyyy-MM-dd HH:mm:ss" + CultureInfo.CurrentUICulture.NumberFormat.NumberDecimalSeparator + "fff",
-                    AllowFieldMatching = false,
-                };
-                return result;
-            }
-        }
-
-        /// <summary>Implements the operator ==.</summary>
-        /// <param name="properties1">The properties1.</param>
-        /// <param name="properties2">The properties2.</param>
-        /// <returns>The result of the conversion.</returns>
-        public static bool operator ==(CSVProperties properties1, CSVProperties properties2)
-        {
-            if (ReferenceEquals(null, properties1))
-            {
-                return ReferenceEquals(null, properties2);
-            }
-
-            return ReferenceEquals(null, properties2) ? false : properties1.Equals(properties2);
-        }
-
-        /// <summary>Implements the operator !=.</summary>
-        /// <param name="properties1">The properties1.</param>
-        /// <param name="properties2">The properties2.</param>
-        /// <returns>The result of the conversion.</returns>
-        public static bool operator !=(CSVProperties properties1, CSVProperties properties2)
-        {
-            if (ReferenceEquals(null, properties1))
-            {
-                return !ReferenceEquals(null, properties2);
-            }
-
-            return ReferenceEquals(null, properties2) ? true : !properties1.Equals(properties2);
-        }
-
-        /// <summary>
-        /// Gets / sets the culture used to en/decode values.
-        /// </summary>
-        public CultureInfo Culture;
-
-        /// <summary>
-        /// Gets / sets the <see cref="CompressionType"/>.
+        /// Gets or sets the <see cref="CompressionType"/>.
         /// </summary>
         public CompressionType Compression;
 
         /// <summary>
-        /// Gets / sets the <see cref="Encoding"/>.
+        /// Gets or sets the <see cref="Encoding"/>.
         /// </summary>
         public StringEncoding Encoding;
 
         /// <summary>
-        /// Gets / sets the <see cref="NewLineMode"/>.
+        /// Gets or sets the <see cref="NewLineMode"/>.
         /// </summary>
         public NewLineMode NewLineMode;
 
         /// <summary>
-        /// Gets / sets the separator for reading / writing csv files.
+        /// Gets or sets the separator for reading / writing csv files.
         /// </summary>
         public char Separator;
 
         /// <summary>
-        /// Gets / sets the string start and end marker for reading / writing csv files.
+        /// Gets or sets the string start and end marker for reading / writing csv files.
         /// </summary>
         public char? StringMarker;
 
         /// <summary>
-        /// Gets / sets the format of date time fields.
+        /// Gets or sets the format of date time fields.
         /// </summary>
         public string DateTimeFormat;
 
@@ -140,35 +67,85 @@ namespace Cave.Data
         /// <summary>The false value to indicate a bool.true value (see <see cref="bool.FalseString"/>).</summary>
         public string TrueValue;
 
+        #endregion
+
         /// <summary>
-        /// Gets whether the properties are all set or not.
+        /// Gets <see cref="CsvProperties"/> with default settings:
+        /// Encoding=UTF8, Compression=None, Separator=';', StringMarker='"'.
         /// </summary>
-        public bool Valid => Enum.IsDefined(typeof(CompressionType), Compression) &&
-                    Enum.IsDefined(typeof(StringEncoding), Encoding) &&
-                    (Encoding != StringEncoding.Undefined) &&
-                    Enum.IsDefined(typeof(NewLineMode), NewLineMode) &&
-                    (NewLineMode != NewLineMode.Undefined) &&
-                    (Separator != StringMarker) &&
-                    (Culture != null);
+        public static CsvProperties Default { get; } = new CsvProperties
+        {
+            Format = CultureInfo.InvariantCulture,
+            Compression = CompressionType.None,
+            Encoding = StringEncoding.UTF8,
+            NewLineMode = NewLineMode.LF,
+            Separator = ';',
+            StringMarker = '"',
+            DateTimeFormat = StringExtensions.InterOpDateTimeFormat,
+            AllowFieldMatching = false,
+        };
+
+        /// <summary>
+        /// Gets <see cref="CsvProperties"/> with default settings for Microsoft Excel:
+        /// Encoding=Current System Default, Compression=None, Separator='Tab', StringMarker='"'.
+        /// </summary>
+        public static CsvProperties Excel { get; } = new CsvProperties
+        {
+            SaveDefaultValues = true,
+            Format = CultureInfo.CurrentUICulture,
+            Compression = CompressionType.None,
+            Encoding = StringEncoding.UTF16,
+            NewLineMode = NewLineMode.CRLF,
+            Separator = '\t',
+            StringMarker = '"',
+            DateTimeFormat = "yyyy-MM-dd HH:mm:ss" + CultureInfo.CurrentUICulture.NumberFormat.NumberDecimalSeparator + "fff",
+            AllowFieldMatching = false,
+        };
+
+        /// <summary>
+        /// Gets a value indicating whether the properties are all set or not.
+        /// </summary>
+        public bool Valid =>
+            Enum.IsDefined(typeof(CompressionType), Compression) &&
+            Enum.IsDefined(typeof(StringEncoding), Encoding) &&
+            (Encoding != StringEncoding.Undefined) &&
+            Enum.IsDefined(typeof(NewLineMode), NewLineMode) &&
+            (NewLineMode != NewLineMode.Undefined) &&
+            (Separator != StringMarker) &&
+            (Format != null);
+
+        #region operator
+
+        /// <summary>Implements the operator ==.</summary>
+        /// <param name="properties1">The properties1.</param>
+        /// <param name="properties2">The properties2.</param>
+        /// <returns>The result of the conversion.</returns>
+        public static bool operator ==(CsvProperties properties1, CsvProperties properties2) => properties1.Equals(properties2);
+
+        /// <summary>Implements the operator !=.</summary>
+        /// <param name="properties1">The properties1.</param>
+        /// <param name="properties2">The properties2.</param>
+        /// <returns>The result of the conversion.</returns>
+        public static bool operator !=(CsvProperties properties1, CsvProperties properties2) => !properties1.Equals(properties2);
+
+        #endregion
 
         /// <summary>Determines whether the specified <see cref="object" />, is equal to this instance.</summary>
         /// <param name="obj">The <see cref="object" /> to compare with this instance.</param>
         /// <returns><c>true</c> if the specified <see cref="object" /> is equal to this instance; otherwise, <c>false</c>.</returns>
         public override bool Equals(object obj)
         {
-            return !(obj is CSVProperties) ? false : base.Equals((CSVProperties)obj);
+            return !(obj is CsvProperties) ? false : base.Equals((CsvProperties)obj);
         }
 
-        /// <summary>Determines whether the specified <see cref="CSVProperties" />, are equal to this instance.</summary>
-        /// <param name="other">The <see cref="CSVProperties" /> to compare with this instance.</param>
-        /// <returns><c>true</c> if the specified <see cref="CSVProperties" /> are equal to this instance; otherwise, <c>false</c>.</returns>
-        public bool Equals(CSVProperties other)
+        /// <summary>Determines whether the specified <see cref="CsvProperties" />, are equal to this instance.</summary>
+        /// <param name="other">The <see cref="CsvProperties" /> to compare with this instance.</param>
+        /// <returns><c>true</c> if the specified <see cref="CsvProperties" /> are equal to this instance; otherwise, <c>false</c>.</returns>
+        public bool Equals(CsvProperties other)
         {
-            return ReferenceEquals(null, other)
-                ? false
-                : other.AllowFieldMatching == AllowFieldMatching
+            return other.AllowFieldMatching == AllowFieldMatching
                 && other.Compression == Compression
-                && other.Culture == Culture
+                && other.Format == Format
                 && other.DateTimeFormat == DateTimeFormat
                 && other.Encoding == Encoding
                 && other.SaveDefaultValues == SaveDefaultValues

@@ -10,16 +10,17 @@ namespace Cave.Data
     public sealed class StringFormatAttribute : Attribute
     {
         /// <summary>
-        /// Gets/sets the <see cref="StringEncoding"/>.
+        /// Initializes a new instance of the <see cref="StringFormatAttribute"/> class.
         /// </summary>
-        public StringEncoding Encoding { get; private set; }
-
-        /// <summary>
-        /// Creates a new <see cref="StringFormatAttribute"/>.
-        /// </summary>
+        /// <param name="encoding">String encoding to use.</param>
         public StringFormatAttribute(StringEncoding encoding)
         {
             Encoding = encoding;
         }
+
+        /// <summary>
+        /// Gets the <see cref="StringEncoding"/>.
+        /// </summary>
+        public StringEncoding Encoding { get; private set; }
     }
 }

@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using Cave.Collections.Generic;
 
 namespace Cave.Data
 {
@@ -10,11 +9,7 @@ namespace Cave.Data
     {
         /// <summary>Retrieves all identifiers for the specified object.</summary>
         /// <param name="obj">The object.</param>
-        /// <returns></returns>
-        IItemSet<long> Find(object obj);
-
-        /// <summary>Gets the sorted identifiers.</summary>
-        /// <value>The sorted identifiers.</value>
-        IEnumerable<long> SortedIDs { get; }
+        /// <returns>All matching rows found.</returns>
+        IEnumerable<object[]> Find(object obj);
     }
 }

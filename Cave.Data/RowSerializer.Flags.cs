@@ -1,5 +1,8 @@
 ﻿namespace Cave.Data
 {
+    /// <summary>
+    /// Provides Row based serialization.
+    /// </summary>
     public static partial class RowSerializer
     {
         /// <summary>
