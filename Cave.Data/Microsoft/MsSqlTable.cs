@@ -1,6 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using Cave.Data.Sql;
 
 namespace Cave.Data.Microsoft
@@ -10,140 +8,39 @@ namespace Cave.Data.Microsoft
     /// </summary>
     public class MsSqlTable : SqlTable
     {
-        #region MsSql specific overrides
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MsSqlTable"/> class.
+        /// </summary>
+        protected MsSqlTable()
+        {
+        }
 
         /// <summary>
-        /// This function does a lookup on the ids of the table and returns the row with the n-th ID where n is the specified index.
-        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
-        /// <param name="index">The index of the row to be fetched</param>
+        /// Connects to the specified database and tablename.
         /// </summary>
-        /// <returns>Returns the row.</returns>
+        /// <param name="database">Database to connect to.</param>
+        /// <param name="flags">Flags used to connect to the table.</param>
+        /// <param name="tableName">The table to connect to.</param>
+        /// <returns>Returns a new <see cref="MsSqlTable"/> instance.</returns>
+        public static MsSqlTable Connect(MsSqlDatabase database, TableFlags flags, string tableName)
+        {
+            var table = new MsSqlTable();
+            table.Initialize(database, flags, tableName);
+            return table;
+        }
+
+        /// <inheritdoc/>
         public override Row GetRowAt(int index)
         {
-            var cmd = $"WITH TempOrderedData AS (SELECT ID, ROW_NUMBER() OVER (ORDER BY ID) AS 'RowNumber' FROM {FQTN}) SELECT * FROM TempOrderedData WHERE RowNumber={index}";
-            var id = (long)SqlStorage.QueryValue(Database.Name, Name, cmd);
-            return GetRow(id);
+            var cmd = $"WITH TempOrderedData AS (SELECT *, ROW_NUMBER() AS 'RowNumber' FROM {FQTN}) SELECT * FROM TempOrderedData WHERE RowNumber={index}";
+            return QueryRow(cmd);
         }
 
-        /// <summary>
-        /// Gets the command to retrieve the last inserted row.
-        /// </summary>
-        /// <param name="row">The row to be inserted.</param>
-        /// <returns></returns>
-        protected override string GetLastInsertedIDCommand(Row row)
+        /// <inheritdoc/>
+        protected override void CreateLastInsertedRowCommand(SqlCommandBuilder commandBuilder, Row row)
         {
-            return "SELECT SCOPE_IDENTITY() AS [SCOPE_IDENTITY];";
-        }
-
-        /// <summary>
-        /// Searches the table for rows with specified field value combinations.
-        /// </summary>
-        /// <param name="search">The search to run.</param>
-        /// <param name="option">Options for the search and the result set.</param>
-        /// <returns>Returns the ID of the row found or -1.</returns>
-        protected internal override List<long> SqlFindIDs(SqlSearch search, ResultOption option)
-        {
-            if (Layout.IDFieldIndex < 0)
-            {
-                throw new ArgumentNullException("IDField");
-            }
-
-            var command = new StringBuilder();
-            command.Append("SELECT ");
-
-            var offset = 0;
-            foreach (ResultOption o in option.ToArray(ResultOptionMode.Offset))
-            {
-                if (offset++ > 0)
-                {
-                    throw new InvalidOperationException(string.Format("Cannot set two different offsets!"));
-                }
-
-                command.Append("OFFSET ");
-                command.Append(o.Parameter);
-                command.Append(" ROWS ");
-            }
-            var limit = 0;
-            foreach (ResultOption o in option.ToArray(ResultOptionMode.Limit))
-            {
-                if (limit++ > 0)
-                {
-                    throw new InvalidOperationException(string.Format("Cannot set two different limits!"));
-                }
-
-                command.Append("FETCH NEXT ");
-                command.Append(o.Parameter);
-                command.Append(" ROWS ONLY");
-            }
-
-            command.Append(SqlStorage.EscapeFieldName(Layout.IDField));
-            foreach (var fieldName in search.FieldNames)
-            {
-                if (fieldName == Layout.IDField.Name)
-                {
-                    continue;
-                }
-
-                command.Append(", ");
-                command.Append(SqlStorage.EscapeFieldName(Layout.GetProperties(fieldName)));
-            }
-
-            command.Append(" FROM ");
-            command.Append(FQTN);
-            command.Append(" WHERE ");
-
-            command.Append(search.ToString());
-
-            var orderCount = 0;
-            foreach (ResultOption o in option.ToArray(ResultOptionMode.SortAsc, ResultOptionMode.SortDesc))
-            {
-                if (orderCount++ == 0)
-                {
-                    command.Append(" ORDER BY ");
-                }
-                else
-                {
-                    command.Append(",");
-                }
-                command.Append(SqlStorage.EscapeFieldName(Layout.GetProperties(o.Parameter)));
-                if (o.Mode == ResultOptionMode.SortAsc)
-                {
-                    command.Append(" ASC");
-                }
-                else
-                {
-                    command.Append(" DESC");
-                }
-            }
-
-            if (option.Contains(ResultOptionMode.Group))
-            {
-                throw new InvalidOperationException(string.Format("Cannot use Option.Group and Option.Sort at once!"));
-            }
-
-            List<Row> rows = SqlStorage.Query(null, Database.Name, Name, command.ToString(), search.Parameters.ToArray());
-            return ToIDs(Layout, rows);
-        }
-        #endregion
-
-        /// <summary>
-        /// Creates a new mysql table instance (checks layout against database).
-        /// </summary>
-        /// <param name="database">The database the table belongs to.</param>
-        /// <param name="layout">Layout and name of the table.</param>
-        public MsSqlTable(MsSqlDatabase database, RowLayout layout)
-            : base(database, layout)
-        {
-        }
-
-        /// <summary>
-        /// Creates a new mysql table instance (retrieves layout from database).
-        /// </summary>
-        /// <param name="database">The database the table belongs to.</param>
-        /// <param name="table">The Name of the table.</param>
-        public MsSqlTable(MsSqlDatabase database, string table)
-            : base(database, table)
-        {
+            var idField = Layout.Identifier.Single();
+            commandBuilder.AppendLine($"SELECT * FROM {FQTN} WHERE {Storage.EscapeFieldName(idField)} = (SELECT SCOPE_IDENTITY() AS [SCOPE_IDENTITY]);");
         }
     }
 }

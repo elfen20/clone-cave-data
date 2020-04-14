@@ -10,6 +10,8 @@ namespace Cave.Data
         IDictionary<TKey, TValue> unsorted;
         TKey[] sortedKeys;
 
+        #region constructor
+
         public FakeSortedDictionary()
         {
             unsorted = new Dictionary<TKey, TValue>();
@@ -20,15 +22,9 @@ namespace Cave.Data
             unsorted = new Dictionary<TKey, TValue>(capacity);
         }
 
-        public TValue this[TKey key]
-        {
-            get => unsorted[key];
-            set
-            {
-                unsorted[key] = value;
-                sortedKeys = null;
-            }
-        }
+        #endregion
+
+        #region properties
 
         public ICollection<TKey> UnsortedKeys => unsorted.Keys;
 
@@ -57,6 +53,20 @@ namespace Cave.Data
         public int Count => unsorted.Count;
 
         public bool IsReadOnly => unsorted.IsReadOnly;
+
+        public TValue this[TKey key]
+        {
+            get => unsorted[key];
+            set
+            {
+                unsorted[key] = value;
+                sortedKeys = null;
+            }
+        }
+
+        #endregion
+
+        #region functions
 
         public void Add(TKey key, TValue value)
         {
@@ -123,5 +133,7 @@ namespace Cave.Data
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator() => ToArray().GetEnumerator();
 
         IEnumerator IEnumerable.GetEnumerator() => ToArray().GetEnumerator();
+
+        #endregion
     }
 }

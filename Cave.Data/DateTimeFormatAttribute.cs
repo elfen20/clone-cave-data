@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cave
+namespace Cave.Data
 {
     /// <summary>
     /// Provides an <see cref="Attribute"/> for configuring datetime fields.
@@ -9,17 +9,7 @@ namespace Cave
     public sealed class DateTimeFormatAttribute : Attribute
     {
         /// <summary>
-        /// Gets/sets the <see cref="DateTimeKind"/>.
-        /// </summary>
-        public DateTimeKind Kind { get; private set; }
-
-        /// <summary>
-        /// Gets/sets the <see cref="DateTimeType"/>.
-        /// </summary>
-        public DateTimeType Type { get; private set; }
-
-        /// <summary>
-        /// Creates a new <see cref="DateTimeFormatAttribute"/>.
+        /// Initializes a new instance of the <see cref="DateTimeFormatAttribute"/> class.
         /// </summary>
         /// <param name="kind"><see cref="DateTimeKind"/>.</param>
         /// <param name="type"><see cref="DateTimeType"/>.</param>
@@ -28,5 +18,15 @@ namespace Cave
             Kind = kind;
             Type = type;
         }
+
+        /// <summary>
+        /// Gets the <see cref="DateTimeKind"/>.
+        /// </summary>
+        public DateTimeKind Kind { get; private set; }
+
+        /// <summary>
+        /// Gets the <see cref="DateTimeType"/>.
+        /// </summary>
+        public DateTimeType Type { get; private set; }
     }
 }

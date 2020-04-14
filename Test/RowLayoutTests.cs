@@ -13,20 +13,32 @@ namespace Test.Cave.Data
     [TestFixture]
     public class RowLayoutTests
     {
+        static void CreateField(ref List<FieldProperties> fields, FieldFlags flags, DataType dataType, string name, Type valueType=null)
+        {
+            fields.Add(new FieldProperties()
+            {
+                Index = fields.Count + 1,
+                Name = name,
+                Flags = flags,
+                DataType = dataType,
+                ValueType = valueType,
+            });
+        }
+
         [Test]
         public void CheckLayout()
         {
             var layoutA = RowLayout.CreateTyped(typeof(TestStructBug));
             var fields = new List<FieldProperties>();
-            fields.Add(new FieldProperties("TestStructBug", FieldFlags.ID, DataType.UInt64, "IDField"));
-            fields.Add(new FieldProperties("TestStructBug", FieldFlags.Index, DataType.UInt32, "IndexedField"));
-            fields.Add(new FieldProperties("TestStructBug", FieldFlags.Unique, DataType.Int16, "UniqueField"));
-            fields.Add(new FieldProperties("TestStructBug", FieldFlags.AutoIncrement, DataType.UInt16, "AutoIncField"));
-            fields.Add(new FieldProperties("TestStructBug", FieldFlags.Index | FieldFlags.AutoIncrement, DataType.UInt8, "AutoIncIndexField"));
-            fields.Add(new FieldProperties("TestStructBug", FieldFlags.Unique | FieldFlags.Index, DataType.Int8, "UniqueIndexedField"));
-            fields.Add(new FieldProperties("TestStructBug", FieldFlags.Index | FieldFlags.AutoIncrement | FieldFlags.Unique, DataType.Int64, "AutoIncUniqueIndexedField"));
-            fields.Add(new FieldProperties("TestStructBug", FieldFlags.None, DataType.Enum, typeof(PlatformType), "SomeEnum"));
-            fields.Add(new FieldProperties("TestStructBug", FieldFlags.None, DataType.String, "BuggyField"));
+            CreateField(ref fields, FieldFlags.ID, DataType.UInt64, "IDField");
+            CreateField(ref fields, FieldFlags.Index, DataType.UInt32, "IndexedField");
+            CreateField(ref fields, FieldFlags.Unique, DataType.Int16, "UniqueField");
+            CreateField(ref fields, FieldFlags.AutoIncrement, DataType.UInt16, "AutoIncField");
+            CreateField(ref fields, FieldFlags.Index | FieldFlags.AutoIncrement, DataType.UInt8, "AutoIncIndexField");
+            CreateField(ref fields, FieldFlags.Unique | FieldFlags.Index, DataType.Int8, "UniqueIndexedField");
+            CreateField(ref fields, FieldFlags.Index | FieldFlags.AutoIncrement | FieldFlags.Unique, DataType.Int64, "AutoIncUniqueIndexedField");
+            CreateField(ref fields, FieldFlags.None, DataType.Enum, "SomeEnum", typeof(Environment.SpecialFolder));
+            CreateField(ref fields, FieldFlags.None, DataType.String, "BuggyField");
 
             var layoutB = RowLayout.CreateUntyped("TestStruct", fields.ToArray());
             RowLayout.CheckLayout(layoutB, layoutA);
@@ -36,8 +48,10 @@ namespace Test.Cave.Data
         public void TypedCheck()
         {
             var layout = RowLayout.CreateTyped(typeof(TestStructClean));
-            Assert.AreEqual(layout.IDField.Name, layout.IDField.NameAtDatabase);
-            Assert.AreEqual(layout.IDFieldIndex, 0);
+            foreach (var field in layout.Fields)
+            {
+                Assert.AreEqual(field.Name, field.NameAtDatabase);
+            }
         }
     }
 }

@@ -1,6 +1,4 @@
 using System;
-using System.Diagnostics;
-using System.Globalization;
 using System.Text;
 using Cave.Collections;
 
@@ -9,197 +7,123 @@ namespace Cave.Data
     /// <summary>
     /// Provides a data row implementation providing untyped data to strong typed struct interop.
     /// </summary>
-    [DebuggerTypeProxy(typeof(DebugView))]
     public sealed class Row : IEquatable<Row>
     {
-        internal class DebugView
-        {
-            Row row;
+        /// <summary>
+        /// Gets the current values of the row.
+        /// </summary>
+        public readonly object[] Values;
 
-            public DebugView(Row row)
-            {
-                this.row = row;
-            }
-
-            [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
-            public object[] Fields => row.data;
-        }
-
-        /// <summary>Implements the operator ==.</summary>
-        /// <param name="x">The x row.</param>
-        /// <param name="y">The y row.</param>
-        /// <returns>The result of the operator.</returns>
-        public static bool operator ==(Row x, Row y) => ReferenceEquals(null, x) ? ReferenceEquals(y, null) : x.Equals(y);
-
-        /// <summary>Implements the operator !=.</summary>
-        /// <param name="x">The x row.</param>
-        /// <param name="y">The y row.</param>
-        /// <returns>The result of the operator.</returns>
-        public static bool operator !=(Row x, Row y)
-        {
-            return ReferenceEquals(null, x) ? !ReferenceEquals(y, null) : !x.Equals(y);
-        }
-
-        #region private implementation
-        [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        object[] data;
-        #endregion
+        /// <summary>
+        /// Gets the row layout.
+        /// </summary>
+        public readonly RowLayout Layout;
 
         #region constructors
 
         /// <summary>
-        /// Creates a new <see cref="Row"/> instance.
+        /// Initializes a new instance of the <see cref="Row"/> class.
         /// </summary>
-        public static Row Create<T>(ref RowLayout layoutCache, T item)
-            where T : struct
+        /// <param name="layout">Layout of this row.</param>
+        /// <param name="values">Values for all fields.</param>
+        /// <param name="clone">Copy values on row create.</param>
+        internal Row(RowLayout layout, object[] values, bool clone)
         {
-            if (layoutCache == null)
+            Layout = layout ?? throw new ArgumentNullException(nameof(layout));
+            if (values == null)
             {
-                layoutCache = RowLayout.CreateTyped(typeof(T));
+                throw new ArgumentNullException(nameof(values));
             }
-
-            return Create(layoutCache, item);
-        }
-
-        /// <summary>
-        /// Creates a new <see cref="Row"/> instance.
-        /// </summary>
-        public static Row Create<T>(RowLayout layout, T item)
-            where T : struct
-        {
-            if (!layout.IsTyped)
+            if (values.Length != layout.FieldCount)
             {
-                throw new NotSupportedException(string.Format("RowLayout needs to be a typed layout!"));
+                throw new ArgumentOutOfRangeException(nameof(layout), "values.Length != layout.FieldCount");
             }
-
-            return new Row(layout.GetValues(item));
+            Values = clone ? (object[])values.Clone() : values;
         }
 
-        /// <summary>
-        /// Creates a new <see cref="Row"/> instance.
-        /// </summary>
-        public Row(object[] values)
-        {
-            data = values;
-        }
         #endregion
 
-        #region Row Members
+        /// <summary>
+        /// Gets the fieldcount.
+        /// </summary>
+        public int FieldCount => Values.Length;
 
         /// <summary>
-        /// Gets the value of the specified field.
+        /// Gets the content of the field with the specified <paramref name="fieldIndex"/>.
         /// </summary>
-        /// <param name="fieldNumber">The fieldnumber to read.</param>
-        /// <returns>Returns the value.</returns>
-        public object GetValue(int fieldNumber)
-        {
-            return data[fieldNumber];
-        }
+        /// <param name="fieldIndex">Index of the field.</param>
+        /// <returns>Returns a value or null.</returns>
+        public object this[int fieldIndex] => Values[fieldIndex];
 
         /// <summary>
-        /// Retrieves a string for the specified value. The string may be parsed back to a value using <see cref="RowLayout.ParseValue(int, string, string, CultureInfo)" />.
+        /// Gets the content of the field with the specified <paramref name="fieldName"/>.
         /// </summary>
-        /// <param name="layout">The layout.</param>
-        /// <param name="fieldNumber">The field number.</param>
-        /// <param name="value">The value.</param>
-        /// <param name="stringMarker">The string marker.</param>
-        /// <param name="jsonMode">if set to <c>true</c> [json mode].</param>
-        /// <param name="culture">The culture.</param>
-        /// <returns></returns>
-        public string GetString(RowLayout layout, int fieldNumber, object value, string stringMarker, bool jsonMode, CultureInfo culture = null)
-        {
-            FieldProperties field = layout.GetProperties(fieldNumber);
-            return field.GetString(value, stringMarker, jsonMode, culture);
-        }
-
-        /// <summary>Sets the identifier.</summary>
-        /// <param name="idFieldIndex">Index of the identifier field.</param>
-        /// <param name="id">The identifier.</param>
-        /// <returns></returns>
-        public Row SetID(int idFieldIndex, long id)
-        {
-            var row = GetValues();
-            row[idFieldIndex] = id;
-            return new Row(row);
-        }
-
-        /// <summary>Gets the identifier.</summary>
-        /// <param name="idFieldIndex">Index of the identifier field.</param>
-        /// <returns></returns>
-        public long GetID(int idFieldIndex)
-        {
-            var value = data[idFieldIndex];
-            return value is long ? (long)value : Convert.ToInt64(value);
-        }
+        /// <param name="fieldName">Name of the field.</param>
+        /// <returns>Returns a value or null.</returns>
+        public object this[string fieldName] => Values[Layout.GetFieldIndex(fieldName, true)];
 
         /// <summary>
         /// Gets all values of the row.
         /// </summary>
-        /// <returns></returns>
-        public object[] GetValues()
-        {
-            return (object[])data.Clone();
-        }
+        /// <returns>A copy of all values.</returns>
+        public object[] CopyValues() => (object[])Values.Clone();
 
         /// <summary>
         /// Gets a struct containing all values of the row.
         /// </summary>
-        /// <exception cref="NotSupportedException">Thrown if the row was not created with a typed layout.</exception>
-        public T GetStruct<T>(RowLayout layout)
-            where T : struct
+        /// <param name="layout">Table layout.</param>
+        /// <typeparam name="TStruct">Structure type.</typeparam>
+        /// <returns>A new structure instance.</returns>
+        public TStruct GetStruct<TStruct>(RowLayout layout)
+            where TStruct : struct
         {
             if (!layout.IsTyped)
             {
                 throw new NotSupportedException(string.Format("This Row was not created from a typed layout!"));
             }
 
-            object result = default(T);
-            layout.SetValues(ref result, data);
-            return (T)result;
+            object result = default(TStruct);
+            layout.SetValues(ref result, Values);
+            return (TStruct)result;
         }
-
-        #endregion
 
         /// <summary>Obtains a row value as string using the string format defined at the rowlayout.</summary>
         /// <param name="layout">The layout.</param>
-        /// <param name="field">The field.</param>
-        /// <returns></returns>
-        public string GetDisplayString(RowLayout layout, int field)
+        /// <param name="index">The field index.</param>
+        /// <returns>The string to display.</returns>
+        public string GetDisplayString(RowLayout layout, int index)
         {
-            var value = GetValue(field);
-            return value == null ? string.Empty : layout.GetDisplayString(field, value);
+            var value = Values[index];
+            return value == null ? string.Empty : layout.GetDisplayString(index, value);
         }
 
         /// <summary>
         /// Gets all row values as strings using the string format defined at the rowlayout.
         /// </summary>
-        /// <returns></returns>
+        /// <param name="layout">Table layout.</param>
+        /// <returns>An array containing the display strings for all fields.</returns>
         public string[] GetDisplayStrings(RowLayout layout)
         {
-            var values = GetValues();
-            var strings = new string[values.Length];
-            for (var i = 0; i < values.Length; i++)
+            var strings = new string[Values.Length];
+            for (var i = 0; i < Values.Length; i++)
             {
-                strings[i] = layout.GetDisplayString(i, values[i]);
+                strings[i] = layout.GetDisplayString(i, Values[i]);
             }
             return strings;
         }
 
         #region overrides
 
-        /// <summary>
-        /// Returns the row type and fieldcount.
-        /// </summary>
-        /// <returns></returns>
+        /// <inheritdoc/>
         public override string ToString()
         {
             var result = new StringBuilder();
             result.Append("Row[");
-            result.Append(data.Length);
+            result.Append(Values.Length);
             result.Append("] ");
             result.Append(" ");
             var l_First = true;
-            foreach (var obj in data)
+            foreach (var obj in Values)
             {
                 if (l_First)
                 {
@@ -239,7 +163,20 @@ namespace Cave.Data
         /// </returns>
         public bool Equals(Row other)
         {
-            return ReferenceEquals(null, other) ? false : DefaultComparer.Equals(data, other.data);
+            if (other?.Values?.Length != Values.Length)
+            {
+                return false;
+            }
+            for (int i = 0; i < Values.Length; i++)
+            {
+                var source = Values[i];
+                var target = other.Values[i];
+                if (!DefaultComparer.Equals(source, target))
+                {
+                    return false;
+                }
+            }
+            return true;
         }
 
         /// <summary>Returns a hash code for this instance.</summary>
@@ -248,7 +185,28 @@ namespace Cave.Data
         /// </returns>
         public override int GetHashCode()
         {
-            return base.GetHashCode();
+            int hash = 0x1234;
+            foreach (var obj in Values)
+            {
+                hash.Rol();
+                if (obj is null)
+                {
+                    continue;
+                }
+                if (obj.GetType().IsArray)
+                {
+                    foreach (var item in (Array)obj)
+                    {
+                        hash.Rol();
+                        hash ^= item?.GetHashCode() ?? 0;
+                    }
+                }
+                else
+                {
+                    hash ^= obj.GetHashCode();
+                }
+            }
+            return hash;
         }
     }
 }

@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Data;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Cave.Collections.Generic;
 
 namespace Cave.Data.Sql
@@ -14,246 +15,199 @@ namespace Cave.Data.Sql
     /// </summary>
     public abstract class SqlTable : Table
     {
+        SqlStorage sqlStorage;
+
+        #region constructor
+
         /// <summary>
-        /// Gets the command to retrieve the last inserted row.
+        /// Initializes a new instance of the <see cref="SqlTable"/> class.
         /// </summary>
-        /// <param name="row">The row to be inserted.</param>
-        /// <returns></returns>
-        protected virtual string GetLastInsertedIDCommand(Row row)
+        protected SqlTable()
         {
-            if (!SqlStorage.SupportsNamedParameters)
-            {
-                throw new NotSupportedException(string.Format("The default GetLastInsertedIDCommand is not available for databases not supporting named parameters!"));
-            }
-            var commandBuilder = new StringBuilder();
-            commandBuilder.Append("SELECT ");
-            commandBuilder.Append(SqlStorage.EscapeFieldName(Layout.IDField));
-            commandBuilder.Append(" FROM ");
-            commandBuilder.Append(FQTN);
-            commandBuilder.Append(" WHERE ");
-            var n = 0;
-            for (var i = 0; i < FieldCount; i++)
-            {
-                FieldProperties fieldProperties = Layout.GetProperties(i);
-                if ((fieldProperties.Flags & FieldFlags.ID) != 0)
-                {
-                    continue;
-                }
-
-                if (++n > 1)
-                {
-                    commandBuilder.Append(" AND ");
-                }
-
-                commandBuilder.Append(SqlStorage.EscapeFieldName(fieldProperties));
-                commandBuilder.Append("=");
-                commandBuilder.Append(SqlStorage.ParameterPrefix);
-                if (SqlStorage.SupportsNamedParameters)
-                {
-                    commandBuilder.Append(fieldProperties.NameAtDatabase);
-                }
-            }
-            commandBuilder.AppendLine(";");
-            return commandBuilder.ToString();
         }
 
-        #region public properties
+        #endregion
+
+        #region properties
+
+        #region FQTN
 
         /// <summary>
         /// Gets the full qualified table name.
         /// </summary>
-        public readonly string FQTN;
+        public string FQTN { get; private set; }
 
         #endregion
 
-        #region protected properties
+        #region RowCount
 
-        /// <summary>
-        /// Gets the used <see cref="SqlStorage"/> backend.
-        /// </summary>
-        protected SqlStorage SqlStorage { get; private set; }
+        /// <inheritdoc/>
+        public override long RowCount
+        {
+            get
+            {
+                var value = Storage.QueryValue(database: Database.Name, table: Name, cmd: "SELECT COUNT(*) FROM " + FQTN);
+                if (value == null)
+                {
+                    throw new InvalidDataException($"Could not read value from {FQTN}!");
+                }
+                return Convert.ToInt64(value);
+            }
+        }
 
         #endregion
 
-        #region constructor
-
-        static RowLayout GetLayout(IDatabase database, string table)
-        {
-            if (database == null)
-            {
-                throw new ArgumentNullException("Database");
-            }
-
-            var storage = database.Storage as SqlStorage;
-            if (storage == null)
-            {
-                throw new InvalidOperationException(string.Format("Database has to be a SqlDatabase!"));
-            }
-
-            return storage.QuerySchema(database.Name, table);
-        }
-
         /// <summary>
-        /// Initializes a new instance of the <see cref="SqlTable"/> class.
+        /// Gets the used <see cref="Sql.SqlStorage"/> backend.
         /// </summary>
-        /// <param name="database">The database this table belongs to.</param>
-        /// <param name="name">The name of the table.</param>
-        protected SqlTable(IDatabase database, string name)
-            : this(database, GetLayout(database, name))
-        {
-        }
+        public new SqlStorage Storage => sqlStorage;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SqlTable"/> class.
-        /// </summary>
-        /// <param name="database">The database this table belongs to.</param>
-        /// <param name="layout">The layout of the table.</param>
-        protected SqlTable(IDatabase database, RowLayout layout)
-            : base(database, layout)
-        {
-            SqlStorage = database.Storage as SqlStorage;
-            if (SqlStorage == null)
-            {
-                throw new InvalidOperationException(string.Format("Database has to be a SqlDatabase!"));
-            }
-
-            FQTN = SqlStorage.FQTN(database.Name, layout.Name);
-            RowLayout schema = SqlStorage.QuerySchema(database.Name, layout.Name);
-            SqlStorage.CheckLayout(Name, schema, Layout);
-        }
         #endregion
 
-        #region implemented functionality
+        #region public ITable functions
 
-        #region ITable interface implementation
+        /// <inheritdoc/>
+        public override void Connect(IDatabase database, TableFlags flags, RowLayout layout)
+        {
+            sqlStorage = database.Storage as SqlStorage;
+            if (sqlStorage == null)
+            {
+                throw new InvalidOperationException("Database has to be a SqlDatabase!");
+            }
+            FQTN = sqlStorage.FQTN(database.Name, layout.Name);
+            var schema = QueryLayout(database.Name, layout.Name);
+            sqlStorage.CheckLayout(layout, schema);
+            base.Connect(database, flags, schema);
+        }
 
         /// <summary>
-        /// Sets the specified value to a field.
+        /// Initializes the interface class. This is the first method to call after create.
         /// </summary>
-        /// <param name="field">The name of the field.</param>
-        /// <param name="value">The value.</param>
-        public override void SetValue(string field, object value)
+        /// <param name="database">Database the table belongs to.</param>
+        /// <param name="flags">Flags used to connect to the table.</param>
+        /// <param name="tableName">Table name to load.</param>
+        public void Initialize(IDatabase database, TableFlags flags, string tableName)
         {
-            var command = "UPDATE " + FQTN + " SET " + SqlStorage.EscapeFieldName(Layout.GetProperties(field));
+            sqlStorage = database.Storage as SqlStorage;
+            if (sqlStorage == null)
+            {
+                throw new InvalidOperationException("Database has to be a SqlDatabase!");
+            }
+            FQTN = sqlStorage.FQTN(database.Name, tableName);
+            var schema = QueryLayout(database.Name, tableName);
+            base.Connect(database, flags, schema);
+        }
+
+        #region SetValue
+
+        /// <inheritdoc/>
+        public override void SetValue(string fieldName, object value)
+        {
+            var field = Layout[fieldName];
+            var command = "UPDATE " + FQTN + " SET " + sqlStorage.EscapeFieldName(field);
             if (value == null)
             {
-                SqlStorage.Execute(Database.Name, Name, command + "=NULL");
+                sqlStorage.Execute(command + "=NULL");
             }
             else
             {
-                var parameter = new DatabaseParameter(field, value);
-                if (SqlStorage.SupportsNamedParameters)
-                {
-                    SqlStorage.Execute(Database.Name, Name, command + "=" + SqlStorage.ParameterPrefix + parameter.Name + ";", parameter);
-                }
-                else
-                {
-                    SqlStorage.Execute(Database.Name, Name, command + "=" + SqlStorage.ParameterPrefix + ";", parameter);
-                }
+                var parameter = new SqlParam(sqlStorage.ParameterPrefix, value);
+                Execute(new SqlCmd($"{command}={parameter.Name};", parameter));
             }
             IncreaseSequenceNumber();
         }
 
-        /// <summary>
-        /// Gets a row from the table.
-        /// </summary>
-        /// <param name="id">The ID of the row to be fetched.</param>
-        /// <returns>Returns the row.</returns>
-        public override Row GetRow(long id)
-        {
-            return SqlStorage.QueryRow(Layout, Database.Name, Name, "SELECT * FROM " + FQTN + " WHERE " + SqlStorage.EscapeFieldName(Layout.IDField) + "=" + id.ToString());
-        }
+        #endregion
 
-        /// <summary>
-        /// Gets an array with all rows.
-        /// </summary>
-        /// <returns></returns>
-        public override IList<Row> GetRows()
-        {
-            return SqlStorage.Query(Layout, Database.Name, Name, "SELECT * FROM " + FQTN);
-        }
+        #region GetValues
 
-        /// <summary>
-        /// Gets the rows with the given ids.
-        /// </summary>
-        /// <param name="ids">IDs of the rows to fetch from the table.</param>
-        /// <returns>Returns the rows.</returns>
-        public override IList<Row> GetRows(IEnumerable<long> ids)
+        /// <inheritdoc/>
+        public override IList<TValue> GetValues<TValue>(string fieldname, Search search = null)
         {
-            if (ids == null)
+            var escapedFieldName = sqlStorage.EscapeFieldName(Layout[fieldname]);
+            var field = new FieldProperties()
             {
-                throw new ArgumentNullException("IDs");
-            }
+                Name = fieldname,
+                Flags = FieldFlags.None,
+                DataType = DataType.String,
+            };
+            field.Check();
+            SqlCmd query;
 
-            var command = new StringBuilder();
-            command.AppendLine($"SELECT * FROM {FQTN} WHERE");
-            var first = true;
-            var idFieldName = Layout.IDField.NameAtDatabase;
-            foreach (var id in ids.AsSet())
+            if (search == null)
             {
-                if (first)
-                {
-                    first = false;
-                    command.AppendLine($"({idFieldName}={id})");
-                }
-                else
-                {
-                    command.AppendLine($"OR({idFieldName}={id})");
-                }
-            }
-            return first ? new List<Row>() : SqlStorage.Query(Layout, Database.Name, Name, command.ToString());
-        }
-
-        /// <summary>Obtains all different field values of a given field.</summary>
-        /// <typeparam name="T">Structure type.</typeparam>
-        /// <param name="field">Name of the field.</param>
-        /// <param name="includeNull">Allow null value to be added to the results.</param>
-        /// <param name="ids">List of IDs to retrieve.</param>
-        /// <returns></returns>
-        public override IItemSet<T> GetValues<T>(string field, bool includeNull = false, IEnumerable<long> ids = null)
-        {
-            var fieldName = SqlStorage.EscapeFieldName(Layout.GetProperties(field));
-            var layout = RowLayout.CreateUntyped("Layout", new FieldProperties(Name, FieldFlags.None, DataType.String, field));
-            string query;
-            if (ids == null)
-            {
-                query = $"SELECT {fieldName} FROM {FQTN} WHERE {Layout.IDField.Name} GROUP BY {fieldName}";
+                query = $"SELECT {escapedFieldName} FROM {FQTN}";
             }
             else
             {
-                query = $"SELECT {fieldName} FROM {FQTN} WHERE {Layout.IDField.Name} IN ({StringExtensions.Join(ids, ",")}) GROUP BY {fieldName}";
+                SqlSearch s = ToSqlSearch(search);
+                query = new SqlCmd($"SELECT {escapedFieldName} FROM {FQTN} WHERE {s}", s.Parameters);
             }
-            List<Row> rows = SqlStorage.Query(layout, Database.Name, Name, query);
-            var result = new Set<T>();
+            var rows = sqlStorage.Query(query, Database.Name, Name);
+            var result = new List<TValue>();
             foreach (Row row in rows)
             {
-                var value = (T)Fields.ConvertValue(typeof(T), row.GetValue(0), CultureInfo.InvariantCulture);
-                if (includeNull || (value != null))
-                {
-                    result.Include(value);
-                }
+                var value = (TValue)Fields.ConvertValue(typeof(TValue), row[0], CultureInfo.InvariantCulture);
+                result.Add(value);
             }
-            return result;
+            return result.AsList();
         }
 
-        /// <summary>Calculates the sum of the specified field name for all matching rows.</summary>
-        /// <param name="fieldName">Name of the field.</param>
-        /// <param name="search">The search.</param>
-        /// <returns></returns>
+        /// <inheritdoc/>
+        public override IList<TValue> Distinct<TValue>(string fieldname, Search search = null)
+        {
+            var escapedFieldName = sqlStorage.EscapeFieldName(Layout[fieldname]);
+            var field = new FieldProperties()
+            {
+                Name = fieldname,
+                Flags = FieldFlags.None,
+                DataType = DataType.String,
+            };
+            field.Check();
+            string query;
+
+            if (search == null)
+            {
+                query = $"SELECT DISTINCT {escapedFieldName} FROM {FQTN}";
+            }
+            else
+            {
+                SqlSearch s = ToSqlSearch(search);
+                query = $"SELECT DISTINCT {escapedFieldName} FROM {FQTN} WHERE {s}";
+            }
+            var rows = sqlStorage.Query(query, Database.Name, Name);
+            var result = new Set<TValue>();
+            foreach (Row row in rows)
+            {
+                var value = (TValue)Fields.ConvertValue(typeof(TValue), row[0], CultureInfo.InvariantCulture);
+                result.Include(value);
+            }
+            return result.AsList();
+        }
+
+        #endregion
+
+        #region Sum
+
+        /// <inheritdoc/>
         public override double Sum(string fieldName, Search search = null)
         {
-            FieldProperties field = Layout.GetProperties(fieldName);
+            var field = Layout[fieldName];
             search = search ?? Search.None;
-            SqlSearch s = search.ToSql(Layout, SqlStorage);
+            SqlSearch s = ToSqlSearch(search);
             var command = new StringBuilder();
             command.Append("SELECT SUM(");
-            command.Append(SqlStorage.EscapeFieldName(field));
+            command.Append(sqlStorage.EscapeFieldName(field));
             command.Append(") FROM ");
             command.Append(FQTN);
             command.Append(" WHERE ");
             command.Append(s.ToString());
             double result = double.NaN;
-            object dbValue = SqlStorage.QueryValue(Database.Name, Name, command.ToString(), s.Parameters.ToArray());
+            object value = sqlStorage.QueryValue(new SqlCmd(command.ToString(), s.Parameters.ToArray()));
+            if (value == null)
+            {
+                throw new InvalidDataException($"Could not read value from {FQTN}!");
+            }
             switch (field.DataType)
             {
                 case DataType.Binary:
@@ -271,323 +225,69 @@ namespace Cave.Data.Sql
                             throw new NotSupportedException($"Sum() is not supported for field {field}!");
 
                         case DateTimeType.BigIntTicks:
-                            result = Convert.ToDouble(dbValue) / TimeSpan.TicksPerSecond;
+                            result = Convert.ToDouble(value) / TimeSpan.TicksPerSecond;
                             break;
 
-                        case DateTimeType.Native:
                         case DateTimeType.DecimalSeconds:
+                        case DateTimeType.Native:
                         case DateTimeType.DoubleSeconds:
-                            result = Convert.ToDouble(dbValue);
+                            result = Convert.ToDouble(value);
                             break;
                     }
                     break;
 
                 default:
-                    result = Convert.ToDouble(dbValue);
+                    result = Convert.ToDouble(value);
                     break;
             }
             return result;
         }
 
-        /// <summary>
-        /// Checks a given ID for existance.
-        /// </summary>
-        /// <param name="id">The dataset ID to look for.</param>
-        /// <returns>Returns whether the dataset exists or not.</returns>
-        public override bool Exist(long id)
-        {
-            var value = SqlStorage.QueryValue(Database.Name, Name, "SELECT COUNT(*) FROM " + FQTN + " WHERE " + SqlStorage.EscapeFieldName(Layout.IDField) + "=" + id.ToString());
-            return int.Parse(value.ToString()) > 0;
-        }
-
-        #region sql92 commands
-
-        /// <summary>Creates the insert command.</summary>
-        /// <param name="commandBuilder">The command builder.</param>
-        /// <param name="row">The row.</param>
-        /// <returns>Returns a value &gt; 0 (valid ID) or &lt;= 0 for autoincrement ids.</returns>
-        public virtual long CreateInsert(SqlCommandBuilder commandBuilder, Row row)
-        {
-            commandBuilder.Append("INSERT INTO ");
-            commandBuilder.Append(FQTN);
-            commandBuilder.Append(" (");
-            var parameterBuilder = new StringBuilder();
-            var firstCommand = true;
-            var autoSetID = false;
-            var autoIncrementID = false;
-
-            // autoset id ?
-            var id = Layout.GetID(row);
-            if (id <= 0)
-            {
-                autoSetID = true;
-
-                // yes, autoinc ?
-                autoIncrementID = (Layout.IDField.Flags & FieldFlags.AutoIncrement) != 0;
-            }
-
-            // prepare ID field
-            if (autoSetID && !autoIncrementID)
-            {
-                commandBuilder.Append(SqlStorage.EscapeFieldName(Layout.IDField));
-                id = GetNextFreeID();
-                parameterBuilder.Append(id);
-                firstCommand = false;
-            }
-
-            for (var i = 0; i < FieldCount; i++)
-            {
-                if (autoSetID && (i == Layout.IDFieldIndex))
-                {
-                    continue;
-                }
-
-                if (firstCommand)
-                {
-                    firstCommand = false;
-                }
-                else
-                {
-                    commandBuilder.Append(", ");
-                    parameterBuilder.Append(", ");
-                }
-
-                FieldProperties fieldProperties = Layout.GetProperties(i);
-
-                commandBuilder.Append(SqlStorage.EscapeFieldName(fieldProperties));
-
-                var value = SqlStorage.GetDatabaseValue(fieldProperties, row.GetValue(i));
-                if (value == null)
-                {
-                    parameterBuilder.Append("NULL");
-                }
-                else if (!TransactionsUseParameters)
-                {
-                    parameterBuilder.Append(SqlStorage.EscapeFieldValue(Layout.GetProperties(i), value));
-                }
-                else
-                {
-                    var parameter = new DatabaseParameter(fieldProperties.NameAtDatabase, value);
-                    commandBuilder.AddParameter(parameter);
-                    parameterBuilder.Append(SqlStorage.ParameterPrefix);
-                    if (SqlStorage.SupportsNamedParameters)
-                    {
-                        parameterBuilder.Append(parameter.Name);
-                    }
-                }
-            }
-
-            commandBuilder.Append(") VALUES (");
-            commandBuilder.Append(parameterBuilder.ToString());
-            commandBuilder.Append(")");
-
-            commandBuilder.AppendLine(";");
-            return id;
-        }
-
-        /// <summary>Creates an update command.</summary>
-        /// <param name="commandBuilder">The command builder.</param>
-        /// <param name="row">The row.</param>
-        protected virtual void CreateUpdate(SqlCommandBuilder commandBuilder, Row row)
-        {
-            commandBuilder.Append("UPDATE ");
-            commandBuilder.Append(FQTN);
-            commandBuilder.Append(" SET ");
-            for (var i = 0; i < Layout.FieldCount; i++)
-            {
-                if (i > 0)
-                {
-                    commandBuilder.Append(",");
-                }
-
-                FieldProperties fieldProperties = Layout.GetProperties(i);
-                commandBuilder.Append(SqlStorage.EscapeFieldName(fieldProperties));
-                var value = row.GetValue(i);
-                if (value == null)
-                {
-                    commandBuilder.Append("=NULL");
-                }
-                else
-                {
-                    commandBuilder.Append("=");
-                    value = SqlStorage.GetDatabaseValue(Layout.GetProperties(i), value);
-                    if (TransactionsUseParameters)
-                    {
-                        commandBuilder.CreateAndAddParameter(value);
-                    }
-                    else
-                    {
-                        commandBuilder.Append(SqlStorage.EscapeFieldValue(Layout.GetProperties(i), value));
-                    }
-                }
-            }
-            commandBuilder.Append(" WHERE ");
-            commandBuilder.Append(SqlStorage.EscapeFieldName(Layout.IDField));
-            commandBuilder.Append("=");
-            commandBuilder.Append(SqlStorage.GetDatabaseValue(Layout.IDField, Layout.GetID(row)).ToString());
-            commandBuilder.AppendLine(";");
-        }
-
-        /// <summary>Creates a replace command.</summary>
-        /// <param name="cb">The command builder.</param>
-        /// <param name="row">The row.</param>
-        protected virtual void CreateReplace(SqlCommandBuilder cb, Row row)
-        {
-            cb.Append("REPLACE INTO ");
-            cb.Append(FQTN);
-            cb.Append(" VALUES (");
-            for (var i = 0; i < Layout.FieldCount; i++)
-            {
-                if (i > 0)
-                {
-                    cb.Append(",");
-                }
-
-                var value = row.GetValue(i);
-                if (value == null)
-                {
-                    cb.Append("NULL");
-                }
-                else
-                {
-                    value = SqlStorage.GetDatabaseValue(Layout.GetProperties(i), value);
-                    if (TransactionsUseParameters)
-                    {
-                        cb.CreateAndAddParameter(value);
-                    }
-                    else
-                    {
-                        cb.Append(SqlStorage.EscapeFieldValue(Layout.GetProperties(i), value));
-                    }
-                }
-            }
-            cb.AppendLine(");");
-        }
         #endregion
 
-        #region sql92 insert
+        #region Insert
 
-        /// <summary>
-        /// Inserts a row to the table. If an ID <![CDATA[<]]> 0 is given an automatically generated ID will be used to add the dataset.
-        /// </summary>
-        /// <param name="row">The row to insert.</param>
-        /// <returns>Returns the ID of the inserted dataset.</returns>
-        public override long Insert(Row row)
+        /// <inheritdoc/>
+        public override Row Insert(Row row)
         {
-            var commandBuilder = new SqlCommandBuilder(Database);
-            var id = CreateInsert(commandBuilder, row);
-            if (id <= 0)
-            {
-                commandBuilder.Append(GetLastInsertedIDCommand(row));
-                id = Convert.ToInt64(SqlStorage.QueryValue(Database.Name, Name, commandBuilder.ToString(), commandBuilder.Parameters));
-            }
-            else
-            {
-                SqlStorage.Execute(Database.Name, Name, commandBuilder.ToString(), commandBuilder.Parameters);
-            }
-            IncreaseSequenceNumber();
-            return id;
-        }
-
-        #endregion
-
-        #region replace (available at most databases via replace alias)
-
-        /// <summary>
-        /// Replaces a row at the table. The ID has to be given. This inserts (if the row does not exist) or updates (if it exists) the row.
-        /// </summary>
-        /// <param name="row">The row to replace (valid ID needed).</param>
-        public override void Replace(Row row)
-        {
-            var id = Layout.GetID(row);
-            if (id <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(row), "Row ID is invalid!");
-            }
-
-            var commandBuilder = new SqlCommandBuilder(Database);
-            CreateReplace(commandBuilder, row);
-            commandBuilder.Execute();
-            IncreaseSequenceNumber();
-        }
-
-        #endregion
-
-        #region sql92 update
-
-        /// <summary>
-        /// Updates a row to the table. The row must exist already!.
-        /// </summary>
-        /// <param name="row">The row to update.</param>
-        public override void Update(Row row)
-        {
-            var id = Layout.GetID(row);
-            if (id <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(row), "Row ID is invalid!");
-            }
-
-            var commandBuilder = new SqlCommandBuilder(Database);
-            CreateUpdate(commandBuilder, row);
-            commandBuilder.Execute();
-            IncreaseSequenceNumber();
-        }
-        #endregion
-
-        #region sql92 delete
-
-        /// <summary>
-        /// Removes a row from the table.
-        /// </summary>
-        /// <param name="id">The dataset ID to remove.</param>
-        public override void Delete(long id)
-        {
-            var commandBuilder = new StringBuilder();
-            commandBuilder.Append("DELETE FROM ");
-            commandBuilder.Append(FQTN);
-            commandBuilder.Append(" WHERE ");
-            commandBuilder.Append(SqlStorage.EscapeFieldName(Layout.IDField));
-            commandBuilder.Append("=");
-            commandBuilder.Append(SqlStorage.GetDatabaseValue(Layout.IDField, id));
-            SqlStorage.Execute(Database.Name, Name, commandBuilder.ToString());
-            IncreaseSequenceNumber();
-        }
-
-        /// <summary>Removes all rows from the table matching the specified search.</summary>
-        /// <param name="search">The Search used to identify rows for removal.</param>
-        /// <returns>Returns the number of dataset deleted.</returns>
-        public override int TryDelete(Search search)
-        {
-            if (search == null)
-            {
-                search = Search.None;
-            }
-
-            SqlSearch s = search.ToSql(Layout, SqlStorage);
-            var command = "DELETE FROM " + FQTN + " WHERE " + s.ToString();
-            var result = SqlStorage.Execute(Database.Name, Name, command, s.Parameters.ToArray());
+            var commandBuilder = new SqlCommandBuilder(sqlStorage);
+            CreateInsert(commandBuilder, row, true);
+            CreateLastInsertedRowCommand(commandBuilder, row);
+            var result = QueryRow(commandBuilder);
             IncreaseSequenceNumber();
             return result;
         }
 
         #endregion
 
-        /// <summary>
-        /// Clears all rows of the table.
-        /// </summary>
-        public override void Clear()
+        #region Replace
+
+        /// <inheritdoc/>
+        public override void Replace(Row row)
         {
-            SqlStorage.Execute(Database.Name, Name, "DELETE FROM " + FQTN);
+            var commandBuilder = new SqlCommandBuilder(sqlStorage);
+            CreateReplace(commandBuilder, row, true);
+            Execute(commandBuilder);
             IncreaseSequenceNumber();
         }
 
-        /// <summary>
-        /// Counts the results of a given search.
-        /// </summary>
-        /// <param name="search">The search to run.</param>
-        /// <param name="resultOption">Options for the search and the result set.</param>
-        /// <returns></returns>
-        public override long Count(Search search = default(Search), ResultOption resultOption = default(ResultOption))
+        #endregion
+
+        #region Clear
+
+        /// <inheritdoc/>
+        public override void Clear()
+        {
+            sqlStorage.Execute(database: Database.Name, table: Name, cmd: "DELETE FROM " + FQTN);
+            IncreaseSequenceNumber();
+        }
+
+        #endregion
+
+        #region Count
+
+        /// <inheritdoc/>
+        public override long Count(Search search = default, ResultOption resultOption = default)
         {
             if (search == null)
             {
@@ -599,17 +299,25 @@ namespace Cave.Data.Sql
                 resultOption = ResultOption.None;
             }
 
-            SqlSearch s = search.ToSql(Layout, SqlStorage);
-            return resultOption != ResultOption.None
-                ? SqlCountIDs(s, resultOption)
-                : Convert.ToInt64(SqlStorage.QueryValue(Database.Name, Name, "SELECT COUNT(*) FROM " + FQTN + " WHERE " + s.ToString(), s.Parameters.ToArray()));
+            SqlSearch s = ToSqlSearch(search);
+            if (resultOption != ResultOption.None)
+            {
+                return SqlCount(s, resultOption);
+            }
+
+            var value = QueryValue(new SqlCmd("SELECT COUNT(*) FROM " + FQTN + " WHERE " + s.ToString(), s.Parameters.ToArray()));
+            if (value == null)
+            {
+                throw new InvalidDataException($"Could not read row count from {FQTN}!");
+            }
+            return Convert.ToInt64(value);
         }
 
-        /// <summary>
-        /// Checks a given search for any datasets matching.
-        /// </summary>
-        /// <param name="search"></param>
-        /// <returns></returns>
+        #endregion
+
+        #region Exist
+
+        /// <inheritdoc/>
         public override bool Exist(Search search)
         {
             if (search == null)
@@ -617,39 +325,289 @@ namespace Cave.Data.Sql
                 search = Search.None;
             }
 
-            SqlSearch s = search.ToSql(Layout, SqlStorage);
+            SqlSearch s = ToSqlSearch(search);
             var query = "SELECT DISTINCT 1 FROM " + FQTN + " WHERE " + s.ToString();
-            return SqlStorage.Query(null, Database.Name, Name, query, s.Parameters.ToArray()).Count > 0;
+            RowLayout layout = null;
+            return Query(new SqlCmd(query, s.Parameters.ToArray()), ref layout).Count > 0;
+        }
+
+        /// <inheritdoc/>
+        public override bool Exist(Row row)
+        {
+            Search search = Search.None;
+            int i = 0;
+            foreach (var field in Layout.Identifier)
+            {
+                i++;
+                search &= Search.FieldEquals(field.Name, row[field.Index]);
+            }
+            if (i < 1)
+            {
+                throw new Exception("At least one identifier field needed!");
+            }
+            return Exist(search);
+        }
+
+        #endregion
+
+        #region GetRows()
+
+        /// <inheritdoc/>
+        public override IList<Row> GetRows() => Query("SELECT * FROM " + FQTN);
+
+        #endregion
+
+        #region GetRows(Search, ResultOption)
+
+        /// <inheritdoc/>
+        public override IList<Row> GetRows(Search search = null, ResultOption resultOption = null)
+        {
+            if (search == null)
+            {
+                search = Search.None;
+            }
+
+            if (resultOption == null)
+            {
+                resultOption = ResultOption.None;
+            }
+
+            SqlSearch s = ToSqlSearch(search);
+            s.CheckFieldsPresent(resultOption);
+            return SqlGetRows(s, resultOption);
+        }
+
+        #endregion
+
+        #region GetRowAt(index)
+
+        /// <inheritdoc/>
+        public override Row GetRowAt(int index) => GetRow(Search.None, ResultOption.Limit(1) + ResultOption.Offset(index));
+
+        #endregion
+
+        #region GetRow(Search, ResultOption)
+
+        /// <inheritdoc/>
+        public override Row GetRow(Search search = null, ResultOption resultOption = null) => GetRows(search, resultOption).Single();
+
+        #endregion
+
+        #region Delete(Row)
+
+        /// <inheritdoc/>
+        public override void Delete(Row row)
+        {
+            var commandBuilder = new SqlCommandBuilder(sqlStorage);
+            commandBuilder.Append("DELETE FROM ");
+            commandBuilder.Append(FQTN);
+            AppendWhereClause(commandBuilder, row);
+            sqlStorage.Execute(database: Database.Name, table: Name, cmd: commandBuilder);
+            IncreaseSequenceNumber();
+        }
+
+        #endregion
+
+        #region TryDelete
+
+        /// <inheritdoc/>
+        public override int TryDelete(Search search)
+        {
+            SqlSearch s = ToSqlSearch(search);
+            var command = "DELETE FROM " + FQTN + " WHERE " + s.ToString();
+            var result = Execute(new SqlCmd(command, s.Parameters.ToArray()));
+            IncreaseSequenceNumber();
+            return result;
+        }
+
+        #endregion
+
+        #region Update
+
+        /// <inheritdoc/>
+        public override void Update(Row row)
+        {
+            var commandBuilder = new SqlCommandBuilder(sqlStorage);
+            CreateUpdate(commandBuilder, row, true);
+            Execute(commandBuilder);
+            IncreaseSequenceNumber();
+        }
+
+        #endregion
+
+        #region QueryRow(SqlCmd cmd, ...)
+
+        /// <summary>
+        /// Queries for a dataset (selected fields, one row).
+        /// </summary>
+        /// <param name="cmd">The database dependent sql statement.</param>
+        /// <param name="layout">The expected schema layout (if unset the layout is returned).</param>
+        /// <returns>The result row.</returns>
+        public Row QueryRow(SqlCmd cmd, ref RowLayout layout) => Query(cmd, ref layout).Single();
+
+        /// <summary>
+        /// Queries for a dataset (selected fields, one row).
+        /// </summary>
+        /// <param name="cmd">The database dependent sql statement.</param>
+        /// <returns>The result row.</returns>
+        public Row QueryRow(SqlCmd cmd)
+        {
+            var layout = Layout;
+            return QueryRow(cmd, ref layout);
+        }
+
+        #endregion
+
+        #region QueryValue(SqlCmd cmd, ...
+
+        /// <summary>
+        /// Querys a single value with a database dependent sql statement.
+        /// </summary>
+        /// <param name="cmd">The database dependent sql statement.</param>
+        /// <param name="value">The result.</param>
+        /// <param name="fieldName">Name of the field (optional, only needed if multiple columns are returned).</param>
+        /// <returns>true if the value could be found and read, false otherwise.</returns>
+        /// <typeparam name="TValue">Result value type.</typeparam>
+        public bool QueryValue<TValue>(SqlCmd cmd, out TValue value, string fieldName = null)
+            where TValue : struct
+            => sqlStorage.QueryValue(cmd, out value, Database.Name, Name, fieldName);
+
+        /// <summary>
+        /// Querys a single value with a database dependent sql statement.
+        /// </summary>
+        /// <param name="cmd">The database dependent sql statement.</param>
+        /// <param name="fieldName">Name of the field (optional, only needed if multiple columns are returned).</param>
+        /// <returns>The result value or null.</returns>
+        public object QueryValue(SqlCmd cmd, string fieldName = null)
+            => sqlStorage.QueryValue(cmd, Database.Name, Name, fieldName);
+
+        #endregion
+
+        #region Execute(SqlCmd cmd, ...)
+
+        /// <summary>
+        /// Executes a database dependent sql statement silently.
+        /// </summary>
+        /// <param name="cmd">the database dependent sql statement.</param>
+        /// <returns>Number of affected rows (if supported by the database).</returns>
+        public int Execute(SqlCmd cmd) => sqlStorage.Execute(cmd, Database.Name, Name);
+
+        #endregion
+
+        #region Query(SqlCmd, ...)
+
+        /// <summary>
+        /// Queries for all matching datasets.
+        /// </summary>
+        /// <param name="cmd">The database dependent sql statement.</param>
+        /// <param name="layout">The expected schema layout (if unset the layout is returned).</param>
+        /// <returns>The result rows.</returns>
+        public IList<Row> Query(SqlCmd cmd, ref RowLayout layout)
+        {
+            return sqlStorage.Query(cmd, ref layout, Database.Name, Name);
         }
 
         /// <summary>
-        /// Gets the RowCount.
+        /// Queries for all matching datasets.
         /// </summary>
-        public override long RowCount
+        /// <param name="cmd">The database dependent sql statement.</param>
+        /// <returns>The result rows.</returns>
+        public IList<Row> Query(SqlCmd cmd)
         {
-            get
+            var layout = Layout;
+            return Query(cmd, ref layout);
+        }
+
+        #endregion
+
+        #region Commit
+
+        /// <inheritdoc/>
+        public override int Commit(IEnumerable<Transaction> transactions, TransactionFlags flags = TransactionFlags.Default)
+        {
+            try
             {
-                var value = SqlStorage.QueryValue(Database.Name, Name, "SELECT COUNT(*) FROM " + FQTN);
-                return Convert.ToInt64(value);
+                return InternalCommit(transactions, true);
+            }
+            catch
+            {
+                if ((flags & TransactionFlags.ThrowExceptions) != 0)
+                {
+                    throw;
+                }
+
+                return -1;
             }
         }
 
-        #region FindRow(s) amd FindGroup implementation
+        #endregion
 
-        #region sql92 protected find functions
+        #region Maximum
+
+        /// <inheritdoc/>
+        public override TValue? Maximum<TValue>(string fieldName, Search search = null)
+        {
+            if (search == null)
+            {
+                search = Search.None;
+            }
+            SqlCommandBuilder command = new SqlCommandBuilder(sqlStorage);
+            command.Append("SELECT MAX(");
+            command.Append(sqlStorage.EscapeFieldName(Layout[fieldName]));
+            command.Append(") FROM ");
+            command.Append(FQTN);
+            command.Append(" WHERE ");
+            command.Append(ToSqlSearch(search).ToString());
+            var value = sqlStorage.QueryValue(database: Database.Name, table: Name, cmd: command);
+            return value == null ? (TValue?)null : (TValue)value;
+        }
+
+        #endregion
+
+        #region Minimum
+
+        /// <inheritdoc/>
+        public override TValue? Minimum<TValue>(string fieldName, Search search = null)
+        {
+            if (search == null)
+            {
+                search = Search.None;
+            }
+            SqlCommandBuilder command = new SqlCommandBuilder(sqlStorage);
+            command.Append("SELECT MIN(");
+            command.Append(sqlStorage.EscapeFieldName(Layout[fieldName]));
+            command.Append(") FROM ");
+            command.Append(FQTN);
+            command.Append(" WHERE ");
+            command.Append(ToSqlSearch(search).ToString());
+            var value = sqlStorage.QueryValue(database: Database.Name, table: Name, cmd: command);
+            return value == null ? (TValue?)null : (TValue)value;
+        }
+
+        #endregion
+
+        #endregion
+
+        /// <summary>
+        /// Gets the name of the table.
+        /// </summary>
+        /// <returns>Database.Tablename.</returns>
+        public override string ToString() => sqlStorage.FQTN(Database.Name, Name);
+
+        #region protected sql92 find functions
 
         /// <summary>
         /// Searches for grouped datasets and returns the id of the first occurence (sql handles this differently).
         /// </summary>
-        /// <param name="search"></param>
-        /// <param name="option"></param>
-        /// <returns></returns>
-        protected internal virtual List<Row> SqlGetGroupRows(SqlSearch search, ResultOption option)
+        /// <param name="search">Search definition.</param>
+        /// <param name="option">Options for the search.</param>
+        /// <returns>Returns a list of rows matching the specified criteria.</returns>
+        protected internal virtual IList<Row> SqlGetGroupRows(SqlSearch search, ResultOption option)
         {
             RowLayout layout;
             var command = new StringBuilder();
             command.Append("SELECT ");
-            if (SqlStorage.SupportsAllFieldsGroupBy)
+            if (sqlStorage.SupportsAllFieldsGroupBy)
             {
                 layout = Layout;
                 command.Append("*");
@@ -665,7 +623,7 @@ namespace Cave.Data.Sql
                         command.Append(", ");
                     }
 
-                    command.Append(SqlStorage.EscapeFieldName(Layout.GetProperties(fieldName)));
+                    command.Append(sqlStorage.EscapeFieldName(Layout[fieldName]));
                 }
             }
             command.Append(" FROM ");
@@ -685,163 +643,32 @@ namespace Cave.Data.Sql
                 {
                     command.Append(",");
                 }
-                command.Append(SqlStorage.EscapeFieldName(Layout.GetProperties(o.Parameter)));
+                command.Append(sqlStorage.EscapeFieldName(Layout[o.Parameter]));
             }
-
-            return SqlStorage.Query(layout, Database.Name, Name, command.ToString(), search.Parameters.ToArray());
+            return Query(new SqlCmd(command.ToString(), search.Parameters.ToArray()), ref layout);
         }
 
         /// <summary>
-        /// Searches for grouped datasets and returns the id of the first occurence (sql handles this differently).
+        /// Searches for grouped datasets and returns the number of items found.
         /// </summary>
-        /// <param name="search"></param>
-        /// <param name="option"></param>
-        /// <returns></returns>
-        protected internal virtual List<long> SqlFindGroupIDs(SqlSearch search, ResultOption option)
+        /// <param name="search">Search definition.</param>
+        /// <param name="option">Options for the search.</param>
+        /// <returns>Numer of items found.</returns>
+        protected internal virtual long SqlCountGroupBy(SqlSearch search, ResultOption option)
         {
-            List<Row> rows = SqlGetGroupRows(search, option);
-            var result = new List<long>(rows.Count);
-            if (SqlStorage.SupportsAllFieldsGroupBy)
+            if (search is null)
             {
-                foreach (Row row in rows)
-                {
-                    result.Add(Layout.GetID(row));
-                }
-            }
-            else
-            {
-                foreach (Row row in rows)
-                {
-                    Search singleSearch = Search.None;
-                    for (var i = 0; i < Layout.FieldCount; i++)
-                    {
-                        if (i == Layout.IDFieldIndex)
-                        {
-                            continue;
-                        }
-
-                        singleSearch &= Search.FieldEquals(Layout.GetProperties(i).Name, row.GetValue(i));
-                    }
-                    result.Add(FindRow(singleSearch, ResultOption.Limit(1) + ResultOption.SortDescending(SqlStorage.EscapeFieldName(Layout.IDField))));
-                }
-            }
-            return result;
-        }
-
-        /// <summary>
-        /// Searches the table for rows with given field value combinations.
-        /// </summary>
-        /// <param name="search">The search to run.</param>
-        /// <param name="option">Options for the search and the result set.</param>
-        /// <returns>Returns the ID of the row found or -1.</returns>
-        protected internal virtual List<long> SqlFindIDs(SqlSearch search, ResultOption option)
-        {
-            if (option.Contains(ResultOptionMode.Group))
-            {
-                return SqlFindGroupIDs(search, option);
-            }
-            var command = new StringBuilder();
-            command.Append("SELECT ");
-            if (Layout.IDField != null)
-            {
-                command.Append(SqlStorage.EscapeFieldName(Layout.IDField));
+                throw new ArgumentNullException(nameof(search));
             }
 
-            foreach (var fieldName in search.FieldNames)
+            if (option is null)
             {
-                if (fieldName == Layout.IDField.Name)
-                {
-                    continue;
-                }
-
-                if (Layout.GetFieldIndex(fieldName) < 0)
-                {
-                    throw new DataException(string.Format("Field {0} could not be found!", fieldName));
-                }
-
-                command.Append(", ");
-                command.Append(SqlStorage.EscapeFieldName(Layout.GetProperties(fieldName)));
+                throw new ArgumentNullException(nameof(option));
             }
 
-            command.Append(" FROM ");
-            command.Append(FQTN);
-            command.Append(" WHERE ");
-
-            command.Append(search.ToString());
-
-            var orderCount = 0;
-            foreach (ResultOption o in option.ToArray(ResultOptionMode.SortAsc, ResultOptionMode.SortDesc))
-            {
-                if (orderCount++ == 0)
-                {
-                    command.Append(" ORDER BY ");
-                }
-                else
-                {
-                    command.Append(",");
-                }
-                command.Append(SqlStorage.EscapeFieldName(Layout.GetProperties(o.Parameter)));
-                if (o.Mode == ResultOptionMode.SortAsc)
-                {
-                    command.Append(" ASC");
-                }
-                else
-                {
-                    command.Append(" DESC");
-                }
-            }
-
-            if (option.Contains(ResultOptionMode.Group))
-            {
-                throw new InvalidOperationException(string.Format("Cannot use Option.Group and Option.Sort at once!"));
-            }
-
-            var limit = 0;
-            foreach (ResultOption o in option.ToArray(ResultOptionMode.Limit))
-            {
-                if (limit++ > 0)
-                {
-                    throw new InvalidOperationException(string.Format("Cannot set two different limits!"));
-                }
-
-                command.Append(" LIMIT " + o.Parameter);
-            }
-            var offset = 0;
-            foreach (ResultOption o in option.ToArray(ResultOptionMode.Offset))
-            {
-                if (offset++ > 0)
-                {
-                    throw new InvalidOperationException(string.Format("Cannot set two different offsets!"));
-                }
-
-                if (limit == 0)
-                {
-                    throw new InvalidOperationException(string.Format("Cannot use offset without limit!"));
-                }
-
-                command.Append(" OFFSET " + o.Parameter);
-            }
-
-            List<Row> rows = SqlStorage.Query(null, Database.Name, Name, command.ToString(), search.Parameters.ToArray());
-            var result = new List<long>();
-            foreach (Row row in rows)
-            {
-                result.Add(Convert.ToInt64(row.GetValue(0)));
-            }
-            return result;
-        }
-
-        /// <summary>
-        /// Searches for grouped datasets and returns the id of the first occurence (sql handles this differently).
-        /// </summary>
-        /// <param name="search"></param>
-        /// <param name="option"></param>
-        /// <returns></returns>
-        protected internal virtual long SqlCountGroupIDs(SqlSearch search, ResultOption option)
-        {
             var command = new StringBuilder();
             command.Append("SELECT COUNT(");
-            if (SqlStorage.SupportsAllFieldsGroupBy)
+            if (sqlStorage.SupportsAllFieldsGroupBy)
             {
                 command.Append("*");
             }
@@ -855,7 +682,7 @@ namespace Cave.Data.Sql
                         command.Append(", ");
                     }
 
-                    command.Append(SqlStorage.EscapeFieldName(Layout.GetProperties(fieldName)));
+                    command.Append(sqlStorage.EscapeFieldName(Layout[fieldName]));
                 }
             }
             command.Append(") FROM ");
@@ -880,10 +707,15 @@ namespace Cave.Data.Sql
                 {
                     command.Append(",");
                 }
-                command.Append(SqlStorage.EscapeFieldName(Layout.GetProperties(o.Parameter)));
+                command.Append(sqlStorage.EscapeFieldName(Layout[o.Parameter]));
             }
 
-            return Convert.ToInt64(SqlStorage.QueryValue(Database.Name, Name, command.ToString(), search.Parameters.ToArray()));
+            var value = QueryValue(new SqlCmd(command.ToString(), search.Parameters.ToArray()));
+            if (value == null)
+            {
+                throw new InvalidDataException($"Could not read value from {FQTN}!");
+            }
+            return Convert.ToInt64(value);
         }
 
         /// <summary>
@@ -891,12 +723,22 @@ namespace Cave.Data.Sql
         /// </summary>
         /// <param name="search">The search to run.</param>
         /// <param name="option">Options for the search and the result set.</param>
-        /// <returns>Returns the ID of the row found or -1.</returns>
-        protected internal virtual long SqlCountIDs(SqlSearch search, ResultOption option)
+        /// <returns>Returns number of rows found.</returns>
+        protected internal virtual long SqlCount(SqlSearch search, ResultOption option)
         {
+            if (search is null)
+            {
+                throw new ArgumentNullException(nameof(search));
+            }
+
+            if (option is null)
+            {
+                throw new ArgumentNullException(nameof(option));
+            }
+
             if (option.Contains(ResultOptionMode.Group))
             {
-                return SqlCountGroupIDs(search, option);
+                return SqlCountGroupBy(search, option);
             }
             var command = new StringBuilder();
             command.Append("SELECT COUNT(*) FROM ");
@@ -915,7 +757,12 @@ namespace Cave.Data.Sql
                         throw new InvalidOperationException(string.Format("ResultOptionMode {0} not supported!", o.Mode));
                 }
             }
-            return Convert.ToInt64(SqlStorage.QueryValue(Database.Name, Name, command.ToString(), search.Parameters.ToArray()));
+            var value = sqlStorage.QueryValue(new SqlCmd(command.ToString(), search.Parameters.ToArray()));
+            if (value == null)
+            {
+                throw new InvalidDataException($"Could not read value from {FQTN}!");
+            }
+            return Convert.ToInt64(value);
         }
 
         /// <summary>
@@ -924,7 +771,7 @@ namespace Cave.Data.Sql
         /// <param name="search">The search to run.</param>
         /// <param name="option">Options for the search and the result set.</param>
         /// <returns>Returns the ID of the row found or -1.</returns>
-        protected internal virtual List<Row> SqlGetRows(SqlSearch search, ResultOption option)
+        protected internal virtual IList<Row> SqlGetRows(SqlSearch search, ResultOption option)
         {
             if (option.Contains(ResultOptionMode.Group))
             {
@@ -948,7 +795,7 @@ namespace Cave.Data.Sql
                 {
                     command.Append(",");
                 }
-                command.Append(SqlStorage.EscapeFieldName(Layout.GetProperties(o.Parameter)));
+                command.Append(sqlStorage.EscapeFieldName(Layout[o.Parameter]));
                 if (o.Mode == ResultOptionMode.SortAsc)
                 {
                     command.Append(" ASC");
@@ -979,218 +826,283 @@ namespace Cave.Data.Sql
 
                 command.Append(" OFFSET " + o.Parameter);
             }
-
-            return SqlStorage.Query(Layout, Database.Name, Name, command.ToString(), search.Parameters.ToArray());
-        }
-        #endregion
-
-        /// <summary>
-        /// Searches the table for rows with given field value combinations.
-        /// </summary>
-        /// <param name="search">The search to run.</param>
-        /// <param name="resultOption">Options for the search and the result set.</param>
-        /// <returns>Returns the ID of the row found or -1.</returns>
-        public override IList<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
-        {
-            if (search == null)
-            {
-                search = Search.None;
-            }
-
-            if (resultOption == null)
-            {
-                resultOption = ResultOption.None;
-            }
-
-            SqlSearch s = search.ToSql(Layout, SqlStorage);
-            s.CheckFieldsPresent(resultOption);
-            return SqlFindIDs(s, resultOption);
+            var layout = Layout;
+            return Query(new SqlCmd(command.ToString(), search.Parameters.ToArray()), ref layout);
         }
 
         /// <summary>
-        /// Searches the table for rows with given field value combinations.
+        /// Converts the specified search to a <see cref="SqlSearch"/>.
         /// </summary>
-        /// <param name="search">The search to run.</param>
-        /// <param name="resultOption">Options for the search and the result set.</param>
-        /// <returns>Returns the rows found.</returns>
-        public override IList<Row> GetRows(Search search = default(Search), ResultOption resultOption = default(ResultOption))
-        {
-            if (search == null)
-            {
-                search = Search.None;
-            }
-
-            if (resultOption == null)
-            {
-                resultOption = ResultOption.None;
-            }
-
-            SqlSearch s = search.ToSql(Layout, SqlStorage);
-            s.CheckFieldsPresent(resultOption);
-            return SqlGetRows(s, resultOption);
-        }
+        /// <param name="search">Search definition.</param>
+        /// <returns>Returns a new <see cref="SqlSearch"/> instance.</returns>
+        protected SqlSearch ToSqlSearch(Search search) => new SqlSearch(sqlStorage, Layout, search);
 
         #endregion
 
-        #region free / used id lookup
+        #region protected sql92 commands
 
-        /// <summary>
-        /// Gets the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!).
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        public override long GetNextUsedID(long id)
+        /// <summary>Creates the insert command.</summary>
+        /// <param name="commandBuilder">The command builder.</param>
+        /// <param name="row">The row.</param>
+        /// <param name="useParameters">Use database parameters instead of escaped command string.</param>
+        protected virtual void CreateInsert(SqlCommandBuilder commandBuilder, Row row, bool useParameters)
         {
-            var cmd = $"SELECT MIN({SqlStorage.EscapeFieldName(Layout.IDField)}) FROM {FQTN} WHERE {SqlStorage.EscapeFieldName(Layout.IDField)} > {id}";
-            var obj = SqlStorage.QueryValue(Database.Name, Name, cmd);
-            return obj == null ? -1 : Convert.ToInt64(obj);
-        }
+            commandBuilder.Append("INSERT INTO ");
+            commandBuilder.Append(FQTN);
+            commandBuilder.Append(" (");
+            var parameterBuilder = new StringBuilder();
+            var firstCommand = true;
 
-        /// <summary>
-        /// Gets the next free ID at the table.
-        /// </summary>
-        /// <returns></returns>
-        public override long GetNextFreeID()
-        {
-            var count = Convert.ToInt64(SqlStorage.QueryValue(Database.Name, Name, $"SELECT COUNT(*) FROM {FQTN}"));
-            if (count == 0)
+            if (Layout.FieldCount != row.FieldCount)
             {
-                return 1L;
+                throw new ArgumentException("Invalid fieldcount at row.", nameof(row));
             }
 
-            var value = Convert.ToInt64(SqlStorage.QueryValue(Database.Name, Name, $"SELECT MAX({SqlStorage.EscapeFieldName(Layout.IDField)}) FROM {FQTN}"));
-            return Math.Max(1L, 1L + value);
-        }
-
-        #endregion
-
-        #endregion
-
-        #region Transaction interface
-
-        /// <summary>Gets a value indicating whether [transactions use parameters during commit].</summary>
-        /// <value>
-        /// <c>true</c> if [transactions use parameters]; otherwise, <c>false</c>.
-        /// </value>
-        /// <remarks>
-        /// Using parameters is recommended since escaping is not needed and when transfering binary data the transmission size is much smaller.
-        /// On the other side even with escaping all values execution without parameters is faster. This is because
-        /// the use of parameters increase the computation time on the server side by an average of 5-10%.
-        /// </remarks>
-        public virtual bool TransactionsUseParameters { get; }
-
-        void InternalCommit(Transaction[] transactions)
-        {
-            var commandBuilder = new SqlCommandBuilder(Database);
-            commandBuilder.AppendLine("START TRANSACTION;");
-            foreach (Transaction transaction in transactions)
+            for (var i = 0; i < Layout.FieldCount; i++)
             {
-                switch (transaction.Type)
+                IFieldProperties field = Layout[i];
+                if (field.Flags.HasFlag(FieldFlags.AutoIncrement))
                 {
-                    #region TransactionType.Inserted
-                    case TransactionType.Inserted:
-                    {
-                        CreateInsert(commandBuilder, transaction.Row);
-                    }
-                    break;
-                    #endregion
-
-                    #region TransactionType.Replaced
-                    case TransactionType.Replaced:
-                    {
-                        CreateReplace(commandBuilder, transaction.Row);
-                    }
-                    break;
-                    #endregion
-
-                    #region TransactionType.Updated
-                    case TransactionType.Updated:
-                    {
-                        CreateUpdate(commandBuilder, transaction.Row);
-                    }
-                    break;
-                    #endregion
-
-                    #region TransactionType.Deleted
-                    case TransactionType.Deleted:
-                    {
-                        commandBuilder.Append("DELETE FROM ");
-                        commandBuilder.Append(FQTN);
-                        commandBuilder.Append(" WHERE ");
-                        commandBuilder.Append(SqlStorage.EscapeFieldName(Layout.IDField));
-                        commandBuilder.Append("=");
-                        commandBuilder.Append(SqlStorage.GetDatabaseValue(Layout.IDField, transaction.ID).ToString());
-                        commandBuilder.AppendLine(";");
-                    }
-                    break;
-                    #endregion
-
-                    default: throw new NotImplementedException();
-                }
-            }
-            commandBuilder.AppendLine("COMMIT;");
-            try
-            {
-                commandBuilder.Execute();
-                IncreaseSequenceNumber();
-            }
-            catch (Exception ex)
-            {
-                Trace.TraceWarning("Error committing transaction[{0}] to table <red>{1}\n{2}", transactions.Length, FQTN, ex);
-                Trace.TraceInformation("Command: {0}", commandBuilder.Text);
-                throw;
-            }
-        }
-
-        /// <summary>Commits a whole TransactionLog to the table.</summary>
-        /// <param name="transactionLog">The transaction log to read.</param>
-        /// <param name="flags">The flags to use.</param>
-        /// <param name="count">Number of transactions to combine at one write.</param>
-        /// <returns>Returns the number of transactions done or -1 if unknown.</returns>
-        public override int Commit(TransactionLog transactionLog, TransactionFlags flags = TransactionFlags.Default, int count = -1)
-        {
-            Transaction[] transactions = transactionLog.Dequeue(count);
-            if (transactions.Length == 0)
-            {
-                return 0;
-            }
-
-            try
-            {
-                InternalCommit(transactions);
-                return transactions.Length;
-            }
-            catch
-            {
-                if ((flags & TransactionFlags.AllowRequeue) != 0)
-                {
-                    transactionLog.Requeue(true, transactions);
+                    continue;
                 }
 
-                if ((flags & TransactionFlags.ThrowExceptions) != 0)
+                if (firstCommand)
                 {
+                    firstCommand = false;
+                }
+                else
+                {
+                    commandBuilder.Append(", ");
+                    parameterBuilder.Append(", ");
+                }
+                commandBuilder.Append(sqlStorage.EscapeFieldName(field));
+
+                var value = sqlStorage.GetDatabaseValue(field, row[i]);
+                if (value == null)
+                {
+                    parameterBuilder.Append("NULL");
+                }
+                else if (!useParameters)
+                {
+                    parameterBuilder.Append(sqlStorage.EscapeFieldValue(Layout[i], value));
+                }
+                else
+                {
+                    var parameter = commandBuilder.CreateParameter(value);
+                    parameterBuilder.Append(parameter.Name);
+                }
+            }
+
+            commandBuilder.Append(") VALUES (");
+            commandBuilder.Append(parameterBuilder.ToString());
+            commandBuilder.Append(")");
+            commandBuilder.AppendLine(";");
+        }
+
+        /// <summary>Creates an update command.</summary>
+        /// <param name="commandBuilder">The command builder.</param>
+        /// <param name="row">The row.</param>
+        /// <param name="useParameters">Use database parameters instead of escaped command string.</param>
+        protected virtual void CreateUpdate(SqlCommandBuilder commandBuilder, Row row, bool useParameters)
+        {
+            commandBuilder.Append("UPDATE ");
+            commandBuilder.Append(FQTN);
+            commandBuilder.Append(" SET ");
+            for (var i = 0; i < Layout.FieldCount; i++)
+            {
+                var field = Layout[i];
+                if (field.Flags.HasFlag(FieldFlags.ID))
+                {
+                    continue;
+                }
+
+                if (i > 0)
+                {
+                    commandBuilder.Append(",");
+                }
+
+                commandBuilder.Append(sqlStorage.EscapeFieldName(field));
+                var value = row[i];
+                if (value == null)
+                {
+                    commandBuilder.Append("=NULL");
+                }
+                else
+                {
+                    commandBuilder.Append("=");
+                    value = sqlStorage.GetDatabaseValue(Layout[i], value);
+                    if (useParameters)
+                    {
+                        commandBuilder.CreateAndAddParameter(value);
+                    }
+                    else
+                    {
+                        commandBuilder.Append(sqlStorage.EscapeFieldValue(Layout[i], value));
+                    }
+                }
+            }
+
+            AppendWhereClause(commandBuilder, row);
+            commandBuilder.AppendLine(";");
+        }
+
+        /// <summary>Creates a replace command.</summary>
+        /// <param name="cb">The command builder.</param>
+        /// <param name="row">The row.</param>
+        /// <param name="useParameters">Use database parameters instead of escaped command string.</param>
+        protected virtual void CreateReplace(SqlCommandBuilder cb, Row row, bool useParameters)
+        {
+            cb.Append("REPLACE INTO ");
+            cb.Append(FQTN);
+            cb.Append(" VALUES (");
+            for (var i = 0; i < Layout.FieldCount; i++)
+            {
+                if (i > 0)
+                {
+                    cb.Append(",");
+                }
+
+                var value = row[i];
+                if (value == null)
+                {
+                    cb.Append("NULL");
+                }
+                else
+                {
+                    value = sqlStorage.GetDatabaseValue(Layout[i], value);
+                    if (useParameters)
+                    {
+                        cb.CreateAndAddParameter(value);
+                    }
+                    else
+                    {
+                        cb.Append(sqlStorage.EscapeFieldValue(Layout[i], value));
+                    }
+                }
+            }
+            cb.AppendLine(");");
+        }
+
+        #endregion
+
+        /// <summary>
+        /// Gets the command to retrieve the last inserted row.
+        /// </summary>
+        /// <param name="commandBuilder">The command builder to append to.</param>
+        /// <param name="row">The row to retrieve.</param>
+        protected abstract void CreateLastInsertedRowCommand(SqlCommandBuilder commandBuilder, Row row);
+
+        /// <summary>
+        /// Retrieves the full layout information for this table.
+        /// </summary>
+        /// <param name="database">Database name.</param>
+        /// <param name="table">Table name.</param>
+        /// <returns>Returns a new <see cref="RowLayout"/> instance.</returns>
+        protected virtual RowLayout QueryLayout(string database, string table)
+        {
+            RowLayout layout = null;
+            sqlStorage.Query($"SELECT * FROM {sqlStorage.FQTN(database, table)} WHERE 1 = 0", ref layout, database, table);
+            return layout;
+        }
+
+        #region private functions
+
+        void AppendWhereClause(SqlCommandBuilder commandBuilder, Row row)
+        {
+            foreach (var field in Layout.Identifier)
+            {
+                commandBuilder.Append(" WHERE ");
+                commandBuilder.Append(sqlStorage.EscapeFieldName(field));
+                commandBuilder.Append("=");
+                commandBuilder.Append(sqlStorage.GetDatabaseValue(field, row[field.Index]).ToString());
+            }
+        }
+
+        int InternalCommit(IEnumerable<Transaction> transactions, bool useParameters)
+        {
+            int n = 0;
+            bool complete = false;
+            var iterator = transactions.GetEnumerator();
+            Task execute = null;
+            while (!complete && iterator.MoveNext())
+            {
+                var commandBuilder = new SqlCommandBuilder(sqlStorage);
+                commandBuilder.AppendLine("START TRANSACTION;");
+                int i = 0;
+                complete = true;
+                do
+                {
+                    var transaction = iterator.Current;
+                    switch (transaction.Type)
+                    {
+                        #region TransactionType.Inserted
+                        case TransactionType.Inserted:
+                        {
+                            CreateInsert(commandBuilder, transaction.Row, useParameters);
+                        }
+                        break;
+                        #endregion
+
+                        #region TransactionType.Replaced
+                        case TransactionType.Replaced:
+                        {
+                            CreateReplace(commandBuilder, transaction.Row, useParameters);
+                        }
+                        break;
+                        #endregion
+
+                        #region TransactionType.Updated
+                        case TransactionType.Updated:
+                        {
+                            CreateUpdate(commandBuilder, transaction.Row, useParameters);
+                        }
+                        break;
+                        #endregion
+
+                        #region TransactionType.Deleted
+                        case TransactionType.Deleted:
+                        {
+                            commandBuilder.Append("DELETE FROM ");
+                            commandBuilder.Append(FQTN);
+                            AppendWhereClause(commandBuilder, transaction.Row);
+                            commandBuilder.AppendLine(";");
+                        }
+                        break;
+                        #endregion
+
+                        default: throw new NotImplementedException();
+                    }
+                    if (++i >= sqlStorage.TransactionRowCount)
+                    {
+                        complete = false;
+                        break;
+                    }
+                }
+                while (iterator.MoveNext());
+                commandBuilder.AppendLine("COMMIT;");
+                try
+                {
+                    if (execute != null)
+                    {
+                        execute.Wait();
+                        IncreaseSequenceNumber();
+                        Trace.TraceInformation("{0} transactions committed to {1}.", n, FQTN);
+                    }
+                    execute = Task.Factory.StartNew((cmd) => Execute((SqlCmd)cmd), commandBuilder);
+                    n += i;
+                }
+                catch (Exception ex)
+                {
+                    Trace.TraceWarning($"Error committing transactions to table <red>{FQTN}\n{ex}");
+                    Trace.TraceInformation("Command: {0}", commandBuilder.Text);
                     throw;
                 }
-
-                return -1;
             }
+            execute?.Wait();
+            Trace.TraceInformation("{0} transactions committed to {1}.", n, FQTN);
+            IncreaseSequenceNumber();
+            return n;
         }
-
         #endregion
-
-        #endregion
-
-        /// <summary>Gets or sets the default automatic increment value (used if no id is specified).</summary>
-        /// <value>The automatic increment value.</value>
-        public string AutoIncrementValue { get; set; } = "NULL";
-
-        /// <summary>
-        /// "Database.Table".
-        /// </summary>
-        /// <returns></returns>
-        public override string ToString()
-        {
-            return Database + "." + Name;
-        }
     }
 }

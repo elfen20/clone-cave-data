@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Cave
+namespace Cave.Data
 {
     /// <summary>
     /// Provides an <see cref="Attribute"/> for configuring timespan fields.
@@ -9,17 +9,17 @@ namespace Cave
     public sealed class TimeSpanFormatAttribute : Attribute
     {
         /// <summary>
-        /// Gets/sets the <see cref="DateTimeType"/>.
-        /// </summary>
-        public DateTimeType Type { get; private set; }
-
-        /// <summary>
-        /// Creates a new <see cref="TimeSpanFormatAttribute"/>.
+        /// Initializes a new instance of the <see cref="TimeSpanFormatAttribute"/> class.
         /// </summary>
         /// <param name="type"><see cref="DateTimeType"/>.</param>
         public TimeSpanFormatAttribute(DateTimeType type)
         {
             Type = type;
         }
+
+        /// <summary>
+        /// Gets the <see cref="DateTimeType"/>.
+        /// </summary>
+        public DateTimeType Type { get; private set; }
     }
 }

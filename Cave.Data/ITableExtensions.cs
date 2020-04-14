@@ -1,6 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
+using System.IO;
 using System.Linq;
+using System.Text;
+using Cave.Collections.Generic;
 
 namespace Cave.Data
 {
@@ -51,18 +56,24 @@ namespace Cave.Data
         /// <param name="table">The table.</param>
         /// <param name="id">The identifier.</param>
         /// <returns>Returns true if the dataset was removed, false otherwise.</returns>
-        public static bool TryDelete(this ITable table, long id)
+        /// <typeparam name="TIdentifier">Identifier type. This has to be convertable to the database <see cref="DataType"/>.</typeparam>
+        public static bool TryDelete<TIdentifier>(this ITable table, TIdentifier id)
         {
-            return table.TryDelete(table.Layout.IDField.Name, id) > 0;
+            var idField = table.Layout.Where(f => f.Flags.HasFlag(FieldFlags.ID)).SingleOrDefault()
+                ?? throw new InvalidOperationException("Could not find identifier field!");
+            return table.TryDelete(idField.Name, id) > 0;
         }
 
         /// <summary>Tries to delete the datasets with the specified identifiers.</summary>
         /// <param name="table">The table.</param>
         /// <param name="ids">The identifiers.</param>
         /// <returns>Returns the number of datasets removed, 0 if the database does not support deletion count or no dataset was removed.</returns>
-        public static int TryDelete(this ITable table, IEnumerable<long> ids)
+        /// <typeparam name="TIdentifier">Identifier type. This has to be convertable to the database <see cref="DataType"/>.</typeparam>
+        public static int TryDelete<TIdentifier>(this ITable table, IEnumerable<TIdentifier> ids)
         {
-            return table.TryDelete(Search.FieldIn(table.Layout.IDField.Name, ids));
+            var idField = table.Layout.Where(f => f.Flags.HasFlag(FieldFlags.ID)).SingleOrDefault()
+                ?? throw new InvalidOperationException("Could not find identifier field!");
+            return table.TryDelete(Search.FieldIn(idField.Name, ids));
         }
 
         /// <summary>Removes all rows from the table matching the given search.</summary>
@@ -85,16 +96,6 @@ namespace Cave.Data
             return table.Exist(Search.FieldEquals(field, value));
         }
 
-        /// <summary>Searches the table for a row with given field value combination.</summary>
-        /// <param name="table">The table.</param>
-        /// <param name="field">The fieldname to match.</param>
-        /// <param name="value">The value to match.</param>
-        /// <returns>Returns the ID of the row found or -1.</returns>
-        public static long FindRow(this ITable table, string field, object value)
-        {
-            return table.FindRow(Search.FieldEquals(field, value), ResultOption.None);
-        }
-
         /// <summary>Searches the table for a single row with given field value combination.</summary>
         /// <param name="table">The table.</param>
         /// <param name="field">The fieldname to match.</param>
@@ -102,17 +103,7 @@ namespace Cave.Data
         /// <returns>Returns the row found.</returns>
         public static Row GetRow(this ITable table, string field, object value)
         {
-            return table.GetRow(Search.FieldEquals(field, value), ResultOption.None);
-        }
-
-        /// <summary>Searches the table for rows with given field value combinations.</summary>
-        /// <param name="table">The table.</param>
-        /// <param name="field">The fieldname to match.</param>
-        /// <param name="value">The value to match.</param>
-        /// <returns>Returns the IDs of the rows found.</returns>
-        public static IList<long> FindRows(this ITable table, string field, object value)
-        {
-            return table.FindRows(Search.FieldEquals(field, value), ResultOption.None);
+            return table.GetRow(Search.FieldEquals(field, value));
         }
 
         /// <summary>Searches the table for rows with given field value combinations.</summary>
@@ -122,18 +113,18 @@ namespace Cave.Data
         /// <returns>Returns the rows found.</returns>
         public static IList<Row> GetRows(this ITable table, string field, object value)
         {
-            return table.GetRows(Search.FieldEquals(field, value), ResultOption.None);
+            return table.GetRows(Search.FieldEquals(field, value));
         }
 
-        /// <summary>Caches the whole table into memory and provides a new ITable{T} instance.</summary>
+        /// <summary>Caches the whole table into memory and provides a new ITable instance.</summary>
         /// <param name="table">The table.</param>
         /// <returns>Returns a new memory table.</returns>
         public static MemoryTable ToMemory(this ITable table)
         {
             Trace.TraceInformation("Copy {0} rows to memory table", table.RowCount);
-            var mem = new MemoryTable(table.Layout);
-            mem.LoadTable(table);
-            return mem;
+            var result = MemoryTable.Create(table.Layout);
+            result.LoadTable(table);
+            return result;
         }
 
         /// <summary>Counts the rows with specified field value combination.</summary>
@@ -145,184 +136,409 @@ namespace Cave.Data
         {
             return table.Count(Search.FieldEquals(field, value), ResultOption.None);
         }
-        #endregion
 
-        #region ITable<T> extensions
-
-        /// <summary>Tries to insert the specified dataset (id has to be set).</summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="table">The table.</param>
-        /// <param name="row">The row.</param>
-        /// <returns>Returns true if the dataset was inserted, false otherwise.</returns>
-        public static bool TryInsert<T>(this ITable<T> table, T row)
-            where T : struct
+        /// <summary>Saves the table to a dat stream.</summary>
+        /// <param name="table">Table to save.</param>
+        /// <param name="stream">The stream to save to.</param>
+        public static void SaveTo(this ITable table, Stream stream)
         {
-            // TODO, implement this without exceptions: needed at Table, SqlTable, MemoryTable
-            try
+            using (var writer = new DatWriter(table.Layout, stream))
             {
-                table.Insert(row);
-                return true;
-            }
-            catch
-            {
-                return false;
+                writer.WriteTable(table);
             }
         }
 
-        /// <summary>Tries to insert the specified dataset (id has to be set).</summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="table">The table.</param>
-        /// <param name="row">The row.</param>
-        /// <returns>Returns true if the dataset was inserted, false otherwise.</returns>
-        public static bool TryUpdate<T>(this ITable<T> table, T row)
-            where T : struct
+        /// <summary>Saves the table to a dat file.</summary>
+        /// <param name="table">Table to save.</param>
+        /// <param name="fileName">The filename to save to.</param>
+        public static void SaveTo(this ITable table, string fileName)
         {
-            // TODO, implement this without exceptions: needed at Table, SqlTable, MemoryTable
-            try
+            using (var stream = File.Create(fileName))
+            using (var writer = new DatWriter(table.Layout, stream))
             {
-                table.Update(row);
-                return true;
+                writer.WriteTable(table);
+                writer.Close();
             }
-            catch
-            {
-                return false;
-            }
-        }
-
-        /// <summary>Tries to get the row with the specified id.</summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="table">The table.</param>
-        /// <param name="id">The identifier.</param>
-        /// <returns>Returns the structure on success, an empty one otherwise.</returns>
-        public static T TryGetStruct<T>(this ITable<T> table, long id)
-            where T : struct
-        {
-            return table.GetStructs(new long[] { id }).FirstOrDefault();
-        }
-
-        /// <summary>Tries to get the (unique) row with the specified fieldvalue.</summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="table">The table.</param>
-        /// <param name="name">The name.</param>
-        /// <param name="value">The value.</param>
-        /// <returns>Returns the structure on success, an empty one otherwise.</returns>
-        public static T TryGetStruct<T>(this ITable<T> table, string name, object value)
-            where T : struct
-        {
-            return table.GetStructs(name, value).FirstOrDefault();
-        }
-
-        /// <summary>Tries to get the (unique) row matching the specified search.</summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="table">The table.</param>
-        /// <param name="search">The search.</param>
-        /// <returns>Returns the structure on success, an empty one otherwise.</returns>
-        public static T TryGetStruct<T>(this ITable<T> table, Search search)
-            where T : struct
-        {
-            return table.GetStructs(search).FirstOrDefault();
-        }
-
-        /// <summary>Tries to get the row with the specified id.</summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="table">The table.</param>
-        /// <param name="id">The row identifier.</param>
-        /// <param name="row">The row.</param>
-        /// <returns>Returns true on success, false otherwise.</returns>
-        public static bool TryGetStruct<T>(this ITable<T> table, long id, out T row)
-            where T : struct
-        {
-            var results = table.GetStructs(new long[] { id });
-            if (results.Count > 0)
-            {
-                row = results[0];
-                return true;
-            }
-            row = default(T);
-            return false;
-        }
-
-        /// <summary>Tries to get the (unique) row with the specified fieldvalue.</summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="table">The table.</param>
-        /// <param name="field">Name of the field.</param>
-        /// <param name="value">The value.</param>
-        /// <param name="row">The row.</param>
-        /// <returns>Returns true on success, false otherwise.</returns>
-        public static bool TryGetStruct<T>(this ITable<T> table, string field, object value, out T row)
-            where T : struct
-        {
-            var results = table.GetStructs(field, value);
-            if (results.Count > 0)
-            {
-                row = results[0];
-                return true;
-            }
-            row = default(T);
-            return false;
-        }
-
-        /// <summary>Tries to get the (unique) row with the specified fieldvalue.</summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="table">The table.</param>
-        /// <param name="search">The search.</param>
-        /// <param name="row">The row.</param>
-        /// <returns>Returns true on success, false otherwise.</returns>
-        public static bool TryGetStruct<T>(this ITable<T> table, Search search, out T row)
-            where T : struct
-        {
-            var results = table.GetStructs(search);
-            if (results.Count > 0)
-            {
-                row = results[0];
-                return true;
-            }
-            row = default(T);
-            return false;
-        }
-
-        /// <summary>Searches the table for rows with given field value combinations.</summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="table">The table.</param>
-        /// <param name="field">The fieldname to match.</param>
-        /// <param name="value">The value to match.</param>
-        /// <returns>Returns the rows found.</returns>
-        public static IList<T> GetStructs<T>(this ITable<T> table, string field, object value)
-            where T : struct
-        {
-            return table.GetStructs(Search.FieldEquals(field, value), ResultOption.None);
-        }
-
-        /// <summary>Searches the table for a single row with given field value combination.</summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="table">The table.</param>
-        /// <param name="field">The fieldname to match.</param>
-        /// <param name="value">The value to match.</param>
-        /// <returns>Returns the row found.</returns>
-        public static T GetStruct<T>(this ITable<T> table, string field, object value)
-            where T : struct
-        {
-            return table.GetStruct(Search.FieldEquals(field, value), ResultOption.None);
         }
 
         /// <summary>
-        /// Caches the whole table into memory and provides a new ITable{T} instance.
+        /// Builds the csharp code file containing the row layout structure.
         /// </summary>
-        public static MemoryTable<T> ToTypedMemory<T>(this ITable<T> table)
-            where T : struct
+        /// <param name="table">The table to use.</param>
+        /// <param name="databaseName">The database name (only used for the structure name).</param>
+        /// <param name="tableName">The table name (only used for the structure name).</param>
+        /// <param name="structFile">The struct file name (defaults to classname.cs).</param>
+        /// <returns>Returns the struct file name.</returns>
+        public static string GenerateStructFile(this ITable table, string databaseName = null, string tableName = null, string structFile = null)
         {
-            var mem = new MemoryTable<T>();
-            mem.LoadTable(table);
-            return mem;
+            var code = table.GenerateStruct(out string className, databaseName, tableName);
+            SaveStructFile(ref structFile, className, code);
+            return structFile;
         }
 
-        /// <summary>Retrieves the whole table as array.</summary>
-        /// <returns></returns>
-        public static T[] ToArray<T>(this ITable<T> table)
-            where T : struct
+        /// <summary>
+        /// Builds the csharp code file containing the row layout structure.
+        /// </summary>
+        /// <param name="layout">The layout to use.</param>
+        /// <param name="databaseName">The database name (only used for the structure name).</param>
+        /// <param name="tableName">The table name (only used for the structure name).</param>
+        /// <param name="structFile">The struct file name (defaults to classname.cs).</param>
+        /// <returns>Returns the struct file name.</returns>
+        public static string GenerateStructFile(this RowLayout layout, string databaseName = null, string tableName = null, string structFile = null)
         {
-            return table.GetStructs().ToArray();
+            var code = layout.GenerateStruct(out string className, databaseName, tableName);
+            SaveStructFile(ref structFile, className, code);
+            return structFile;
         }
+
+        /// <summary>
+        /// Builds the csharp code containing the row layout structure.
+        /// </summary>
+        /// <param name="table">The table to use.</param>
+        /// <param name="databaseName">The database name (only used for the structure name).</param>
+        /// <param name="tableName">The table name (only used for the structure name).</param>
+        /// <returns>Returns a string containing csharp code.</returns>
+        public static string GenerateStruct(this ITable table, string databaseName = null, string tableName = null) => GenerateStruct(table.Layout, databaseName ?? table.Database.Name, tableName);
+
+        /// <summary>
+        /// Builds the csharp code containing the row layout structure.
+        /// </summary>
+        /// <param name="table">The table to use.</param>
+        /// <param name="className">Returns the resulting classname.</param>
+        /// <param name="databaseName">The database name (only used for the structure name).</param>
+        /// <param name="tableName">The table name (only used for the structure name).</param>
+        /// <returns>Returns a string containing csharp code.</returns>
+        public static string GenerateStruct(this ITable table, out string className, string databaseName = null, string tableName = null) => GenerateStruct(table.Layout, out className, databaseName ?? table.Database.Name, tableName);
+
+        /// <summary>
+        /// Builds the csharp code containing the row layout structure.
+        /// </summary>
+        /// <param name="layout">The layout to use.</param>
+        /// <param name="databaseName">The database name (only used for the structure name).</param>
+        /// <param name="tableName">The table name (only used for the structure name).</param>
+        /// <returns>Returns a string containing csharp code.</returns>
+        public static string GenerateStruct(this RowLayout layout, string databaseName, string tableName = null) => GenerateStruct(layout, out string temp, databaseName, tableName);
+
+        /// <summary>
+        /// Builds the csharp code containing the row layout structure.
+        /// </summary>
+        /// <param name="layout">The layout to use.</param>
+        /// <param name="className">Returns the resulting classname.</param>
+        /// <param name="databaseName">The database name (only used for the structure name).</param>
+        /// <param name="tableName">The table name (only used for the structure name).</param>
+        /// <returns>Returns a string containing csharp code.</returns>
+        public static string GenerateStruct(this RowLayout layout, out string className, string databaseName, string tableName = null)
+        {
+            #region GetName()
+            string GetName(string text)
+            {
+                text = text.ReplaceInvalidChars(ASCII.Strings.Letters + ASCII.Strings.Digits, "_");
+                var parts = text.Split('_').SelectMany(s => s.SplitCamelCase());
+                return parts.ToArray().JoinCamelCase();
+            }
+            #endregion
+
+            if (databaseName == null)
+            {
+                throw new ArgumentNullException(nameof(databaseName));
+            }
+
+            if (tableName == null)
+            {
+                tableName = layout.Name;
+            }
+
+            Dictionary<int, string> fieldNameLookup = new Dictionary<int, string>();
+            int idCount = layout.Identifier.Count();
+            var idFields = (idCount == 0 ? layout : layout.Identifier).ToList();
+            StringBuilder code = new StringBuilder();
+
+            code.AppendLine("//-----------------------------------------------------------------------");
+            code.AppendLine("// <summary>");
+            code.AppendLine($"// Autogenerated table class {DateTime.UtcNow.ToString("R")}");
+            code.AppendLine($"// Using {typeof(ITableExtensions).Assembly.FullName}");
+            code.AppendLine("// </summary>");
+            code.AppendLine("// <auto-generated />");
+            code.AppendLine("//-----------------------------------------------------------------------");
+            code.AppendLine();
+            code.AppendLine("using System;");
+            code.AppendLine("using System.Globalization;");
+            code.AppendLine("using Cave.Data;");
+
+            #region Build lookup tables
+            {
+                IndexedSet<string> uniqueFieldNames = new IndexedSet<string>();
+                foreach (var field in layout)
+                {
+                    var sharpName = GetName(field.Name);
+                    int i = 0;
+                    while (uniqueFieldNames.Contains(sharpName))
+                    {
+                        sharpName = GetName(field.Name) + ++i;
+                    }
+                    uniqueFieldNames.Add(sharpName);
+                    fieldNameLookup[field.Index] = sharpName;
+                }
+            }
+            #endregion
+
+            className = GetName(databaseName) + GetName(tableName) + "Row";
+            code.AppendLine();
+            code.AppendLine("namespace Database");
+            code.AppendLine("{");
+            code.AppendLine($"\t/// <summary>Table structure for {layout}.</summary>");
+            code.AppendLine($"\t[Table(\"{layout.Name}\")]");
+            code.AppendLine($"\tpublic partial struct {className} : IEquatable<{className}>");
+            code.AppendLine("\t{");
+
+            #region static Parse()
+
+            code.AppendLine($"\t\t/// <summary>Converts the string representation of a row to its {className} equivalent.</summary>");
+            code.AppendLine($"\t\t/// <param name=\"data\">A string that contains a row to convert.</param>");
+            code.AppendLine($"\t\t/// <returns>A new {className} instance.</returns>");
+            code.AppendLine($"\t\tpublic static {className} Parse(string data) => Parse(data, CultureInfo.InvariantCulture);");
+            code.AppendLine();
+            code.AppendLine($"\t\t/// <summary>Converts the string representation of a row to its {className} equivalent.</summary>");
+            code.AppendLine($"\t\t/// <param name=\"data\">A string that contains a row to convert.</param>");
+            code.AppendLine($"\t\t/// <param name=\"provider\">The format provider (optional).</param>");
+            code.AppendLine($"\t\t/// <returns>A new {className} instance.</returns>");
+            code.AppendLine($"\t\tpublic static {className} Parse(string data, IFormatProvider provider) => CsvReader.ParseRow<{className}>(data, provider);");
+            #endregion
+
+            #region Add fields
+
+            foreach (var field in layout)
+            {
+                code.AppendLine();
+                code.AppendLine($"\t\t/// <summary>{field} {field.Description}.</summary>");
+                if (!string.IsNullOrEmpty(field.Description))
+                {
+                    code.AppendLine($"\t\t[Description(\"{field} {field.Description}\")]");
+                }
+                code.Append($"\t\t[Field(");
+                int i = 0;
+                void AddAttribute<T>(T value, Func<string> content)
+                {
+                    if (Equals(value, default))
+                    {
+                        return;
+                    }
+                    if (i++ > 0)
+                    {
+                        code.Append(", ");
+                    }
+                    code.Append(content());
+                }
+
+                if (field.Flags != 0)
+                {
+                    code.Append("Flags = ");
+                    int flagCount = 0;
+                    foreach (var flag in field.Flags.GetFlags())
+                    {
+                        if (flagCount++ > 0)
+                        {
+                            code.Append(" | ");
+                        }
+                        code.Append("FieldFlags.");
+                        code.Append(flag);
+                    }
+                    code.Append(", ");
+                }
+                var sharpName = fieldNameLookup[field.Index];
+                if (sharpName != field.Name)
+                {
+                    AddAttribute(field.Name, () => $"Name = \"{field.Name}\"");
+                }
+                if (field.MaximumLength < int.MaxValue)
+                {
+                    AddAttribute(field.MaximumLength, () => $"Length = {(int)field.MaximumLength}");
+                }
+                AddAttribute(field.AlternativeNames, () => $"AlternativeNames = \"{field.AlternativeNames.Join(", ")}\"");
+                AddAttribute(field.DisplayFormat, () => $"DisplayFormat = \"{field.DisplayFormat.EscapeUtf8()}\"");
+                code.AppendLine(")]");
+
+                if (field.DateTimeKind != DateTimeKind.Unspecified || field.DateTimeType != DateTimeType.Undefined)
+                {
+                    code.AppendLine($"\t\t[DateTimeFormat({field.DateTimeKind}, {field.DateTimeType})]");
+                }
+
+                if (field.StringEncoding != 0)
+                {
+                    code.AppendLine($"\t\t[Cave.IO.StringFormat(Cave.IO.StringEncoding.{field.StringEncoding})]");
+                }
+
+                code.AppendLine($"\t\tpublic {field.DotNetTypeName} {sharpName};");
+            }
+
+            #endregion
+
+            #region ToString()
+            {
+                code.AppendLine();
+                code.AppendLine($"\t\t/// <summary>Gets a string representation of this row.</summary>");
+                code.AppendLine($"\t\t/// <returns>Returns a string that can be parsed by <see cref=\"Parse(string)\"/>.</returns>");
+                code.AppendLine($"\t\tpublic override string ToString() => ToString(CultureInfo.InvariantCulture);");
+                code.AppendLine();
+                code.AppendLine($"\t\t/// <summary>Gets a string representation of this row.</summary>");
+                code.AppendLine($"\t\t/// <returns>Returns a string that can be parsed by <see cref=\"Parse(string, IFormatProvider)\"/>.</returns>");
+                code.AppendLine($"\t\tpublic string ToString(IFormatProvider provider) => CsvWriter.RowToString(this, provider);");
+            }
+            #endregion
+
+            #region GetHashCode()
+            {
+                code.AppendLine();
+                if (idCount == 1)
+                {
+                    var idField = layout.Identifier.First();
+                    var idFieldName = fieldNameLookup[idField.Index];
+                    code.AppendLine($"\t\t/// <summary>Gets the hash code for the identifier of this row (field {idFieldName}).</summary>");
+                    code.AppendLine("\t\t/// <returns>A hash code for the identifier of this row.</returns>");
+                    code.Append("\t\tpublic override int GetHashCode() => ");
+                    code.Append(idFieldName);
+                    code.AppendLine(".GetHashCode();");
+                }
+                else
+                {
+                    if (idCount == 0)
+                    {
+                        code.AppendLine($"\t\t/// <summary>Gets the hash code based on all values of this row (no identififer defined).</summary>");
+                    }
+                    else
+                    {
+                        var names = idFields.Select(field => fieldNameLookup[field.Index]).Join(", ");
+                        code.AppendLine($"\t\t/// <summary>Gets the hash code for the identifier of this row (fields {names}).</summary>");
+                    }
+                    code.AppendLine("\t\t/// <returns>A hash code for the identifier of this row.</returns>");
+                    code.AppendLine("\t\tpublic override int GetHashCode() =>");
+                    bool first = true;
+                    foreach (var idField in idFields)
+                    {
+                        if (first)
+                        {
+                            first = false;
+                        }
+                        else
+                        {
+                            code.AppendLine(" ^");
+                        }
+                        code.Append($"\t\t\t{fieldNameLookup[idField.Index]}.GetHashCode()");
+                    }
+                    code.AppendLine(";");
+                }
+            }
+            #endregion
+
+            #region Equals()
+            {
+                code.AppendLine();
+                code.AppendLine("\t\t/// <inheritdoc/>");
+                code.AppendLine($"\t\tpublic override bool Equals(object other) => other is {className} row && Equals(row);");
+                code.AppendLine();
+                code.AppendLine("\t\t/// <inheritdoc/>");
+                code.AppendLine($"\t\tpublic bool Equals({className} other)");
+                code.AppendLine("\t\t{");
+                code.AppendLine("\t\t\treturn");
+                {
+                    bool first = true;
+                    foreach (var field in layout)
+                    {
+                        if (first)
+                        {
+                            first = false;
+                        }
+                        else
+                        {
+                            code.AppendLine(" &&");
+                        }
+                        var name = fieldNameLookup[field.Index];
+                        code.Append($"\t\t\t\tEquals(other.{name}, {name})");
+                    }
+                    code.AppendLine(";");
+                }
+                code.AppendLine("\t\t}");
+            }
+            #endregion
+
+            code.AppendLine("\t}");
+            code.AppendLine("}");
+            code.Replace("\t", "    ");
+            return code.ToString();
+        }
+
+        #endregion
+
+        #region ITable<TStruct> extensions
+
+        /// <summary>Caches the whole table into memory and provides a new ITable{TStruct} instance.</summary>
+        /// <typeparam name="TStruct">Structure type.</typeparam>
+        /// <param name="table">The table.</param>
+        /// <returns>Returns a new memory table.</returns>
+        public static ITable<TStruct> ToMemory<TStruct>(this ITable<TStruct> table)
+            where TStruct : struct
+        {
+            Trace.TraceInformation("Copy {0} rows to memory table", table.RowCount);
+            var result = MemoryTable.Create(table.Layout);
+            result.LoadTable(table);
+            return new Table<TStruct>(result);
+        }
+
+        #endregion
+
+        #region ITable<TKey, TStruct> extensions
+
+        /// <summary>
+        /// Tries to get the row with the specified <paramref name="key"/> from <paramref name="table"/>.
+        /// </summary>
+        /// <typeparam name="TKey">The identifier field type.</typeparam>
+        /// <typeparam name="TStruct">The row structure type.</typeparam>
+        /// <param name="table">The table.</param>
+        /// <param name="key">The identifier value.</param>
+        /// <param name="row">Returns the result row.</param>
+        /// <returns>Returns true on success, false otherwise.</returns>
+        /// <exception cref="InvalidOperationException">The result sequence contains more than one element.</exception>
+        public static bool TryGetStruct<TKey, TStruct>(this ITable<TKey, TStruct> table, TKey key, out TStruct row)
+            where TKey : IComparable<TKey>
+            where TStruct : struct
+        {
+            var result = table.GetStructs(new[] { key });
+            if (result.Count > 0)
+            {
+                row = result.Single();
+                return true;
+            }
+            row = default;
+            return false;
+        }
+
+        /// <summary>Caches the whole table into memory and provides a new ITable{TStruct} instance.</summary>
+        /// <typeparam name="TKey">Key identifier type.</typeparam>
+        /// <typeparam name="TStruct">Row structure type.</typeparam>
+        /// <param name="table">The table.</param>
+        /// <returns>Returns a new memory table.</returns>
+        public static ITable<TKey, TStruct> ToMemory<TKey, TStruct>(this ITable<TKey, TStruct> table)
+            where TKey : IComparable<TKey>
+            where TStruct : struct
+        {
+            var result = MemoryTable.Create(table.Layout);
+            result.LoadTable(table);
+            return new Table<TKey, TStruct>(result);
+        }
+
+        #endregion
+
+        #region private filter
+
+        static void SaveStructFile(ref string structFile, string className, string code)
+        {
+            if (structFile == null)
+            {
+                structFile = className + ".cs";
+            }
+            File.WriteAllText(structFile, code);
+        }
+
         #endregion
     }
 }

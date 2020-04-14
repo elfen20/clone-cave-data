@@ -1,19 +1,24 @@
+﻿using System;
 using System.Collections.Generic;
-using Cave.Collections.Generic;
 
 namespace Cave.Data
 {
     /// <summary>
-    /// Provides an interface for a table of structs (rows).
+    /// Provides an interface for database tables.
     /// </summary>
     public interface ITable
     {
+        /// <summary>
+        /// Gets the flags used when connecting to the table.
+        /// </summary>
+        TableFlags Flags { get; }
+
         /// <summary>Gets the sequence number (counting write commands on this table).</summary>
         /// <value>The sequence number.</value>
         int SequenceNumber { get; }
 
         /// <summary>
-        /// The storage engine the database belongs to.
+        /// Gets the storage engine the database belongs to.
         /// </summary>
         IStorage Storage { get; }
 
@@ -38,12 +43,26 @@ namespace Cave.Data
         long RowCount { get; }
 
         /// <summary>
+        /// Initializes the interface class. This is the first method to call after create.
+        /// </summary>
+        /// <param name="database">Database the table belongs to.</param>
+        /// <param name="flags">Flags to use when connecting to the table.</param>
+        /// <param name="layout">Layout of the table.</param>
+        void Connect(IDatabase database, TableFlags flags, RowLayout layout);
+
+        /// <summary>
+        /// Updates the layout of the table (applies local fieldmappings and typeconversion).
+        /// </summary>
+        /// <param name="layout">The new layout.</param>
+        void UseLayout(RowLayout layout);
+
+        /// <summary>
         /// Counts the results of a given search.
         /// </summary>
         /// <param name="search">The search to run.</param>
         /// <param name="resultOption">Options for the search and the result set.</param>
         /// <returns>Returns the number of rows found matching the criteria given.</returns>
-        long Count(Search search = default(Search), ResultOption resultOption = default(ResultOption));
+        long Count(Search search = default, ResultOption resultOption = default);
 
         /// <summary>
         /// Clears all rows of the table.
@@ -51,45 +70,40 @@ namespace Cave.Data
         void Clear();
 
         /// <summary>
-        /// Gets a row from the table.
-        /// </summary>
-        /// <param name="id">The ID of the row to be fetched.</param>
-        /// <returns>Returns the row.</returns>
-        Row GetRow(long id);
-
-        /// <summary>
         /// This function does a lookup on the ids of the table and returns the row with the n-th ID where n is the given index.
         /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
-        /// <param name="index">The index of the row to be fetched</param>
         /// </summary>
+        /// <param name="index">The index of the row to be fetched.</param>
         /// <returns>Returns the row.</returns>
         Row GetRowAt(int index);
 
         /// <summary>
         /// Sets the specified value to the specified fieldname on all rows.
         /// </summary>
-        /// <param name="field">The fields name.</param>
-        /// <param name="value">The value to set.</param>
-        void SetValue(string field, object value);
+        /// <param name="fieldName">The fieldname.</param>
+        /// <param name="databaseValue">The databaseValue to set (no conversions are done).</param>
+        void SetValue(string fieldName, object databaseValue);
 
         /// <summary>
-        /// Checks a given ID for existance.
+        /// Searches the table using the specified search.
         /// </summary>
-        /// <param name="id">The dataset ID to look for.</param>
-        /// <returns>Returns whether the dataset exists or not.</returns>
-        bool Exist(long id);
-
-        /// <summary>
-        /// Checks a given search for any datasets matching.
-        /// </summary>
+        /// <param name="search">The search to perform.</param>
+        /// <returns>True if a matching dataset exists.</returns>
         bool Exist(Search search);
 
         /// <summary>
-        /// Inserts a row into the table. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.
+        /// Searches the table for a raw with the same identifiers.
         /// </summary>
-        /// <param name="row">The row to insert. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.</param>
-        /// <returns>Returns the ID of the inserted dataset.</returns>
-        long Insert(Row row);
+        /// <param name="row">The row to search.</param>
+        /// <returns>True if a matching dataset exists.</returns>
+        bool Exist(Row row);
+
+        /// <summary>
+        /// Inserts a row into the table and returns the inserted row.
+        /// </summary>
+        /// <param name="row">The row to insert.</param>
+        /// <returns>Returns the inserted row.</returns>
+        Row Insert(Row row);
 
         /// <summary>
         /// Inserts rows into the table using a transaction.
@@ -98,10 +112,9 @@ namespace Cave.Data
         void Insert(IEnumerable<Row> rows);
 
         /// <summary>
-        /// Updates a row at the table. The row must exist already!.
+        /// Updates a row at the table.
         /// </summary>
         /// <param name="row">The row to update.</param>
-        /// <returns>Returns the ID of the dataset.</returns>
         void Update(Row row);
 
         /// <summary>
@@ -111,16 +124,16 @@ namespace Cave.Data
         void Update(IEnumerable<Row> rows);
 
         /// <summary>
-        /// Removes a row from the table.
+        /// Deletes a row at the table.
         /// </summary>
-        /// <param name="id">The dataset ID to remove.</param>
-        void Delete(long id);
+        /// <param name="row">The row to update.</param>
+        void Delete(Row row);
 
         /// <summary>
-        /// Removes rows from the table using a transaction.
+        /// Deletes rows at the table using a transaction.
         /// </summary>
-        /// <param name="ids">The dataset IDs to remove.</param>
-        void Delete(IEnumerable<long> ids);
+        /// <param name="rows">The rows to insert.</param>
+        void Delete(IEnumerable<Row> rows);
 
         /// <summary>
         /// Removes all rows from the table matching the specified search.
@@ -142,28 +155,18 @@ namespace Cave.Data
         void Replace(IEnumerable<Row> rows);
 
         /// <summary>
-        /// Searches the table for a row with given field value combinations.
-        /// </summary>
-        /// <param name="search">The search to run.</param>
-        /// <param name="resultOption">Options for the search and the result set.</param>
-        /// <returns>Returns the ID of the row found or -1.</returns>
-        long FindRow(Search search = default(Search), ResultOption resultOption = default(ResultOption));
-
-        /// <summary>
-        /// Searches the table for rows with given field value combinations.
-        /// </summary>
-        /// <param name="search">The search to run.</param>
-        /// <param name="resultOption">Options for the search and the result set.</param>
-        /// <returns>Returns the IDs of the rows found.</returns>
-        IList<long> FindRows(Search search = default(Search), ResultOption resultOption = default(ResultOption));
-
-        /// <summary>
         /// Searches the table for a single row with given search.
         /// </summary>
         /// <param name="search">The search to run.</param>
         /// <param name="resultOption">Options for the search and the result set.</param>
         /// <returns>Returns the row found.</returns>
-        Row GetRow(Search search = default(Search), ResultOption resultOption = default(ResultOption));
+        Row GetRow(Search search = default, ResultOption resultOption = default);
+
+        /// <summary>
+        /// Gets all rows present at the table.
+        /// </summary>
+        /// <returns>Returns a new list of rows.</returns>
+        IList<Row> GetRows();
 
         /// <summary>
         /// Searches the table for rows with given search.
@@ -171,61 +174,54 @@ namespace Cave.Data
         /// <param name="search">The search to run.</param>
         /// <param name="resultOption">Options for the search and the result set.</param>
         /// <returns>Returns the rows found.</returns>
-        IList<Row> GetRows(Search search = default(Search), ResultOption resultOption = default(ResultOption));
-
-        /// <summary>
-        /// Gets the rows with the given ids.
-        /// </summary>
-        /// <param name="ids">IDs of the rows to fetch from the table.</param>
-        /// <returns>Returns the rows.</returns>
-        IList<Row> GetRows(IEnumerable<long> ids);
-
-        /// <summary>
-        /// Gets an array with all rows.
-        /// </summary>
-        /// <returns></returns>
-        IList<Row> GetRows();
+        IList<Row> GetRows(Search search = default, ResultOption resultOption = default);
 
         /// <summary>Calculates the sum of the specified field name for all matching rows.</summary>
         /// <param name="fieldName">Name of the field.</param>
         /// <param name="search">The search.</param>
-        /// <returns></returns>
+        /// <returns>The sum of all values at the specified field.</returns>
         double Sum(string fieldName, Search search = null);
 
-        /// <summary>Gets all currently used IDs.</summary>
-        /// <value>The IDs.</value>
-        IList<long> IDs { get; }
-
-        /// <summary>Gets all currently used IDs in ascending order.</summary>
-        /// <value>The IDs in ascending order.</value>
-        IList<long> SortedIDs { get; }
+        /// <summary>
+        /// Gets the maximum value for the specified fieldname.
+        /// </summary>
+        /// <typeparam name="TValue">Value type.</typeparam>
+        /// <param name="fieldName">Field name.</param>
+        /// <param name="search">Search to apply.</param>
+        /// <returns>The maximum value found or null.</returns>
+        TValue? Maximum<TValue>(string fieldName, Search search = null)
+            where TValue : struct, IComparable;
 
         /// <summary>
-        /// Gets the next used ID at the table (positive values are valid, negative ones are invalid, 0 is not defined!).
+        /// Gets the minimum value for the specified fieldname.
         /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        long GetNextUsedID(long id);
-
-        /// <summary>
-        /// Gets the next free ID at the table.
-        /// </summary>
-        /// <returns></returns>
-        long GetNextFreeID();
+        /// <typeparam name="TValue">Value type.</typeparam>
+        /// <param name="fieldName">Field name.</param>
+        /// <param name="search">Search to apply.</param>
+        /// <returns>The maximum value found or null.</returns>
+        TValue? Minimum<TValue>(string fieldName, Search search = null)
+            where TValue : struct, IComparable;
 
         /// <summary>Obtains all different field values of a given field.</summary>
-        /// <typeparam name="T"></typeparam>
+        /// <typeparam name="TValue">The returned value type.</typeparam>
         /// <param name="field">The field.</param>
-        /// <param name="includeNull">allow null value to be added to the results.</param>
-        /// <param name="ids">The ids to check or null for any.</param>
-        /// <returns></returns>
-        IItemSet<T> GetValues<T>(string field, bool includeNull = false, IEnumerable<long> ids = null);
+        /// <param name="search">The search.</param>
+        /// <returns>A new <see cref="List{TValue}"/>.</returns>
+        IList<TValue> GetValues<TValue>(string field, Search search = null)
+              where TValue : struct, IComparable;
+
+        /// <summary>Obtains all different field values of a given field.</summary>
+        /// <typeparam name="TValue">The returned value type.</typeparam>
+        /// <param name="field">The field.</param>
+        /// <param name="search">The search.</param>
+        /// <returns>A new <see cref="List{TValue}"/>.</returns>
+        IList<TValue> Distinct<TValue>(string field, Search search = null)
+            where TValue : struct, IComparable;
 
         /// <summary>Commits a whole TransactionLog to the table.</summary>
         /// <param name="transactions">The transaction log to read.</param>
         /// <param name="flags">The flags to use.</param>
-        /// <param name="count">Number of transactions to combine at one write.</param>
         /// <returns>Returns the number of transactions done or -1 if unknown.</returns>
-        int Commit(TransactionLog transactions, TransactionFlags flags = TransactionFlags.Default, int count = -1);
+        int Commit(IEnumerable<Transaction> transactions, TransactionFlags flags = TransactionFlags.Default);
     }
 }

@@ -12,11 +12,8 @@ namespace Cave.Data.Sql
         IDbConnection connection;
 
         /// <summary>
-        /// Gets/sets the last use datetime (local).
+        /// Initializes a new instance of the <see cref="SqlConnection"/> class.
         /// </summary>
-        public DateTime LastUsed { get; set; }
-
-        /// <summary>Creates a new SqlConnection instance.</summary>
         /// <param name="databaseName">Name of the database.</param>
         /// <param name="connection">The connection object.</param>
         public SqlConnection(string databaseName, IDbConnection connection)
@@ -24,6 +21,58 @@ namespace Cave.Data.Sql
             this.connection = connection;
             Database = databaseName;
             LastUsed = DateTime.UtcNow;
+        }
+
+        /// <summary>
+        /// Gets or sets the last use datetime (local).
+        /// </summary>
+        public DateTime LastUsed { get; set; }
+
+        /// <summary>
+        /// Gets the name of the database this instance is connected to.
+        /// </summary>
+        public string Database { get; private set; }
+
+        /// <inheritdoc/>
+        public string ConnectionString
+        {
+            get
+            {
+                if (connection == null)
+                {
+                    throw new ObjectDisposedException("SqlConnection");
+                }
+
+                return connection.ConnectionString;
+            }
+            set => throw new NotSupportedException();
+        }
+
+        /// <summary>
+        /// Gets the connection timeout in milliseconds.
+        /// </summary>
+        public int ConnectionTimeout
+        {
+            get
+            {
+                if (connection == null)
+                {
+                    throw new ObjectDisposedException("SqlConnection");
+                }
+
+                return connection.ConnectionTimeout;
+            }
+        }
+
+        /// <summary>
+        /// Gets the current <see cref="ConnectionState"/>.
+        /// </summary>
+        public ConnectionState State
+        {
+            get
+            {
+                return connection == null ? ConnectionState.Closed : connection.State;
+            }
         }
 
         /// <summary>
@@ -78,59 +127,13 @@ namespace Cave.Data.Sql
         /// </summary>
         public void Close()
         {
-            lock (this)
-            {
-                if (connection != null)
-                {
-                    try
-                    {
-                        connection.Dispose();
-                    }
-                    catch
-                    {
-                    }
-                    connection = null;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Gets the connection string used to open the connection. Setting this value is not supported!.
-        /// </summary>
-        public string ConnectionString
-        {
-            get
-            {
-                if (connection == null)
-                {
-                    throw new ObjectDisposedException("SqlConnection");
-                }
-
-                return connection.ConnectionString;
-            }
-            set => throw new NotSupportedException();
-        }
-
-        /// <summary>
-        /// Gets the connection timeout in milliseconds.
-        /// </summary>
-        public int ConnectionTimeout
-        {
-            get
-            {
-                if (connection == null)
-                {
-                    throw new ObjectDisposedException("SqlConnection");
-                }
-
-                return connection.ConnectionTimeout;
-            }
+            Dispose();
         }
 
         /// <summary>
         /// Creates a new IDbCommand for this connection.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>A new <see cref="IDbCommand"/> instance.</returns>
         public IDbCommand CreateCommand()
         {
             if (connection == null)
@@ -143,33 +146,17 @@ namespace Cave.Data.Sql
         }
 
         /// <summary>
-        /// Gets the name of the database this instance is connected to.
-        /// </summary>
-        public string Database { get; private set; }
-
-        /// <summary>
         /// Opens the connection to the database.
         /// </summary>
         public void Open()
         {
             if (connection == null)
             {
-                throw new ObjectDisposedException("SqlConnection");
+                throw new ObjectDisposedException(nameof(SqlConnection));
             }
 
             connection.Open();
             LastUsed = DateTime.UtcNow;
-        }
-
-        /// <summary>
-        /// Gets the current <see cref="ConnectionState"/>.
-        /// </summary>
-        public ConnectionState State
-        {
-            get
-            {
-                return connection == null ? ConnectionState.Closed : connection.State;
-            }
         }
 
         /// <summary>Returns a <see cref="string" /> that represents this instance.</summary>
@@ -178,15 +165,25 @@ namespace Cave.Data.Sql
         {
             return connection == null
                 ? "SqlConnection Disposed"
-                : string.Format("SqlConnection Database:'{0}' State:{1}", Database, State);
+                : $"SqlConnection Database:'{Database}' State:{State}";
         }
 
         /// <summary>
-        /// Disposes the connection (use <see cref="Close"/> first!).
+        /// Disposes the connection.
         /// </summary>
         public void Dispose()
         {
-            Close();
+            if (connection != null)
+            {
+                try
+                {
+                    connection.Dispose();
+                }
+                catch
+                {
+                }
+                connection = null;
+            }
         }
     }
 }

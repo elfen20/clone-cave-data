@@ -9,17 +9,7 @@ namespace Cave.Data
     public abstract class FileDatabase : Database, IDisposable
     {
         /// <summary>
-        /// Checks whether the instance was already closed.
-        /// </summary>
-        public override bool Closed => Folder == null;
-
-        /// <summary>
-        /// The path (directory) the database can be found at.
-        /// </summary>
-        public string Folder { get; private set; }
-
-        /// <summary>
-        /// Creates a new FileDatabase instance.
+        /// Initializes a new instance of the <see cref="FileDatabase"/> class.
         /// </summary>
         /// <param name="storage">The storage engine.</param>
         /// <param name="directory">The directory the database can be found at.</param>
@@ -34,6 +24,16 @@ namespace Cave.Data
             Folder = directory;
             Directory.CreateDirectory(Folder);
         }
+
+        /// <summary>
+        /// Gets a value indicating whether the instance was already closed.
+        /// </summary>
+        public override bool IsClosed => Folder == null;
+
+        /// <summary>
+        /// Gets the path (directory) the database can be found at.
+        /// </summary>
+        public string Folder { get; private set; }
 
         #region IDatabase Member
 
@@ -50,7 +50,7 @@ namespace Cave.Data
         /// <summary>
         /// Gets the name of the database.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>The name of the database.</returns>
         public override string ToString()
         {
             return Name;
@@ -59,18 +59,19 @@ namespace Cave.Data
         #region IDisposable Support
 
         /// <summary>Releases unmanaged and - optionally - managed resources.</summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>Releases unmanaged and - optionally - managed resources.</summary>
         /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         protected virtual void Dispose(bool disposing)
         {
             Close();
         }
 
-        /// <summary>Releases unmanaged and - optionally - managed resources.</summary>
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
         #endregion
     }
 }

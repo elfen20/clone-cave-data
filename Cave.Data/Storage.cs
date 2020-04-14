@@ -9,99 +9,89 @@ namespace Cave.Data
     /// </summary>
     public abstract class Storage : IStorage
     {
+        /// <summary>
+        /// Epoch DateTime in Ticks.
+        /// </summary>
+        public const long EpochTicks = 621355968000000000;
+
         ConnectionString connectionString;
         bool closed;
 
-        /// <summary>Creates a new storage instance with the specified <see cref="ConnectionString" />.</summary>
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Storage"/> class.
+        /// </summary>
         /// <param name="connectionString">ConnectionString of the storage.</param>
-        /// <param name="options">The options.</param>
-        protected Storage(ConnectionString connectionString, DbConnectionOptions options)
+        /// <param name="flags">The connection flags.</param>
+        protected Storage(ConnectionString connectionString, ConnectionFlags flags)
         {
             this.connectionString = connectionString;
-            LogVerboseMessages = options.HasFlag(DbConnectionOptions.VerboseLogging);
+            AllowUnsafeConnections = flags.HasFlag(ConnectionFlags.AllowUnsafeConnections);
+            LogVerboseMessages = flags.HasFlag(ConnectionFlags.VerboseLogging);
             if (LogVerboseMessages)
             {
                 Trace.TraceInformation("Verbose logging <green>enabled!");
             }
         }
 
-        #region abstract IStorage Member
-
         /// <summary>
-        /// Checks whether the database with the specified name exists at the database or not.
+        /// Gets or sets the date time format for big int date time values.
         /// </summary>
-        /// <param name="database">The name of the database.</param>
-        /// <returns></returns>
-        public abstract bool HasDatabase(string database);
+        public static string BigIntDateTimeFormat { get; set; } = "yyyyMMddHHmmssfff";
 
-        /// <summary>
-        /// Gets all available database names.
-        /// </summary>
+        #region IStorage Member
+
+        #region properties
+
+        /// <inheritdoc/>
         public abstract string[] DatabaseNames { get; }
 
-        /// <summary>
-        /// Gets the database with the specified name.
-        /// </summary>
-        /// <param name="database">The name of the database.</param>
-        /// <returns></returns>
-        public abstract IDatabase GetDatabase(string database);
+        /// <inheritdoc/>
+        public virtual ConnectionString ConnectionString => connectionString;
 
-        /// <summary>
-        /// Adds a new database with the specified name.
-        /// </summary>
-        /// <param name="database">The name of the database.</param>
-        /// <returns></returns>
-        public abstract IDatabase CreateDatabase(string database);
+        /// <inheritdoc/>
+        public virtual bool Closed => closed;
 
-        /// <summary>
-        /// Removes the specified database.
-        /// </summary>
-        /// <param name="database">The name of the database.</param>
-        public abstract void DeleteDatabase(string database);
+        /// <inheritdoc/>
+        public virtual float FloatPrecision => 0;
+
+        /// <inheritdoc/>
+        public virtual double DoublePrecision => 0;
+
+        /// <inheritdoc/>
+        public virtual TimeSpan DateTimePrecision => TimeSpan.FromMilliseconds(0);
+
+        /// <inheritdoc/>
+        public virtual TimeSpan TimeSpanPrecision => new TimeSpan(0);
+
+        /// <inheritdoc/>
+        public bool LogVerboseMessages { get; set; }
+
+        /// <inheritdoc/>
+        public bool AllowUnsafeConnections { get; }
+
+        /// <inheritdoc/>
+        public abstract bool SupportsNativeTransactions { get; }
+
+        /// <inheritdoc/>
+        public int TransactionRowCount { get; set; } = 5000;
+
+        /// <inheritdoc/>
+        string IStorage.BigIntDateTimeFormat => BigIntDateTimeFormat;
+
+        /// <inheritdoc/>
+        public IDatabase this[string databaseName] => GetDatabase(databaseName);
 
         #endregion
 
-        #region implemented IStorage Member
+        #region functions
 
-        /// <summary>
-        /// Allow delayed inserts, updates and deletes.
-        /// </summary>
-        public bool UseDelayedWrites { get; set; }
+        /// <inheritdoc/>
+        public virtual IFieldProperties GetDatabaseFieldProperties(IFieldProperties field) => field;
 
-        /// <summary>
-        /// Gets FieldProperties for the Database based on requested FieldProperties.
-        /// </summary>
-        /// <param name="field"></param>
-        /// <returns></returns>
-        public virtual FieldProperties GetDatabaseFieldProperties(FieldProperties field)
-        {
-            return field;
-        }
+        /// <inheritdoc/>
+        public virtual void Close() => closed = true;
 
-        /// <summary>
-        /// Gets/sets the <see cref="ConnectionString"/> used to connect to the database server.
-        /// </summary>
-        public virtual ConnectionString ConnectionString => connectionString;
-
-        /// <summary>
-        /// Gets wether the storage was already closed or not.
-        /// </summary>
-        public virtual bool Closed => closed;
-
-        /// <summary>
-        /// closes the connection to the storage engine.
-        /// </summary>
-        public virtual void Close()
-        {
-            closed = true;
-        }
-
-        /// <summary>
-        /// Gets the database with the specified name.
-        /// </summary>
-        /// <param name="database">The name of the database.</param>
-        /// <param name="createIfNotExists">Create the database if its not already present.</param>
-        /// <returns></returns>
+        /// <inheritdoc/>
         public virtual IDatabase GetDatabase(string database, bool createIfNotExists)
         {
             if (HasDatabase(database))
@@ -117,11 +107,7 @@ namespace Cave.Data
             throw new ArgumentException(string.Format("The requested database '{0}' was not found!", database));
         }
 
-        /// <summary>
-        /// Checks two layouts for equality using the database field type conversion and throws an error if the layouts do not match.
-        /// </summary>
-        /// <param name="expected">The expected layout.</param>
-        /// <param name="current">The layout to check.</param>
+        /// <inheritdoc/>
         public virtual void CheckLayout(RowLayout expected, RowLayout current)
         {
             if (expected == null)
@@ -136,46 +122,36 @@ namespace Cave.Data
 
             if (expected.FieldCount != current.FieldCount)
             {
-                throw new InvalidDataException(string.Format("Fieldcount of table {0} differs (found {1} expected {2})!", current.Name, current.FieldCount, expected.FieldCount));
+                throw new InvalidDataException($"Field.Count of table {current.Name} != {expected.Name} differs (found {current.FieldCount} expected {expected.FieldCount})!");
             }
             for (var i = 0; i < expected.FieldCount; i++)
             {
-                FieldProperties expectedField = GetDatabaseFieldProperties(expected.GetProperties(i));
-                FieldProperties currentField = GetDatabaseFieldProperties(current.GetProperties(i));
+                var expectedField = GetDatabaseFieldProperties(expected[i]);
+                var currentField = GetDatabaseFieldProperties(current[i]);
                 if (!expectedField.Equals(currentField))
                 {
-                    throw new InvalidDataException(string.Format("Fieldproperties of table {0} differ! (found {1} expected {2})!", current.Name, currentField, expectedField));
+                    throw new Exception($"FieldProperties of table {current.Name} != {expected.Name} differ! (found {currentField} expected {expectedField})!");
+                }
+                if (currentField.Flags != expectedField.Flags)
+                {
+                    Trace.TraceWarning($"Field.Flags of table {current.Name} != {expected.Name} differ! (found {currentField} expected {expectedField})!");
                 }
             }
         }
 
-        #endregion
+        /// <inheritdoc/>
+        public abstract bool HasDatabase(string database);
 
-        #region precision members
+        /// <inheritdoc/>
+        public abstract IDatabase GetDatabase(string database);
 
-        /// <summary>
-        /// Gets the maximum <see cref="float"/> precision at the value of 1.0f of this storage engine.
-        /// </summary>
-        public virtual float FloatPrecision => 0;
+        /// <inheritdoc/>
+        public abstract IDatabase CreateDatabase(string database);
 
-        /// <summary>
-        /// Gets the maximum <see cref="double"/> precision at the value of 1.0d of this storage engine.
-        /// </summary>
-        public virtual double DoublePrecision => 0;
+        /// <inheritdoc/>
+        public abstract void DeleteDatabase(string database);
 
-        /// <summary>
-        /// Gets the maximum <see cref="DateTime"/> value precision of this storage engine.
-        /// </summary>
-        public virtual TimeSpan DateTimePrecision => TimeSpan.FromMilliseconds(0);
-
-        /// <summary>
-        /// Gets the maximum <see cref="TimeSpan"/> value precision of this storage engine.
-        /// </summary>
-        public virtual TimeSpan TimeSpanPrecision => new TimeSpan(0);
-
-        /// <summary>
-        /// Gets the maximum <see cref="decimal"/> value precision of this storage engine.
-        /// </summary>
+        /// <inheritdoc/>
         public virtual decimal GetDecimalPrecision(float count)
         {
             if (count == 0)
@@ -183,31 +159,21 @@ namespace Cave.Data
                 return 0;
             }
 
-            var l_PreDecimal = Math.Truncate(count);
-            var l_Decimal = (int)Math.Round((count - l_PreDecimal) * 100);
+            var value = Math.Truncate(count);
+            var decimalValue = (int)Math.Round((count - value) * 100);
             decimal result = 1;
-            while (l_Decimal-- > 0)
+            while (decimalValue-- > 0)
             {
                 result *= 0.1m;
             }
             return result;
         }
+
+        /// <inheritdoc/>
+        public override string ToString() => ConnectionString.ToString(ConnectionStringPart.NoCredentials);
+
         #endregion
 
-        /// <summary>Gets or sets a value indicating whether [log verbose messages].</summary>
-        /// <value><c>true</c> if [log verbose messages]; otherwise, <c>false</c>.</value>
-        public bool LogVerboseMessages { get; set; }
-
-        /// <summary>Gets the name of the log source.</summary>
-        /// <value>The name of the log source.</value>
-        public string LogSourceName => connectionString.ToString(ConnectionStringPart.NoCredentials);
-
-        /// <summary>
-        /// Gets a value indicating whether the storage engine supports native transactions with faster execution than single commands.
-        /// </summary>
-        /// <value>
-        /// <c>true</c> if supports native transactions; otherwise, <c>false</c>.
-        /// </value>
-        public abstract bool SupportsNativeTransactions { get; }
+        #endregion
     }
 }
