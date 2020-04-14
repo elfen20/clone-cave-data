@@ -2,7 +2,7 @@
   <PropertyGroup>
     <TargetFrameworks>net47</TargetFrameworks>
     <IsPackable>false</IsPackable>
-    <StartupObject>Test.Program</StartupObject>
+    <StartupObject>Test.TestProgram</StartupObject>
     <ApplicationIcon />
     <OutputType>Exe</OutputType>
   </PropertyGroup>
