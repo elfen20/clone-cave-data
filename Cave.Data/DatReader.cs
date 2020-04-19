@@ -263,7 +263,7 @@ namespace Cave.Data
                 if ((dataType & DataType.MaskRequireValueType) != 0)
                 {
                     var typeName = reader.ReadString();
-                    valueType = Type.GetType(typeName, true);
+                    valueType = AppDom.FindType(typeName: typeName.BeforeFirst(','), assemblyName: typeName.AfterFirst(',').Trim());
                 }
 
                 var field = fields[i] = new FieldProperties()
@@ -279,7 +279,7 @@ namespace Cave.Data
                     DateTimeKind = dateTimeKind,
                     StringEncoding = stringEncoding,
                 };
-                field.Check();
+                field.Validate();
             }
             return RowLayout.CreateUntyped(layoutName, fields);
         }

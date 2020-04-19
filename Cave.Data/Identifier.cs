@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Cave.Data
@@ -13,9 +14,9 @@ namespace Cave.Data
         /// <summary>
         /// Initializes a new instance of the <see cref="Identifier"/> class.
         /// </summary>
-        /// <param name="layout">Table layout.</param>
         /// <param name="row">Row to create to create identifier for.</param>
-        internal Identifier(RowLayout layout, Row row)
+        /// <param name="layout">Table layout.</param>
+        public Identifier(Row row, RowLayout layout)
         {
             if (!layout.Identifier.Any())
             {
@@ -26,6 +27,20 @@ namespace Cave.Data
                 data = layout.Identifier.Select(field => row[field.Index]).ToArray();
             }
         }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Identifier"/> class.
+        /// </summary>
+        /// <param name="row">Row to create to create identifier for.</param>
+        /// <param name="fields">The fields to use for the itentifier.</param>
+        public Identifier(Row row, params int[] fields) => data = GetData(row, fields);
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="Identifier"/> class.
+        /// </summary>
+        /// <param name="row">Row to create to create identifier for.</param>
+        /// <param name="fields">The fields to use for the itentifier.</param>
+        public Identifier(Row row, IEnumerable<int> fields) => data = GetData(row, fields);
 
         /// <inheritdoc/>
         public override string ToString() => data.Select(d => $"{d}").Join('|');
@@ -49,6 +64,16 @@ namespace Cave.Data
                 hash.Rol(1);
             }
             return hash;
+        }
+
+        static object[] GetData(Row row, IEnumerable<int> fields)
+        {
+            var result = fields.Select(fieldsIndex => row[fieldsIndex]).ToArray();
+            if (result.Length == 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(fields));
+            }
+            return result;
         }
     }
 }

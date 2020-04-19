@@ -555,7 +555,11 @@ namespace Cave.Data
             var result = new object[FieldCount];
             for (var i = 0; i < FieldCount; i++)
             {
-                result[i] = properties[i].FieldInfo.GetValue(item);
+                var value = result[i] = properties[i].FieldInfo.GetValue(item);
+                if (value is DateTime dt && dt.Kind == DateTimeKind.Unspecified)
+                {
+                    throw new ArgumentOutOfRangeException("DateTime.Kind may not be DateTimeKind.Unspecified!");
+                }
             }
             return result;
         }

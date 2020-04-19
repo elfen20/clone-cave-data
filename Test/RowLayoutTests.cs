@@ -13,23 +13,24 @@ namespace Test.Cave.Data
     [TestFixture]
     public class RowLayoutTests
     {
-        static void CreateField(ref List<FieldProperties> fields, FieldFlags flags, DataType dataType, string name, Type valueType=null)
+        static void CreateField(ref List<IFieldProperties> fields, FieldFlags flags, DataType dataType, string name, Type valueType=null)
         {
-            fields.Add(new FieldProperties()
+            var field = new FieldProperties()
             {
-                Index = fields.Count + 1,
+                Index = fields.Count,
                 Name = name,
                 Flags = flags,
                 DataType = dataType,
                 ValueType = valueType,
-            });
+            }.Validate();
+            fields.Add(field);
         }
 
         [Test]
         public void CheckLayout()
         {
             var layoutA = RowLayout.CreateTyped(typeof(TestStructBug));
-            var fields = new List<FieldProperties>();
+            var fields = new List<IFieldProperties>();
             CreateField(ref fields, FieldFlags.ID, DataType.UInt64, "IDField");
             CreateField(ref fields, FieldFlags.Index, DataType.UInt32, "IndexedField");
             CreateField(ref fields, FieldFlags.Unique, DataType.Int16, "UniqueField");

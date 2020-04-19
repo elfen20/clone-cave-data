@@ -432,7 +432,8 @@ namespace Cave
         /// <summary>
         /// Checks properties and sets needed but unset settings.
         /// </summary>
-        public void Check()
+        /// <returns>Returns a reference to this instance.</returns>
+        public IFieldProperties Validate()
         {
             if (TypeAtDatabase == 0)
             {
@@ -486,6 +487,10 @@ namespace Cave
                     }
                     break;
                 case DataType.String:
+                    if (StringEncoding == StringEncoding.Undefined)
+                    {
+                        StringEncoding = StringEncoding.UTF8;
+                    }
                     break;
                 case DataType.User:
                     if (ValueType == null)
@@ -495,14 +500,27 @@ namespace Cave
 
                     switch (TypeAtDatabase)
                     {
-                        case DataType.User: TypeAtDatabase = DataType.String; Trace.TraceWarning("Field {0} DatabaseDataType undefined! Using DatabaseDataType {1}!", this, TypeAtDatabase); break;
-                        case DataType.String: break;
+                        case DataType.User:
+                            TypeAtDatabase = DataType.String;
+                            Trace.TraceWarning("Field {0} DatabaseDataType undefined! Using DatabaseDataType {1}!", this, TypeAtDatabase);
+                            if (StringEncoding == StringEncoding.Undefined)
+                            {
+                                StringEncoding = StringEncoding.UTF8;
+                            }
+                            break;
+                        case DataType.String:
+                            if (StringEncoding == StringEncoding.Undefined)
+                            {
+                                StringEncoding = StringEncoding.UTF8;
+                            }
+                            break;
                         default: throw new NotSupportedException($"Datatype {TypeAtDatabase} is not supported for field {this}!");
                     }
                     goto case DataType.String;
                 default:
                     throw new NotImplementedException("Unknown DataType!");
             }
+            return this;
         }
 
         /// <summary>
@@ -620,7 +638,7 @@ namespace Cave
             {
                 NameAtDatabase = Name;
             }
-            Check();
+            Validate();
         }
 
         /// <summary>Loads fieldproperties from the specified reader.</summary>
@@ -652,7 +670,7 @@ namespace Cave
             {
                 MaximumLength = reader.ReadSingle();
             }
-            Check();
+            Validate();
         }
 
         #endregion
@@ -702,6 +720,23 @@ namespace Cave
                 return other.AlternativeNames?.Split(splitters, StringSplitOptions.RemoveEmptyEntries).Any(n => n == Name || n == NameAtDatabase) == true;
             }
 
+            if (other.FieldInfo != null && FieldInfo != null)
+            {
+                // both typed, full match needed
+                return other.ValueType == ValueType;
+            }
+
+            if (DataType == other.DataType)
+            {
+                return true;
+            }
+
+            throw new Exception("CHECK");
+
+            /*
+            This was the old cave.data v1 equals code
+            remove this after all compatibility issues are checked.
+
             // additional checks
             if (FieldInfo != null)
             {
@@ -743,6 +778,7 @@ namespace Cave
                 return TypeAtDatabase == other.TypeAtDatabase;
             }
 
+
             // only other typed, other is db -> check conversions
             switch (other.DataType)
             {
@@ -751,7 +787,7 @@ namespace Cave
                     switch (other.DateTimeType)
                     {
                         case DateTimeType.BigIntTicks:
-                        case DateTimeType.BigIntHumanReadable: return DataType == DataType.Int64;
+                        case DateTimeType.BigIntHumanReadable: return TypeAtDatabase == DataType.Int64;
                         case DateTimeType.DecimalSeconds: return DataType == DataType.Decimal;
                         case DateTimeType.DoubleSeconds: return DataType == DataType.Double;
                         case DateTimeType.Undefined:
@@ -762,6 +798,7 @@ namespace Cave
                     }
             }
             return true;
+            */
         }
 
         /// <summary>Returns a <see cref="string" /> that represents this instance.</summary>

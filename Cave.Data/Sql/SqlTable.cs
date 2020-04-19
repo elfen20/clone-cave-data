@@ -131,7 +131,7 @@ namespace Cave.Data.Sql
                 Flags = FieldFlags.None,
                 DataType = DataType.String,
             };
-            field.Check();
+            field.Validate();
             SqlCmd query;
 
             if (search == null)
@@ -163,7 +163,7 @@ namespace Cave.Data.Sql
                 Flags = FieldFlags.None,
                 DataType = DataType.String,
             };
-            field.Check();
+            field.Validate();
             string query;
 
             if (search == null)
@@ -633,7 +633,7 @@ namespace Cave.Data.Sql
             command.Append(search.ToString());
 
             var groupCount = 0;
-            foreach (ResultOption o in option.ToArray(ResultOptionMode.Group))
+            foreach (ResultOption o in option.Filter(ResultOptionMode.Group))
             {
                 if (groupCount++ == 0)
                 {
@@ -697,7 +697,7 @@ namespace Cave.Data.Sql
             }
 
             var groupCount = 0;
-            foreach (ResultOption o in option.ToArray(ResultOptionMode.Group))
+            foreach (ResultOption o in option.Filter(ResultOptionMode.Group))
             {
                 if (groupCount++ == 0)
                 {
@@ -785,7 +785,7 @@ namespace Cave.Data.Sql
             command.Append(search.ToString());
 
             var orderCount = 0;
-            foreach (ResultOption o in option.ToArray(ResultOptionMode.SortAsc, ResultOptionMode.SortDesc))
+            foreach (ResultOption o in option.Filter(ResultOptionMode.SortAsc, ResultOptionMode.SortDesc))
             {
                 if (orderCount++ == 0)
                 {
@@ -807,7 +807,7 @@ namespace Cave.Data.Sql
             }
 
             var limit = 0;
-            foreach (ResultOption o in option.ToArray(ResultOptionMode.Limit))
+            foreach (ResultOption o in option.Filter(ResultOptionMode.Limit))
             {
                 if (limit++ > 0)
                 {
@@ -817,7 +817,7 @@ namespace Cave.Data.Sql
                 command.Append(" LIMIT " + o.Parameter);
             }
             var offset = 0;
-            foreach (ResultOption o in option.ToArray(ResultOptionMode.Offset))
+            foreach (ResultOption o in option.Filter(ResultOptionMode.Offset))
             {
                 if (offset++ > 0)
                 {

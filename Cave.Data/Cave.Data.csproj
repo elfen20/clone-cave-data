@@ -71,10 +71,11 @@
   <!-- nuget packages -->
   <ItemGroup>
     <PackageReference Include="Cave.Compression" Version="1.0.2" />
-    <PackageReference Include="Cave.Extensions" Version="1.0.10" />
+    <PackageReference Include="Cave.Extensions" Version="1.0.11" />
     <PackageReference Include="Cave.IO" Version="1.0.7" />
     <PackageReference Include="Cave.Collections" Version="1.0.3" />
     <PackageReference Include="Cave.BaseX" Version="1.0.1" />
+    <PackageReference Include="Cave.Platform" Version="1.0.4" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>

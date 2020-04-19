@@ -16,6 +16,8 @@ namespace Cave.Data
     {
         #region ITable extensions
 
+        #region TryInsert
+
         /// <summary>Tries to insert the specified dataset (id has to be set).</summary>
         /// <param name="table">The table.</param>
         /// <param name="row">The row.</param>
@@ -34,6 +36,10 @@ namespace Cave.Data
             }
         }
 
+        #endregion
+
+        #region TryUpdate
+
         /// <summary>Tries to insert the specified dataset (id has to be set).</summary>
         /// <param name="table">The table.</param>
         /// <param name="row">The row.</param>
@@ -51,6 +57,10 @@ namespace Cave.Data
                 return false;
             }
         }
+
+        #endregion
+
+        #region TryDelete
 
         /// <summary>Tries to delete the dataset with the specified id.</summary>
         /// <param name="table">The table.</param>
@@ -86,6 +96,10 @@ namespace Cave.Data
             return table.TryDelete(Search.FieldEquals(field, value));
         }
 
+        #endregion
+
+        #region Exist
+
         /// <summary>Checks a given search for any datasets matching.</summary>
         /// <param name="table">The table.</param>
         /// <param name="field">The fields name.</param>
@@ -95,6 +109,8 @@ namespace Cave.Data
         {
             return table.Exist(Search.FieldEquals(field, value));
         }
+
+        #endregion
 
         /// <summary>Searches the table for a single row with given field value combination.</summary>
         /// <param name="table">The table.</param>
@@ -137,6 +153,8 @@ namespace Cave.Data
             return table.Count(Search.FieldEquals(field, value), ResultOption.None);
         }
 
+        #region SaveTo
+
         /// <summary>Saves the table to a dat stream.</summary>
         /// <param name="table">Table to save.</param>
         /// <param name="stream">The stream to save to.</param>
@@ -161,35 +179,21 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>
-        /// Builds the csharp code file containing the row layout structure.
-        /// </summary>
-        /// <param name="table">The table to use.</param>
-        /// <param name="databaseName">The database name (only used for the structure name).</param>
-        /// <param name="tableName">The table name (only used for the structure name).</param>
-        /// <param name="structFile">The struct file name (defaults to classname.cs).</param>
-        /// <returns>Returns the struct file name.</returns>
-        public static string GenerateStructFile(this ITable table, string databaseName = null, string tableName = null, string structFile = null)
-        {
-            var code = table.GenerateStruct(out string className, databaseName, tableName);
-            SaveStructFile(ref structFile, className, code);
-            return structFile;
-        }
+        #endregion
+
+        #region GenerateStruct/-File (ITable)
 
         /// <summary>
         /// Builds the csharp code file containing the row layout structure.
         /// </summary>
-        /// <param name="layout">The layout to use.</param>
+        /// <param name="table">The table to use.</param>
         /// <param name="databaseName">The database name (only used for the structure name).</param>
         /// <param name="tableName">The table name (only used for the structure name).</param>
+        /// <param name="className">The name of the class to generate.</param>
         /// <param name="structFile">The struct file name (defaults to classname.cs).</param>
         /// <returns>Returns the struct file name.</returns>
-        public static string GenerateStructFile(this RowLayout layout, string databaseName = null, string tableName = null, string structFile = null)
-        {
-            var code = layout.GenerateStruct(out string className, databaseName, tableName);
-            SaveStructFile(ref structFile, className, code);
-            return structFile;
-        }
+        public static GenerateTableCodeResult GenerateStructFile(this ITable table, string databaseName = null, string tableName = null, string className = null, string structFile = null)
+            => GenerateStruct(table.Layout, databaseName: databaseName, tableName: tableName, className: className).SaveStructFile(structFile: structFile);
 
         /// <summary>
         /// Builds the csharp code containing the row layout structure.
@@ -197,18 +201,26 @@ namespace Cave.Data
         /// <param name="table">The table to use.</param>
         /// <param name="databaseName">The database name (only used for the structure name).</param>
         /// <param name="tableName">The table name (only used for the structure name).</param>
+        /// <param name="className">The name of the class to generate.</param>
         /// <returns>Returns a string containing csharp code.</returns>
-        public static string GenerateStruct(this ITable table, string databaseName = null, string tableName = null) => GenerateStruct(table.Layout, databaseName ?? table.Database.Name, tableName);
+        public static GenerateTableCodeResult GenerateStruct(this ITable table, string databaseName = null, string tableName = null, string className = null)
+            => GenerateStruct(table.Layout, databaseName: databaseName ?? table.Database.Name, tableName: tableName, className: className);
+
+        #endregion
+
+        #region GenerateStruct/-File (RowLayout)
 
         /// <summary>
-        /// Builds the csharp code containing the row layout structure.
+        /// Builds the csharp code file containing the row layout structure.
         /// </summary>
-        /// <param name="table">The table to use.</param>
-        /// <param name="className">Returns the resulting classname.</param>
+        /// <param name="layout">The layout to use.</param>
         /// <param name="databaseName">The database name (only used for the structure name).</param>
         /// <param name="tableName">The table name (only used for the structure name).</param>
-        /// <returns>Returns a string containing csharp code.</returns>
-        public static string GenerateStruct(this ITable table, out string className, string databaseName = null, string tableName = null) => GenerateStruct(table.Layout, out className, databaseName ?? table.Database.Name, tableName);
+        /// <param name="className">The name of the class to generate.</param>
+        /// <param name="structFile">The struct file name (defaults to classname.cs).</param>
+        /// <returns>Returns the struct file name.</returns>
+        public static GenerateTableCodeResult GenerateStructFile(this RowLayout layout, string databaseName = null, string tableName = null, string className = null, string structFile = null)
+            => GenerateStruct(layout, databaseName: databaseName, tableName: tableName, className: className).SaveStructFile(structFile: structFile);
 
         /// <summary>
         /// Builds the csharp code containing the row layout structure.
@@ -216,18 +228,9 @@ namespace Cave.Data
         /// <param name="layout">The layout to use.</param>
         /// <param name="databaseName">The database name (only used for the structure name).</param>
         /// <param name="tableName">The table name (only used for the structure name).</param>
+        /// <param name="className">The name of the class to generate.</param>
         /// <returns>Returns a string containing csharp code.</returns>
-        public static string GenerateStruct(this RowLayout layout, string databaseName, string tableName = null) => GenerateStruct(layout, out string temp, databaseName, tableName);
-
-        /// <summary>
-        /// Builds the csharp code containing the row layout structure.
-        /// </summary>
-        /// <param name="layout">The layout to use.</param>
-        /// <param name="className">Returns the resulting classname.</param>
-        /// <param name="databaseName">The database name (only used for the structure name).</param>
-        /// <param name="tableName">The table name (only used for the structure name).</param>
-        /// <returns>Returns a string containing csharp code.</returns>
-        public static string GenerateStruct(this RowLayout layout, out string className, string databaseName, string tableName = null)
+        public static GenerateTableCodeResult GenerateStruct(this RowLayout layout, string databaseName, string tableName = null, string className = null)
         {
             #region GetName()
             string GetName(string text)
@@ -282,7 +285,10 @@ namespace Cave.Data
             }
             #endregion
 
-            className = GetName(databaseName) + GetName(tableName) + "Row";
+            if (className == null)
+            {
+                className = GetName(databaseName) + GetName(tableName) + "Row";
+            }
             code.AppendLine();
             code.AppendLine("namespace Database");
             code.AppendLine("{");
@@ -464,8 +470,43 @@ namespace Cave.Data
             code.AppendLine("\t}");
             code.AppendLine("}");
             code.Replace("\t", "    ");
-            return code.ToString();
+            return new GenerateTableCodeResult()
+            {
+                ClassName = className,
+                TableName = tableName,
+                DatabaseName = databaseName,
+                Code = code.ToString(),
+            };
         }
+
+        #endregion
+
+        #region SaveStructFile
+
+        /// <summary>
+        /// Saves the generated code to a file and returns the updated result.
+        /// </summary>
+        /// <param name="result">Result to update.</param>
+        /// <param name="structFile">Name of the file to write to (optional).</param>
+        /// <returns>Returns an updated result instance.</returns>
+        public static GenerateTableCodeResult SaveStructFile(this GenerateTableCodeResult result, string structFile = null)
+        {
+            if (result.FileName == null)
+            {
+                if (structFile == null)
+                {
+                    result.FileName = result.ClassName + ".cs";
+                }
+                else
+                {
+                    result.FileName = structFile;
+                }
+            }
+            File.WriteAllText(result.FileName, result.Code);
+            return result;
+        }
+
+        #endregion
 
         #endregion
 
@@ -524,19 +565,6 @@ namespace Cave.Data
             var result = MemoryTable.Create(table.Layout);
             result.LoadTable(table);
             return new Table<TKey, TStruct>(result);
-        }
-
-        #endregion
-
-        #region private filter
-
-        static void SaveStructFile(ref string structFile, string className, string code)
-        {
-            if (structFile == null)
-            {
-                structFile = className + ".cs";
-            }
-            File.WriteAllText(structFile, code);
         }
 
         #endregion
