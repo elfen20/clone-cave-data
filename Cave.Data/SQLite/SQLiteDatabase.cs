@@ -28,7 +28,7 @@ namespace Cave.Data.SQLite
             };
             foreach (var field in fields)
             {
-                field.Check();
+                field.Validate();
             }
             var expected = RowLayout.CreateUntyped(name, fields.ToArray());
             RowLayout schema = SqlStorage.QuerySchema(Name, "sqlite_master");

@@ -117,7 +117,7 @@ namespace Test.Cave
                 I = i,
                 F = (500 - i) * 0.5f,
                 D = (500 - i) * 0.5d,
-                Date = new DateTime(1 + Math.Abs(i), 12, 31, 23, 59, 48, i % 1000),
+                Date = new DateTime(1 + Math.Abs(i), 12, 31, 23, 59, 48, i % 1000, DateTimeKind.Local),
                 Time = TimeSpan.FromSeconds(i),
                 S = (short)(i - 500),
                 UI = (uint)i,

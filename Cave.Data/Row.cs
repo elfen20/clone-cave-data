@@ -145,6 +145,22 @@ namespace Cave.Data
         #endregion
 
         /// <summary>
+        /// Gets the value with the specified name.
+        /// </summary>
+        /// <typeparam name="T">The expected type.</typeparam>
+        /// <param name="fieldName">The name of the field.</param>
+        /// <returns>Returns the field value.</returns>
+        public T GetValue<T>(string fieldName) => GetValue<T>(Layout.GetFieldIndex(fieldName, true));
+
+        /// <summary>
+        /// Gets the value with the specified name.
+        /// </summary>
+        /// <typeparam name="T">The expected type.</typeparam>
+        /// <param name="fieldIndex">The index of the field.</param>
+        /// <returns>Returns the field value.</returns>
+        public T GetValue<T>(int fieldIndex) => (T)TypeExtension.ConvertValue(typeof(T), Values[fieldIndex], null);
+
+        /// <summary>
         /// Determines whether the specified <see cref="object" />, is equal to this instance.
         /// </summary>
         /// <param name="obj">The <see cref="object" /> to compare with this instance.</param>

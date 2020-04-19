@@ -629,14 +629,6 @@ namespace Cave.Data
 
         internal void LoadLayout(RowLayout layout)
         {
-            if (Layout is object)
-            {
-                if (ReferenceEquals(layout, Layout))
-                {
-                    return;
-                }
-                throw new InvalidOperationException("Different Layout already set!");
-            }
             switch (Mode)
             {
                 case SearchMode.And:
@@ -644,7 +636,16 @@ namespace Cave.Data
                 case SearchMode.None:
                     return;
             }
-            Layout = layout ?? throw new ArgumentNullException(nameof(Layout));
+
+            if (Layout != null)
+            {
+                if (ReferenceEquals(layout, Layout))
+                {
+                    return;
+                }
+            }
+
+            Layout = layout ?? throw new ArgumentNullException(nameof(layout));
             if (FieldName == null)
             {
                 throw new ArgumentNullException(nameof(FieldName));

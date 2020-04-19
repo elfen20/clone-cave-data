@@ -277,7 +277,7 @@ namespace Cave.Data
         }
 
         /// <inheritdoc/>
-        public override bool Exist(Row row) => Exist(new Identifier(Layout, row));
+        public override bool Exist(Row row) => Exist(new Identifier(row, Layout));
 
         #endregion
 
@@ -286,7 +286,7 @@ namespace Cave.Data
         /// <inheritdoc/>
         public override void Replace(Row row)
         {
-            var id = new Identifier(Layout, row);
+            var id = new Identifier(row, Layout);
             if (Exist(id))
             {
                 Update(row, id);
@@ -313,7 +313,7 @@ namespace Cave.Data
         /// <inheritdoc/>
         public override Row Insert(Row row)
         {
-            var id = new Identifier(Layout, row);
+            var id = new Identifier(row, Layout);
             return Insert(row, id);
         }
 
@@ -333,7 +333,7 @@ namespace Cave.Data
         /// <inheritdoc/>
         public override void Update(Row row)
         {
-            var id = new Identifier(Layout, row);
+            var id = new Identifier(row, Layout);
             Update(row, id);
         }
 
@@ -363,7 +363,7 @@ namespace Cave.Data
                 Trace.TraceInformation("Delete {0} at {1}", row, this);
             }
 
-            var id = new Identifier(Layout, row);
+            var id = new Identifier(row, Layout);
             if (!rows.Remove(id))
             {
                 throw new ArgumentException(string.Format("Row {0} not found at table {1}!", row, Name));
@@ -597,18 +597,12 @@ namespace Cave.Data
             if (grouping.Count > 0)
             {
                 var groupedRows = new List<Row>();
-                foreach (var groupField in grouping)
+                var groupedKeys = new Set<Identifier>();
+                foreach (var row in result)
                 {
-                    var groupedValues = new Set<object>();
-                    foreach (var row in result)
+                    var key = new Identifier(row, grouping);
+                    if (groupedKeys.Include(key))
                     {
-                        var val = row[groupField];
-                        if (groupedValues.Contains(val))
-                        {
-                            continue;
-                        }
-
-                        groupedValues.Add(val);
                         groupedRows.Add(row);
                     }
                 }
@@ -708,73 +702,92 @@ namespace Cave.Data
         void GetAutoIncrement(ref Row row, ref Identifier id, IEnumerable<IFieldProperties> autoinc)
         {
             var values = row.CopyValues();
-
-            // only fields that are not already set
-            var fields = autoinc.Where(f => values[f.Index] == null).ToArray();
-            if (!fields.Any())
+            foreach (var field in autoinc)
             {
-                return;
-            }
-
-            for (int i = 0; i < 10; i++)
-            {
-                foreach (var field in fields)
+                var value = values[field.Index];
+                switch (field.DataType)
                 {
-                    switch (field.DataType)
-                    {
-                        default:
+                    default:
+                        throw new NotSupportedException($"Autoincrement field {field} not supported!");
+                    case DataType.DateTime:
+                        if (value == null || (DateTime)value == default(DateTime))
+                        {
+                            value = DateTime.UtcNow;
+                        }
+                        break;
+                    case DataType.User:
+                        if (field.ValueType == typeof(Guid))
+                        {
+                            if (value == null || (Guid)value == default(Guid))
+                            {
+                                value = Guid.NewGuid();
+                            }
+                        }
+                        else
+                        {
                             throw new NotSupportedException($"Autoincrement field {field} not supported!");
-                        case DataType.DateTime:
-                            values[field.Index] = DateTime.UtcNow;
-                            break;
-                        case DataType.User:
-                            if (field.ValueType == typeof(Guid))
-                            {
-                                values[field.Index] = Guid.NewGuid();
-                            }
-                            else
-                            {
-                                throw new NotSupportedException($"Autoincrement field {field} not supported!");
-                            }
-                            break;
-                        case DataType.Int8:
-                            values[field.Index] = Maximum<sbyte>(field.Name) ?? 0 + 1;
-                            break;
-                        case DataType.UInt8:
-                            values[field.Index] = Maximum<byte>(field.Name) ?? 0 + 1;
-                            break;
-                        case DataType.Int16:
-                            values[field.Index] = Maximum<short>(field.Name) ?? 0 + 1;
-                            break;
-                        case DataType.UInt16:
-                            values[field.Index] = Maximum<ushort>(field.Name) ?? 0 + 1;
-                            break;
-                        case DataType.Int32:
-                            values[field.Index] = Maximum<int>(field.Name) ?? 0 + 1;
-                            break;
-                        case DataType.UInt32:
-                            values[field.Index] = Maximum<uint>(field.Name) ?? 0 + 1;
-                            break;
-                        case DataType.Int64:
-                            values[field.Index] = Maximum<long>(field.Name) ?? 0 + 1;
-                            break;
-                        case DataType.UInt64:
-                            values[field.Index] = Maximum<ulong>(field.Name) ?? 0 + 1;
-                            break;
-                    }
+                        }
+                        break;
+                    case DataType.Int8:
+                        if (value == null || (sbyte)value == default(sbyte))
+                        {
+                            value = (Maximum<sbyte>(field.Name) ?? 0) + 1;
+                        }
+                        break;
+                    case DataType.UInt8:
+                        if (value == null || (byte)value == default(byte))
+                        {
+                            value = (Maximum<byte>(field.Name) ?? 0) + 1;
+                        }
+                        break;
+                    case DataType.Int16:
+                        if (value == null || (short)value == default(short))
+                        {
+                            value = (Maximum<short>(field.Name) ?? 0) + 1;
+                        }
+                        break;
+                    case DataType.UInt16:
+                        if (value == null || (ushort)value == default(ushort))
+                        {
+                            value = (Maximum<ushort>(field.Name) ?? 0) + 1;
+                        }
+                        break;
+                    case DataType.Int32:
+                        if (value == null || (int)value == default(int))
+                        {
+                            value = (Maximum<int>(field.Name) ?? 0) + 1;
+                        }
+                        break;
+                    case DataType.UInt32:
+                        if (value == null || (uint)value == default(uint))
+                        {
+                            value = (Maximum<uint>(field.Name) ?? 0) + 1;
+                        }
+                        break;
+                    case DataType.Int64:
+                        if (value == null || (long)value == default(long))
+                        {
+                            value = (Maximum<long>(field.Name) ?? 0) + 1;
+                        }
+                        break;
+                    case DataType.UInt64:
+                        if (value == null || (ulong)value == default(ulong))
+                        {
+                            value = (Maximum<ulong>(field.Name) ?? 0) + 1;
+                        }
+                        break;
                 }
-
-                var newRow = new Row(Layout, values, false);
-                var newId = new Identifier(Layout, newRow);
-                if (!Exist(newId))
-                {
-                    id = newId;
-                    row = newRow;
-                    return;
-                }
+                values[field.Index] = value;
             }
 
-            throw new InvalidDataException("Could not create autoincrement identifier!");
+            var newRow = new Row(Layout, values, false);
+            var newId = new Identifier(newRow, Layout);
+            if (Exist(newId))
+            {
+                throw new InvalidDataException("Could not create autoincrement identifier!");
+            }
+            id = newId;
+            row = newRow;
         }
 
         void Update(Row row, Identifier id)

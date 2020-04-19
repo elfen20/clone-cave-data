@@ -121,5 +121,13 @@ namespace Cave.Data
             var table = database.GetTable(layout, flags);
             return new Table<TKey, TStruct>(table);
         }
+
+        /// <summary>
+        /// Provides a csharp interface generator.
+        /// </summary>
+        /// <param name="database">The database to generate code for.</param>
+        /// <param name="className">The class name for the database interface.</param>
+        /// <returns>Returns a new <see cref="DatabaseInterfaceGenerator"/> instance.</returns>
+        public static DatabaseInterfaceGenerator GenerateInterface(this IDatabase database, string className = null) => new DatabaseInterfaceGenerator(database, className: className);
     }
 }

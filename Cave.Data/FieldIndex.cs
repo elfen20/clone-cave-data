@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Cave.Data
 {
@@ -127,14 +128,16 @@ namespace Cave.Data
             {
                 throw new ArgumentException($"Value {value} is not present at index (equals check {index.Join(",")})!");
             }
-            if (!rows.Contains(row))
+
+            int i = GetRowIndex(rows, row);
+            if (i < 0)
             {
                 throw new KeyNotFoundException($"Row {row} is not present at index! (Present: {value} => {rows.Join(",")})!");
             }
 
             if (rows.Count > 1)
             {
-                rows.Remove(row);
+                rows.RemoveAt(i);
             }
             else
             {
@@ -144,6 +147,18 @@ namespace Cave.Data
                 }
             }
             Count--;
+        }
+
+        int GetRowIndex(IList<object[]> rows, object[] row)
+        {
+            for (int i = 0; i < rows.Count; i++)
+            {
+                if (rows[i].SequenceEqual(row))
+                {
+                    return i;
+                }
+            }
+            return -1;
         }
 
         class BoxedValue : IComparable<BoxedValue>, IEquatable<BoxedValue>, IComparable

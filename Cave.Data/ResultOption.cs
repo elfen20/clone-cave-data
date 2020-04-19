@@ -191,7 +191,7 @@ namespace Cave.Data
         /// <summary>Returns an array with all options with the specified modes.</summary>
         /// <param name="modes">The modes.</param>
         /// <returns>Returns an array with all matching options.</returns>
-        public ResultOption[] ToArray(params ResultOptionMode[] modes)
+        public ResultOption[] Filter(params ResultOptionMode[] modes)
         {
             var results = new List<ResultOption>();
             foreach (ResultOption option in this)

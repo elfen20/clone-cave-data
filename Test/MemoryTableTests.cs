@@ -39,10 +39,10 @@ namespace Test.Cave.Data
 
             var array = typed.GetStructs();
 
-            CollectionAssert.AreEqual(array.OrderBy(a => a.Integer), typed.GetStructs(Search.None, ResultOption.SortAscending(nameof(SmallTestStruct.Integer))));
-            CollectionAssert.AreEqual(array.OrderBy(a => a.DateTime), typed.GetStructs(Search.None, ResultOption.SortAscending(nameof(SmallTestStruct.DateTime))));
-            CollectionAssert.AreEqual(array.OrderByDescending(a => a.Integer), typed.GetStructs(Search.None, ResultOption.SortDescending(nameof(SmallTestStruct.Integer))));
-            CollectionAssert.AreEqual(array.OrderByDescending(a => a.DateTime), typed.GetStructs(Search.None, ResultOption.SortDescending(nameof(SmallTestStruct.DateTime))));
+            CollectionAssert.AreEqual(array.OrderBy(a => a.Integer).ToList(), typed.GetStructs(Search.None, ResultOption.SortAscending(nameof(SmallTestStruct.Integer))));
+            CollectionAssert.AreEqual(array.OrderBy(a => a.DateTime).ToList(), typed.GetStructs(Search.None, ResultOption.SortAscending(nameof(SmallTestStruct.DateTime))));
+            CollectionAssert.AreEqual(array.OrderByDescending(a => a.Integer).ToList(), typed.GetStructs(Search.None, ResultOption.SortDescending(nameof(SmallTestStruct.Integer))));
+            CollectionAssert.AreEqual(array.OrderByDescending(a => a.DateTime).ToList(), typed.GetStructs(Search.None, ResultOption.SortDescending(nameof(SmallTestStruct.DateTime))));
 
             CollectionAssert.AreEqual(
                 array.OrderBy(a => a.Integer).SubRange(0, 3),
@@ -119,13 +119,13 @@ namespace Test.Cave.Data
             var typed = new Table<long, SmallTestStruct>(test);
             for (var i = 0; i < 1000; i++)
             {
-                //test.Insert(new LogEntry() { Content = "", DateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified).AddHours(i), HostName = "host" + (i%10), Level = LogLevel.Debug, ProcessName = "this", Source = "this", });
-                typed.Insert(new SmallTestStruct() { Content = "", DateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified).AddHours(i), Name = "host" + (i % 10), Level = TestEnum.A, Source = "this", });
+                typed.Insert(new SmallTestStruct() { Content = "", DateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Local).AddHours(i), Name = "host" + (i % 10), Level = TestEnum.A, Source = "this", });
             }
             Assert.AreEqual(1000, test.RowCount);
             Assert.AreEqual(1, test.Count(Search.None, ResultOption.Group(nameof(SmallTestStruct.Content))));
             Assert.AreEqual(1000, test.Count(Search.None, ResultOption.Group(nameof(SmallTestStruct.DateTime))));
             Assert.AreEqual(10, test.Count(Search.None, ResultOption.Group(nameof(SmallTestStruct.Name))));
+
             Assert.AreEqual(10, test.Count(Search.None, ResultOption.Group(nameof(SmallTestStruct.Content)) + ResultOption.Group(nameof(SmallTestStruct.Name))));
 
             var rows = typed.GetStructs(Search.None, ResultOption.Group(nameof(SmallTestStruct.Name)) + ResultOption.SortDescending(nameof(SmallTestStruct.Name)));
@@ -133,28 +133,28 @@ namespace Test.Cave.Data
             for (var i = 0; i < 10; i++) Assert.AreEqual("host" + (9 - i), rows[i].Name);
 
             rows = typed.GetStructs(
-                Search.FieldGreater(nameof(SmallTestStruct.DateTime), new DateTime(1970, 1, 1, 5, 0, 0, DateTimeKind.Unspecified)) &
-                Search.FieldSmallerOrEqual(nameof(SmallTestStruct.DateTime), new DateTime(1970, 1, 1, 10, 0, 0, DateTimeKind.Unspecified)),
+                Search.FieldGreater(nameof(SmallTestStruct.DateTime), new DateTime(1970, 1, 1, 5, 0, 0, DateTimeKind.Local)) &
+                Search.FieldSmallerOrEqual(nameof(SmallTestStruct.DateTime), new DateTime(1970, 1, 1, 10, 0, 0, DateTimeKind.Local)),
                 ResultOption.SortDescending(nameof(SmallTestStruct.DateTime)));
             var rowsExpected = typed.GetStructs().
-                Where(i => i.DateTime > new DateTime(1970, 1, 1, 5, 0, 0, DateTimeKind.Unspecified) &&
-                    i.DateTime <= new DateTime(1970, 1, 1, 10, 0, 0, DateTimeKind.Unspecified)).
-                OrderBy(i => -i.DateTime.Ticks);
+                Where(i => i.DateTime > new DateTime(1970, 1, 1, 5, 0, 0, DateTimeKind.Local) &&
+                    i.DateTime <= new DateTime(1970, 1, 1, 10, 0, 0, DateTimeKind.Local)).
+                OrderBy(i => -i.DateTime.Ticks).ToList();
             CollectionAssert.AreEqual(rowsExpected, rows);
 
             rows = typed.GetStructs(
-                Search.FieldGreaterOrEqual(nameof(SmallTestStruct.DateTime), new DateTime(1970, 1, 1, 5, 0, 0, DateTimeKind.Unspecified)) &
-                Search.FieldSmaller(nameof(SmallTestStruct.DateTime), new DateTime(1970, 1, 1, 10, 0, 0, DateTimeKind.Unspecified)),
+                Search.FieldGreaterOrEqual(nameof(SmallTestStruct.DateTime), new DateTime(1970, 1, 1, 5, 0, 0, DateTimeKind.Local)) &
+                Search.FieldSmaller(nameof(SmallTestStruct.DateTime), new DateTime(1970, 1, 1, 10, 0, 0, DateTimeKind.Local)),
                 ResultOption.SortAscending(nameof(SmallTestStruct.DateTime)));
             rowsExpected = typed.GetStructs().
-                Where(i => i.DateTime >= new DateTime(1970, 1, 1, 5, 0, 0, DateTimeKind.Unspecified) &&
-                    i.DateTime < new DateTime(1970, 1, 1, 10, 0, 0, DateTimeKind.Unspecified)).
-                OrderBy(i => i.DateTime);
+                Where(i => i.DateTime >= new DateTime(1970, 1, 1, 5, 0, 0, DateTimeKind.Local) &&
+                    i.DateTime < new DateTime(1970, 1, 1, 10, 0, 0, DateTimeKind.Local)).
+                OrderBy(i => i.DateTime).ToList();
             CollectionAssert.AreEqual(rowsExpected, rows);
 
             for (var i = 0; i < 1000; i++)
             {
-                var e = new SmallTestStruct() { ID = i + 1, Content = "Updated" + i.ToString(), DateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified).AddHours(i % 100), Name = "this", Level = TestEnum.B, Source = "this", };
+                var e = new SmallTestStruct() { ID = i + 1, Content = "Updated" + i.ToString(), DateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Local).AddHours(i % 100), Name = "this", Level = TestEnum.B, Source = "this", };
                 typed.Update(e);
                 Assert.AreEqual(e, typed.GetStruct(i + 1));
             }
@@ -164,7 +164,7 @@ namespace Test.Cave.Data
 
             for (var i = 0; i < 1000; i++)
             {
-                var e = new SmallTestStruct() { ID = i + 1, Content = "Replaced", DateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Unspecified).AddHours(i), Name = "this", Level = TestEnum.B, Source = "this", };
+                var e = new SmallTestStruct() { ID = i + 1, Content = "Replaced", DateTime = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Local).AddHours(i), Name = "this", Level = TestEnum.B, Source = "this", };
                 typed.Update(e);
                 Assert.AreEqual(e, typed.GetStruct(i + 1));
             }
