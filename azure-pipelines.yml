@@ -4,11 +4,11 @@
 # https://docs.microsoft.com/azure/devops/pipelines/apps/windows/dot-net
 
 trigger:
-- master
 - refs/tags/*
+- refs/heads/*
 
 pool:
-  vmImage: 'VS2017-Win2016'
+  vmImage: 'windows-latest'
 
 variables:
   solution: '**/*.sln'
@@ -23,38 +23,36 @@ steps:
   displayName: Set git variables
   env:
     BUILD_BUILDNUMBER: $(Build.BuildNumber)
+    BUILD_SOURCEBRANCHNAME: $(Build.SourceBranchName)
   inputs:
     targetType: inline
     script: |
-      $var = "$(git tag -l --points-at HEAD)".Trim()
-      $incRev = $false
-      if ($var -eq '')
+      $var = "$(git describe --tags --always)".Trim()
+      $ver = [Version]"0.0.0"
+      if (!$var.Contains("."))
+      {
+        $var = "0.0.0-$var"
+      }
+      if ($var.Contains("-"))
       {
         $semver = "ci-$env:BUILD_BUILDNUMBER".Replace('.', '-')
         Write-Host "$("##vso[task.setvariable variable=VersionSuffix]")$semver"
-        Write-Host "VersionSuffix: '$semver'"
-        $incRev = $true
+        $ver = [Version]$var.Substring(0, $var.IndexOf('-'))
+        $ver = [Version]"$($ver.Major).$($ver.Minor).$($ver.Build+1)"
+        $verFromFile = [Version] [System.IO.File]::ReadAllText("version.txt")
+        if ($ver.Major -ne $verFromFile.Major)
+        {
+          $ver = [Version]"$($verFromFile.Major).$($verFromFile.Minor)"
+        }
       }
       else
       {
-        Write-Host "VersionSuffix: ''"
+        $ver = [Version]$var
       }
-      $ver = [Version]"1.0.0"
-      $var = "$(git rev-list --tags --max-count=1)".Trim()
-      if ($var -ne '')
-      {
-        $var = $(git describe --tags $var).Trim()
-        if ($var -ne '')
-        {
-          $ver = [Version]$var
-          if ($incRev -eq $true)
-          {
-            $ver = [Version]"$($ver.Major).$($ver.Minor).$($ver.Build+1)"
-          }
-        }
-      }
+      echo "Branch = $env:BUILD_SOURCEBRANCHNAME"
+      echo "VersionPrefix = '$ver'"
+      echo "VersionSuffix = '$semver'"
       Write-Host "$("##vso[task.setvariable variable=VersionPrefix]")$ver"
-      Write-Host "VersionPrefix: '$ver'"
 
 - task: NuGetToolInstaller@0
   inputs:
@@ -78,14 +76,13 @@ steps:
     configuration: '$(buildConfiguration)'
     testAssemblyVer2: '**\bin\Release\**\Test.exe'
 
-- task: NuGetCommand@2
-  displayName: Push to nuget (release)
-  #condition: ne(variables['GIT_TAG'], '')
-  inputs:
-    command: push
-    packagesToPush: '$(Build.SourcesDirectory)/**/bin/Release/*.nupkg'
-    nuGetFeedType: external
-    publishFeedCredentials: 'nuget-default'
-    versioningScheme: byEnvVar
-    versionEnvVar: GIT_TAG
-    includeSymbols: true
+#- task: NuGetCommand@2
+#  displayName: Push to nuget (release)
+#  inputs:
+#    command: push
+#    packagesToPush: '$(Build.SourcesDirectory)/**/bin/Release/*.nupkg'
+#    nuGetFeedType: external
+#    publishFeedCredentials: 'nuget-default'
+#    versioningScheme: byEnvVar
+#    versionEnvVar: GIT_TAG
+#    includeSymbols: true
