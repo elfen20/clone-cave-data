@@ -525,6 +525,18 @@ namespace Cave.Data
             return new Table<TStruct>(result);
         }
 
+        /// <summary>Searches the table for rows with given field value combinations.</summary>
+        /// <typeparam name="TStruct">Structure type.</typeparam>
+        /// <param name="table">The table.</param>
+        /// <param name="field">The fieldname to match.</param>
+        /// <param name="value">The value to match.</param>
+        /// <returns>Returns the rows found.</returns>
+        public static IList<TStruct> GetStructs<TStruct>(this ITable<TStruct> table, string field, object value)
+               where TStruct : struct
+        {
+            return table.GetStructs(Search.FieldEquals(field, value));
+        }
+
         #endregion
 
         #region ITable<TKey, TStruct> extensions
