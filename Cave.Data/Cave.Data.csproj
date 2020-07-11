@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net20;net35;net40;net45;net46</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net20;net35;net40;net45</TargetFrameworks>
     <Authors>Andreas Rohleder</Authors>
     <Company>CaveSystems GmbH, Andreas Rohleder</Company>
     <Copyright>(c) 2003-$([System.DateTime]::UtcNow.Year) Andreas Rohleder</Copyright>
@@ -70,12 +70,8 @@
   </ItemGroup>
   <!-- nuget packages -->
   <ItemGroup>
-    <PackageReference Include="Cave.Compression" Version="1.0.2" />
-    <PackageReference Include="Cave.Extensions" Version="1.0.11" />
-    <PackageReference Include="Cave.IO" Version="1.0.7" />
-    <PackageReference Include="Cave.Collections" Version="1.0.3" />
-    <PackageReference Include="Cave.BaseX" Version="1.0.1" />
-    <PackageReference Include="Cave.Platform" Version="1.0.4" />
+    <PackageReference Include="Cave.Extensions" Version="2.0.0" />
+    <PackageReference Include="Cave.IO" Version="2.0.0" />
     <PackageReference Include="Microsoft.SourceLink.GitHub" Version="1.0.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
