@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Cave.Compression.Tar;
 
 namespace Cave.Data
 {
@@ -40,84 +39,6 @@ namespace Cave.Data
                 }
 
                 return databases.Keys.ToArray();
-            }
-        }
-
-        /// <summary>
-        /// Saves the whole Storage to a tgz file.
-        /// </summary>
-        /// <param name="fileName">Filename to save to.</param>
-        /// <param name="csv">If set the tables will be saved as csv files.</param>
-        public void Save(string fileName, CsvProperties? csv = null)
-        {
-            using (var tar = TarWriter.CreateTGZ(fileName))
-            {
-                tar.AddFile("# MemoryDataBase 1.0.0.0 #", new byte[0]);
-                foreach (MemoryDatabase database in databases.Values)
-                {
-                    foreach (var tableName in database.TableNames)
-                    {
-                        var table = database.GetTable(tableName);
-                        using (var ms = new MemoryStream())
-                        {
-                            if (csv.HasValue)
-                            {
-                                CsvWriter.WriteTable(table, ms, csv.Value);
-                            }
-                            else
-                            {
-                                table.SaveTo(ms);
-                            }
-                            tar.AddFile($"{database.Name}/{table.Name}.dat", ms.ToArray());
-                        }
-                    }
-                }
-            }
-        }
-
-        /// <summary>
-        /// Loads a previously saved storage.
-        /// </summary>
-        /// <param name="fileName">Filename to load from.</param>
-        /// <param name="csv">If set the tables will be read from csv files.</param>
-        public void Load(string fileName, CsvProperties? csv = null)
-        {
-            using (var file = TarReader.ReadTGZ(fileName))
-            {
-                file.ReadNext(out TarEntry entry, out var data);
-                if (entry.FileName != "# MemoryDataBase 1.0.0.0 #")
-                {
-                    throw new FormatException();
-                }
-
-                databases.Clear();
-                while (file.ReadNext(out entry, out data))
-                {
-                    var databaseName = Path.GetDirectoryName(entry.FileName);
-                    IDatabase database = new MemoryDatabase(this, databaseName);
-                    var tableName = Path.GetFileName(entry.FileName);
-
-                    using (Stream stream = new MemoryStream(data))
-                    {
-                        if (csv.HasValue)
-                        {
-                            var table = database.GetTable(tableName);
-                            using (var reader = new CsvReader(table.Layout, stream, csv.Value))
-                            {
-                                table.Clear();
-                                reader.ReadTable(table);
-                            }
-                        }
-                        else
-                        {
-                            using (var reader = new DatReader(stream))
-                            {
-                                var table = database.GetTable(reader.Layout, TableFlags.CreateNew);
-                                reader.ReadTable(table);
-                            }
-                        }
-                    }
-                }
             }
         }
 
