@@ -61,7 +61,7 @@ namespace Cave.Data
             foreach (var item in data)
             {
                 hash ^= item?.GetHashCode() ?? 0;
-                hash.Rol(1);
+                hash = hash.BitwiseRotateLeft(1);
             }
             return hash;
         }

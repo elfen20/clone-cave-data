@@ -204,7 +204,7 @@ namespace Cave.Data
             int hash = 0x1234;
             foreach (var obj in Values)
             {
-                hash.Rol();
+                hash = hash.BitwiseRotateLeft();
                 if (obj is null)
                 {
                     continue;
@@ -213,7 +213,7 @@ namespace Cave.Data
                 {
                     foreach (var item in (Array)obj)
                     {
-                        hash.Rol();
+                        hash = hash.BitwiseRotateLeft();
                         hash ^= item?.GetHashCode() ?? 0;
                     }
                 }

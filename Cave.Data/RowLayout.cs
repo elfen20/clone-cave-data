@@ -67,13 +67,6 @@ namespace Cave.Data
             properties = fields;
             Name = name;
             RowType = rowtype;
-            for (int i = 0; i < FieldCount; i++)
-            {
-                if (fields[i].Index != i)
-                {
-                    throw new ArgumentOutOfRangeException(nameof(IFieldProperties.Index), $"Field {i}: {fields[i]} has an invalid index!");
-                }
-            }
         }
 
         #endregion
