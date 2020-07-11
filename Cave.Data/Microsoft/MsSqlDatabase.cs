@@ -160,7 +160,7 @@ namespace Cave.Data.Microsoft
                         switch (fieldProperties.StringEncoding)
                         {
                             case StringEncoding.ASCII:
-                                if ((fieldProperties.MaximumLength > 0) && (fieldProperties.MaximumLength <= 255))
+                                if (fieldProperties.MaximumLength > 0 && fieldProperties.MaximumLength <= 255)
                                 {
                                     queryText.AppendFormat("VARCHAR({0})", fieldProperties.MaximumLength);
                                 }
@@ -171,7 +171,7 @@ namespace Cave.Data.Microsoft
                                 break;
                             case StringEncoding.UTF16:
                             case StringEncoding.UTF8:
-                                if ((fieldProperties.MaximumLength > 0) && (fieldProperties.MaximumLength <= 255))
+                                if (fieldProperties.MaximumLength > 0 && fieldProperties.MaximumLength <= 255)
                                 {
                                     queryText.AppendFormat("NVARCHAR({0})", fieldProperties.MaximumLength);
                                 }
@@ -190,7 +190,7 @@ namespace Cave.Data.Microsoft
                             var l_PreDecimal = (int)fieldProperties.MaximumLength;
                             var l_Temp = (fieldProperties.MaximumLength - l_PreDecimal) * 100;
                             var l_Decimal = (int)l_Temp;
-                            if ((l_Decimal >= l_PreDecimal) || (l_Decimal != l_Temp))
+                            if (l_Decimal >= l_PreDecimal || l_Decimal != l_Temp)
                             {
                                 throw new ArgumentOutOfRangeException(string.Format("Field {0} has an invalid MaximumLength of {1},{2}. Correct values range from s,p = 1,0 to 28,27 with 0 < s < p!", fieldProperties.Name, l_PreDecimal, l_Decimal));
                             }

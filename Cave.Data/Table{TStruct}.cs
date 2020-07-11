@@ -57,8 +57,8 @@ namespace Cave.Data
         /// <inheritdoc/>
         public override void Connect(IDatabase database, TableFlags flags, RowLayout layout) => BaseTable.Connect(database, flags, layout);
 
-        /// <summary>Not supported</summary>
+        /// <summary>Not supported.</summary>
         /// <param name="layout">Unused parameter.</param>
-        public override void UseLayout(RowLayout layout) => throw new NotSupportedException();
+        public override void UseLayout(RowLayout layout) => RowLayout.CheckLayout(Layout, layout);
     }
 }

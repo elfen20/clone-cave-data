@@ -103,7 +103,7 @@ namespace Cave.Data
 
         /// <summary>Gets the description of a specified enum or field.</summary>
         /// <param name="value">The enum or field value.</param>
-        /// <returns>Returns the description if present or null otherwise.</returns>
+        /// <returns>The description if present or null otherwise.</returns>
         /// <exception cref="ArgumentNullException">Value.</exception>
         /// <exception cref="ArgumentException">Enum value is not defined!.</exception>
         public static string GetDescription(object value)
@@ -481,7 +481,7 @@ namespace Cave.Data
                 }
                 case DataType.Bool:
                 {
-                    return ((bool)value) ? "true" : "false";
+                    return (bool)value ? "true" : "false";
                 }
                 case DataType.TimeSpan:
                 {
@@ -552,7 +552,7 @@ namespace Cave.Data
                 default: break;
             }
 
-            var s = (value is IConvertible) ? ((IConvertible)value).ToString(provider) : value.ToString();
+            var s = value is IConvertible ? ((IConvertible)value).ToString(provider) : value.ToString();
             return s.EscapeUtf8().Box(stringMarker);
         }
     }

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
 using Cave.Data.Sql;
 
@@ -128,27 +129,33 @@ namespace Cave.Data.Mysql
         /// <inheritdoc/>
         public override object GetLocalValue(IFieldProperties field, IDataReader reader, object databaseValue)
         {
-            if (field.DataType == DataType.DateTime)
+            if (field.DataType == DataType.DateTime && !(databaseValue is DBNull) && !(databaseValue is DateTime))
             {
-                var value = reader.GetValue(field.Index);
-                if (value is DBNull)
-                {
-                    return null;
-                }
                 if (isValidDateTimeProperty == null)
                 {
-                    isValidDateTimeProperty = value.GetType().GetProperties().Single(p => p.Name == "IsValidDateTime");
+                    var type = databaseValue.GetType();
+                    if (type.Name == "MySqlDateTime")
+                    {
+                        isValidDateTimeProperty = type.GetProperties().Single(p => p.Name == "IsValidDateTime");
+                    }
+                    if (isValidDateTimeProperty == null)
+                    {
+                        throw new InvalidDataException($"Unknown data type {type} or missing IsValidDateTime property!");
+                    }
                 }
 #if NET20 || NET35 || NET40
-                var isValid = (bool)isValidDateTimeProperty.GetValue(value, null);
+                var isValid = (bool)isValidDateTimeProperty.GetValue(databaseValue, null);
 #else
-                var isValid = (bool)isValidDateTimeProperty.GetValue(value);
+                var isValid = (bool)isValidDateTimeProperty.GetValue(databaseValue);
 #endif
                 if (isValid)
                 {
-                    return reader.GetDateTime(field.Index);
+                    databaseValue = reader.GetDateTime(field.Index);
                 }
-                return null;
+                else
+                {
+                    databaseValue = null;
+                }
             }
             return base.GetLocalValue(field, reader, databaseValue);
         }
@@ -304,16 +311,6 @@ namespace Cave.Data.Mysql
             {
                 // handle all default types
                 dataType = RowLayout.DataTypeFromType(fieldType);
-
-                // handle mysql bool
-                if (fieldSize == 1)
-                {
-                    if ((dataType == DataType.User) || (dataType == DataType.UInt64))
-                    {
-                        // fix mysql bool data type
-                        dataType = DataType.Bool;
-                    }
-                }
             }
             return dataType;
         }

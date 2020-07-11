@@ -61,7 +61,7 @@ namespace Cave.Data
         /// </summary>
         /// <param name="search">The search to run.</param>
         /// <param name="resultOption">Options for the search and the result set.</param>
-        /// <returns>Returns the number of rows found matching the criteria given.</returns>
+        /// <returns>The number of rows found matching the criteria given.</returns>
         long Count(Search search = default, ResultOption resultOption = default);
 
         /// <summary>
@@ -74,7 +74,7 @@ namespace Cave.Data
         /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
         /// </summary>
         /// <param name="index">The index of the row to be fetched.</param>
-        /// <returns>Returns the row.</returns>
+        /// <returns>The row.</returns>
         Row GetRowAt(int index);
 
         /// <summary>
@@ -102,7 +102,7 @@ namespace Cave.Data
         /// Inserts a row into the table and returns the inserted row.
         /// </summary>
         /// <param name="row">The row to insert.</param>
-        /// <returns>Returns the inserted row.</returns>
+        /// <returns>The inserted row.</returns>
         Row Insert(Row row);
 
         /// <summary>
@@ -139,7 +139,7 @@ namespace Cave.Data
         /// Removes all rows from the table matching the specified search.
         /// </summary>
         /// <param name="search">The Search used to identify rows for removal.</param>
-        /// <returns>Returns the number of dataset deleted.</returns>
+        /// <returns>The number of dataset deleted.</returns>
         int TryDelete(Search search);
 
         /// <summary>
@@ -159,7 +159,7 @@ namespace Cave.Data
         /// </summary>
         /// <param name="search">The search to run.</param>
         /// <param name="resultOption">Options for the search and the result set.</param>
-        /// <returns>Returns the row found.</returns>
+        /// <returns>The row found.</returns>
         Row GetRow(Search search = default, ResultOption resultOption = default);
 
         /// <summary>
@@ -173,7 +173,7 @@ namespace Cave.Data
         /// </summary>
         /// <param name="search">The search to run.</param>
         /// <param name="resultOption">Options for the search and the result set.</param>
-        /// <returns>Returns the rows found.</returns>
+        /// <returns>The rows found.</returns>
         IList<Row> GetRows(Search search = default, ResultOption resultOption = default);
 
         /// <summary>Calculates the sum of the specified field name for all matching rows.</summary>
@@ -221,7 +221,7 @@ namespace Cave.Data
         /// <summary>Commits a whole TransactionLog to the table.</summary>
         /// <param name="transactions">The transaction log to read.</param>
         /// <param name="flags">The flags to use.</param>
-        /// <returns>Returns the number of transactions done or -1 if unknown.</returns>
+        /// <returns>The number of transactions done or -1 if unknown.</returns>
         int Commit(IEnumerable<Transaction> transactions, TransactionFlags flags = TransactionFlags.Default);
     }
 }

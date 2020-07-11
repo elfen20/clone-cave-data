@@ -42,28 +42,28 @@ namespace Cave.Data
         /// Gets a row from the table.
         /// </summary>
         /// <param name="id">The ID of the row to be fetched.</param>
-        /// <returns>Returns the row.</returns>
+        /// <returns>The row.</returns>
         Row GetRow(TKey id);
 
         /// <summary>
         /// Gets the rows with the given identifiers.
         /// </summary>
         /// <param name="ids">Identifiers of the rows to fetch from the table.</param>
-        /// <returns>Returns the rows.</returns>
+        /// <returns>The rows.</returns>
         IList<Row> GetRows(IEnumerable<TKey> ids);
 
         /// <summary>
         /// Gets a row from the table.
         /// </summary>
         /// <param name="id">The ID of the row to be fetched.</param>
-        /// <returns>Returns the row.</returns>
+        /// <returns>The row.</returns>
         TStruct GetStruct(TKey id);
 
         /// <summary>
         /// Inserts a row into the table. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.
         /// </summary>
         /// <param name="row">The row to insert. If an ID &lt;= 0 is given an automatically generated ID will be used to add the dataset.</param>
-        /// <returns>Returns the ID of the inserted dataset.</returns>
+        /// <returns>The ID of the inserted dataset.</returns>
         TStruct Insert(TStruct row);
 
         /// <summary>
@@ -101,7 +101,7 @@ namespace Cave.Data
         /// </summary>
         /// <param name="search">The search to run.</param>
         /// <param name="resultOption">Options for the search and the result set.</param>
-        /// <returns>Returns the structure found.</returns>
+        /// <returns>The structure found.</returns>
         TStruct GetStruct(Search search = default, ResultOption resultOption = default);
 
         /// <summary>
@@ -109,14 +109,14 @@ namespace Cave.Data
         /// </summary>
         /// <param name="search">The search to run.</param>
         /// <param name="resultOption">Options for the search and the result set.</param>
-        /// <returns>Returns the rows found.</returns>
+        /// <returns>The rows found.</returns>
         IList<TStruct> GetStructs(Search search = default, ResultOption resultOption = default);
 
         /// <summary>
         /// Gets the rows with the given ids.
         /// </summary>
         /// <param name="ids">IDs of the rows to fetch from the table.</param>
-        /// <returns>Returns the rows.</returns>
+        /// <returns>The rows.</returns>
         IList<TStruct> GetStructs(IEnumerable<TKey> ids);
 
         /// <summary>

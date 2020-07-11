@@ -311,7 +311,7 @@ namespace Cave.Data
         #region SequenceNumber
 
         /// <summary>Increases the sequence number.</summary>
-        /// <returns>Returns the increased sequence number.</returns>
+        /// <returns>The increased sequence number.</returns>
         public int IncreaseSequenceNumber() => Interlocked.Increment(ref sequenceNumber);
 
         #endregion

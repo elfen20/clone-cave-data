@@ -97,7 +97,7 @@ namespace Cave.Data
                 if (used.Contains(connection))
                 {
                     used.Remove(connection);
-                    if (!close && (connection.State == ConnectionState.Open))
+                    if (!close && connection.State == ConnectionState.Open)
                     {
                         queue.AddFirst(connection);
                         connection = null;
@@ -127,7 +127,7 @@ namespace Cave.Data
                 nextNode = currentNode.Next;
 
                 // remove dead and old connections
-                if ((currentNode.Value.State != ConnectionState.Open) || (DateTime.UtcNow > currentNode.Value.LastUsed + timeout.Value))
+                if (currentNode.Value.State != ConnectionState.Open || DateTime.UtcNow > currentNode.Value.LastUsed + timeout.Value)
                 {
                     Trace.TraceInformation(string.Format("Closing connection {0} (livetime exceeded) (Idle:{1} Used:{2})", currentNode.Value, queue.Count, used.Count));
                     currentNode.Value.Dispose();

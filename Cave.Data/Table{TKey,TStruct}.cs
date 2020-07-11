@@ -21,34 +21,37 @@ namespace Cave.Data
         public Table(ITable table)
         {
             BaseTable = table;
+            RowLayout layout = RowLayout.CreateTyped(typeof(TStruct));
             if (table.Flags.HasFlag(TableFlags.IgnoreMissingFields))
             {
                 var result = new List<IFieldProperties>();
-                var layout = RowLayout.CreateTyped(typeof(TStruct));
                 foreach (var field in layout)
                 {
-                    var match = BaseTable.Layout.FirstOrDefault(f => f.Equals(field));
+                    var match = table.Layout.FirstOrDefault(f => f.Equals(field));
                     if (match == null)
                     {
-                        throw new InvalidDataException($"Field {field} cannot be found at table {BaseTable}");
+                        throw new InvalidDataException($"Field {field} cannot be found at table {table}");
                     }
                     var target = match.Clone();
                     target.FieldInfo = field.FieldInfo;
                     result.Add(target);
                 }
-                Layout = new RowLayout(table.Name, result.ToArray(), typeof(TStruct));
+                layout = new RowLayout(table.Name, result.ToArray(), typeof(TStruct));
             }
             else
             {
-                Layout = RowLayout.CreateTyped(typeof(TStruct));
-                RowLayout.CheckLayout(Layout, BaseTable.Layout);
+                RowLayout.CheckLayout(layout, table.Layout);
             }
-            KeyField = Layout.Identifier.Single();
-            if (KeyField.ValueType != typeof(TKey))
+
+            Layout = layout;
+            var keyField = layout.Identifier.Single();
+            if (keyField.ValueType != typeof(TKey))
             {
-                throw new ArgumentException($"Key needs to be of type {KeyField.ValueType}!", nameof(TKey));
+                throw new ArgumentException($"Key needs to be of type {keyField.ValueType}!", nameof(TKey));
             }
-            BaseTable.UseLayout(Layout);
+
+            KeyField = keyField;
+            table.UseLayout(layout);
         }
 
         /// <inheritdoc/>
@@ -63,7 +66,7 @@ namespace Cave.Data
         /// <inheritdoc/>
         public override void Connect(IDatabase database, TableFlags flags, RowLayout layout) => BaseTable.Connect(database, flags, layout);
 
-        /// <summary>Not supported</summary>
+        /// <summary>Not supported.</summary>
         /// <param name="layout">Unused parameter.</param>
         public override void UseLayout(RowLayout layout) => throw new NotSupportedException();
     }

@@ -557,7 +557,7 @@ namespace Cave
             AlternativeNames = null;
             DefaultValue = null;
 
-            if ((DataType == DataType.User) && fieldInfo.FieldType.IsArray)
+            if (DataType == DataType.User && fieldInfo.FieldType.IsArray)
             {
                 throw new NotSupportedException($"Array types (except byte[]) are not supported!\nPlease define a class with a valid ToString() member and static Parse(string) constructor instead!");
             }
@@ -709,7 +709,7 @@ namespace Cave
             }
 
             // check name
-            if ((other.Name != Name) && (other.NameAtDatabase != NameAtDatabase))
+            if (other.Name != Name && other.NameAtDatabase != NameAtDatabase)
             {
                 var splitters = " ,;".ToCharArray();
                 if (AlternativeNames?.Split(splitters, StringSplitOptions.RemoveEmptyEntries).Any(n => n == other.Name || n == other.NameAtDatabase) == true)
@@ -731,7 +731,8 @@ namespace Cave
                 return true;
             }
 
-            throw new Exception("CHECK");
+            Trace.WriteLine($"FieldProperties.Equals {this} != {other}");
+            return false;
         }
 
         /// <summary>Returns a <see cref="string" /> that represents this instance.</summary>
@@ -766,7 +767,7 @@ namespace Cave
             }
 
             result.Append($" {Name}");
-            if ((MaximumLength > 0) && (MaximumLength < int.MaxValue))
+            if (MaximumLength > 0 && MaximumLength < int.MaxValue)
             {
                 result.Append($" ({MaximumLength})");
             }

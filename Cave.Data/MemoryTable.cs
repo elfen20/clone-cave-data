@@ -262,7 +262,7 @@ namespace Cave.Data
         /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
         /// </summary>
         /// <param name="index">The index of the row to be fetched.</param>
-        /// <returns>Returns the row.</returns>
+        /// <returns>The row.</returns>
         public override Row GetRowAt(int index) => new Row(Layout, rows.Values.ElementAt(index), true);
 
         #endregion
@@ -402,7 +402,7 @@ namespace Cave.Data
 
         /// <summary>Removes all rows from the table matching the specified search.</summary>
         /// <param name="search">The Search used to identify rows for removal.</param>
-        /// <returns>Returns the number of dataset deleted.</returns>
+        /// <returns>The number of dataset deleted.</returns>
         public override int TryDelete(Search search)
         {
             if (search == null)
@@ -485,7 +485,7 @@ namespace Cave.Data
         /// Gets a row from the table.
         /// </summary>
         /// <param name="id">The identifier of the row to be fetched.</param>
-        /// <returns>Returns the row.</returns>
+        /// <returns>The row.</returns>
         public Row GetRow(Identifier id)
         {
             return new Row(Layout, rows[id], true);
@@ -493,7 +493,7 @@ namespace Cave.Data
 
         /// <summary>Obtains the rows with the given ids.</summary>
         /// <param name="ids">Identifiers of the rows to fetch from the table.</param>
-        /// <returns>Returns the rows.</returns>
+        /// <returns>The rows.</returns>
         public IList<Row> GetRows(IEnumerable<Identifier> ids)
         {
             var result = new List<Row>();
