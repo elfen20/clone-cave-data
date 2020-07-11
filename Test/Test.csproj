@@ -1,16 +1,26 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <TargetFrameworks>net47</TargetFrameworks>
+    <TargetFrameworks>net20;net35;net40;net45;netcoreapp2.0</TargetFrameworks>
+
     <IsPackable>false</IsPackable>
-    <StartupObject>Test.TestProgram</StartupObject>
+
     <ApplicationIcon />
+
     <OutputType>Exe</OutputType>
+
+    <StartupObject>Test.Program</StartupObject>
   </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="MySqlConnector" Version="0.56.0" />
-    <PackageReference Include="nunit" Version="3.12.0" />
-    <PackageReference Include="NUnit3TestAdapter" Version="3.15.1" />
+
+  <ItemGroup Condition="'$(TargetFramework)'=='net40' OR '$(TargetFramework)'=='net45' OR '$(TargetFramework)'=='netcoreapp2.0'">
+    <PackageReference Include="NUnit" Version="3.11.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)'=='net20' OR '$(TargetFramework)'=='net35'">
+    <PackageReference Include="NUnit" Version="2.6.4" />
+    <PackageReference Include="NUnitTestAdapter" Version="2.3.0" />
+  </ItemGroup>
+  
   <ItemGroup>
     <ProjectReference Include="..\Cave.Data\Cave.Data.csproj" />
   </ItemGroup>
