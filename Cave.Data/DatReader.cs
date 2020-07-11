@@ -205,7 +205,7 @@ namespace Cave.Data
             }
 
             version = reader.Read7BitEncodedInt32();
-            if ((version < 1) || (version > 4))
+            if (version < 1 || version > 4)
             {
                 throw new InvalidDataException(string.Format("Unknown Table version!"));
             }

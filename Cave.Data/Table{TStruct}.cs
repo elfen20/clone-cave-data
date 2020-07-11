@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -42,6 +43,7 @@ namespace Cave.Data
                 Layout = RowLayout.CreateTyped(typeof(TStruct));
                 RowLayout.CheckLayout(Layout, BaseTable.Layout);
             }
+            BaseTable.UseLayout(Layout);
         }
 
         #endregion
@@ -55,7 +57,8 @@ namespace Cave.Data
         /// <inheritdoc/>
         public override void Connect(IDatabase database, TableFlags flags, RowLayout layout) => BaseTable.Connect(database, flags, layout);
 
-        /// <inheritdoc/>
-        public override void UseLayout(RowLayout layout) => BaseTable.UseLayout(layout);
+        /// <summary>Not supported.</summary>
+        /// <param name="layout">Unused parameter.</param>
+        public override void UseLayout(RowLayout layout) => RowLayout.CheckLayout(Layout, layout);
     }
 }

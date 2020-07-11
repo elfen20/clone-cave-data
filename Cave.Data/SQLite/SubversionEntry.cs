@@ -16,7 +16,7 @@ namespace Cave.Data.SQLite
         {
             Version = version;
             this.data = data;
-            IsValid = (Version >= 8) || (Version <= 10);
+            IsValid = Version >= 8 || Version <= 10;
         }
 
         /// <summary>

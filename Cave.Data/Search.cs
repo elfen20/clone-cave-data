@@ -576,7 +576,7 @@ namespace Cave.Data
                     if (Mode == SearchMode.Equals)
                     {
                         // check if we can do an index search
-                        if ((indices != null) && (indices[FieldNumber] != null))
+                        if (indices != null && indices[FieldNumber] != null)
                         {
                             // field has an index
                             var result = indices[FieldNumber].Find(FieldValue).Select(r => new Row(Layout, r, true));

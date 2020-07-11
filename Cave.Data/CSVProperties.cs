@@ -1,6 +1,5 @@
 using System;
 using System.Globalization;
-using Cave.Compression;
 using Cave.IO;
 
 namespace Cave.Data
@@ -16,11 +15,6 @@ namespace Cave.Data
         /// Gets or sets the format provider used to en/decode values.
         /// </summary>
         public IFormatProvider Format;
-
-        /// <summary>
-        /// Gets or sets the <see cref="CompressionType"/>.
-        /// </summary>
-        public CompressionType Compression;
 
         /// <summary>
         /// Gets or sets the <see cref="Encoding"/>.
@@ -76,7 +70,6 @@ namespace Cave.Data
         public static CsvProperties Default { get; } = new CsvProperties
         {
             Format = CultureInfo.InvariantCulture,
-            Compression = CompressionType.None,
             Encoding = StringEncoding.UTF8,
             NewLineMode = NewLineMode.LF,
             Separator = ';',
@@ -93,7 +86,6 @@ namespace Cave.Data
         {
             SaveDefaultValues = true,
             Format = CultureInfo.CurrentUICulture,
-            Compression = CompressionType.None,
             Encoding = StringEncoding.UTF16,
             NewLineMode = NewLineMode.CRLF,
             Separator = '\t',
@@ -106,7 +98,6 @@ namespace Cave.Data
         /// Gets a value indicating whether the properties are all set or not.
         /// </summary>
         public bool Valid =>
-            Enum.IsDefined(typeof(CompressionType), Compression) &&
             Enum.IsDefined(typeof(StringEncoding), Encoding) &&
             (Encoding != StringEncoding.Undefined) &&
             Enum.IsDefined(typeof(NewLineMode), NewLineMode) &&
@@ -144,7 +135,6 @@ namespace Cave.Data
         public bool Equals(CsvProperties other)
         {
             return other.AllowFieldMatching == AllowFieldMatching
-                && other.Compression == Compression
                 && other.Format == Format
                 && other.DateTimeFormat == DateTimeFormat
                 && other.Encoding == Encoding

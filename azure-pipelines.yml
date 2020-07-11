@@ -1,25 +1,26 @@
-# .NET Desktop
-# Build and run tests for .NET Desktop or Windows classic desktop solutions.
-# Add steps that publish symbols, save build artifacts, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/apps/windows/dot-net
+# .NET Cave Build Script
+# Set Major Build Version in variables
+# before merging next to master, branch to new release version vX
 
+# trigger: add any branches with releases to build AND change fixedBuildVersion variable!
 trigger:
 - refs/tags/*
-- refs/heads/*
+- master
+- next
 
 pool:
   vmImage: 'windows-latest'
 
 variables:
+  fixedBuildVersion: '2.0'
   solution: '**/*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
 steps:
-- script: set
-  displayName: Show Variables
 
 - task: PowerShell@2
+  name: SetGitVars
   displayName: Set git variables
   env:
     BUILD_BUILDNUMBER: $(Build.BuildNumber)
@@ -27,32 +28,38 @@ steps:
   inputs:
     targetType: inline
     script: |
-      $var = "$(git describe --tags --always)".Trim()
-      $ver = [Version]"0.0.0"
-      if (!$var.Contains("."))
+      $fixedVersion = [Version]"$(fixedBuildVersion)"
+      $gitTag = "$(git describe --tags --always)".Trim().TrimStart('v')                                # possible return values: 'hash' (no tags), 'tag-hash' (old tag), 'tag' (if commit == tag)
+      if (!$gitTag.Contains('.'))
       {
-        $var = "0.0.0-$var"
+        echo "no tag set yet!"
+        $gitTag = "0.0.0-$gitTag"
       }
-      if ($var.Contains("-"))
+      if (!$gitTag.Contains('-'))
       {
-        $semver = "ci-$env:BUILD_BUILDNUMBER".Replace('.', '-')
-        Write-Host "$("##vso[task.setvariable variable=VersionSuffix]")$semver"
-        $ver = [Version]$var.Substring(0, $var.IndexOf('-'))
-        $ver = [Version]"$($ver.Major).$($ver.Minor).$($ver.Build+1)"
-        $verFromFile = [Version] [System.IO.File]::ReadAllText("version.txt")
-        if ($ver.Major -ne $verFromFile.Major)
-        {
-          $ver = [Version]"$($verFromFile.Major).$($verFromFile.Minor)"
-        }
+        echo "commit has valid tag set!"
+        $version = $gitTag
       }
       else
       {
-        $ver = [Version]$var
-      }
-      echo "Branch = $env:BUILD_SOURCEBRANCHNAME"
-      echo "VersionPrefix = '$ver'"
-      echo "VersionSuffix = '$semver'"
-      Write-Host "$("##vso[task.setvariable variable=VersionPrefix]")$ver"
+        $semVer = "ci-$env:BUILD_BUILDNUMBER".Replace('.', '-')                                     # semVer = ci-yyyyMMdd-NN
+        $gitTagVersion = [Version]$gitTag.Split('-')[0]
+        if ($gitTagVersion.Major -ne $fixedVersion.Major)
+        {
+          echo "fixed version major differs from last git tag, using fixed version!"
+          $version = "$fixedVersion-$semVer"
+        }
+        else
+        {
+          echo "using git tag version, incrementing build number!"
+          $version = "$($gitTagVersion.Major).$($gitTagVersion.Minor).$($gitTagVersion.Build+1)-$semVer"
+        }
+      }	  
+      echo "branch = $env:BUILD_SOURCEBRANCHNAME"
+      echo "fixedVersion = '$fixedVersion'"
+      echo "gitTag = '$gitTag'"
+      echo "build version = '$version'"
+      Write-Host "##vso[task.setvariable variable=Version]$version"
 
 - task: NuGetToolInstaller@0
   inputs:
@@ -76,13 +83,11 @@ steps:
     configuration: '$(buildConfiguration)'
     testAssemblyVer2: '**\bin\Release\**\Test.exe'
 
-#- task: NuGetCommand@2
-#  displayName: Push to nuget (release)
-#  inputs:
-#    command: push
-#    packagesToPush: '$(Build.SourcesDirectory)/**/bin/Release/*.nupkg'
-#    nuGetFeedType: external
-#    publishFeedCredentials: 'nuget-default'
-#    versioningScheme: byEnvVar
-#    versionEnvVar: GIT_TAG
-#    includeSymbols: true
+- task: NuGetCommand@2
+  displayName: Push to nuget (release)
+  inputs:
+    command: push
+    packagesToPush: '$(Build.SourcesDirectory)/**/bin/Release/*.nupkg'
+    nuGetFeedType: external
+    publishFeedCredentials: 'nuget-default'
+    includeSymbols: true

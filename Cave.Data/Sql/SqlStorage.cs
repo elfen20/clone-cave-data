@@ -250,7 +250,7 @@ namespace Cave.Data.Sql
 
             if (value is bool)
             {
-                return ((bool)value == true) ? "1" : "0";
+                return (bool)value == true ? "1" : "0";
             }
 
             if (value is TimeSpan)
@@ -393,6 +393,8 @@ namespace Cave.Data.Sql
             }
         }
 
+        public DateTimeKind DefaultDateTimeKind { get; set; } = DateTimeKind.Local;
+
         /// <summary>
         /// Converts a database value into a local value.
         /// </summary>
@@ -470,10 +472,12 @@ namespace Cave.Data.Sql
                             break;
 
                         case DateTimeType.DoubleEpoch:
-                            ticks = (long)Math.Round(((double)databaseValue * TimeSpan.TicksPerSecond) + Storage.EpochTicks);
+                            ticks = (long)Math.Round((double)databaseValue * TimeSpan.TicksPerSecond + Storage.EpochTicks);
                             break;
                     }
-                    return new DateTime(ticks, field.DateTimeKind);
+
+                    var kind = field.DateTimeKind != 0 ? field.DateTimeKind : DefaultDateTimeKind;
+                    return new DateTime(ticks, kind);
                 }
                 case DataType.TimeSpan:
                 {
@@ -506,7 +510,7 @@ namespace Cave.Data.Sql
                             break;
 
                         case DateTimeType.DoubleEpoch:
-                            ticks = (long)Math.Round(((double)databaseValue * TimeSpan.TicksPerSecond) + Storage.EpochTicks);
+                            ticks = (long)Math.Round((double)databaseValue * TimeSpan.TicksPerSecond + Storage.EpochTicks);
                             break;
                     }
                     return new TimeSpan(ticks);
@@ -1139,7 +1143,7 @@ namespace Cave.Data.Sql
                 DataRow row = schemaTable.Rows[i];
 
                 var isHidden = row["IsHidden"];
-                if ((isHidden != DBNull.Value) && (bool)isHidden)
+                if (isHidden != DBNull.Value && (bool)isHidden)
                 {
                     // continue;
                 }
@@ -1156,19 +1160,19 @@ namespace Cave.Data.Sql
                 FieldFlags fieldFlags = FieldFlags.None;
 
                 var isKey = row["IsKey"];
-                if ((isKey != DBNull.Value) && (bool)isKey)
+                if (isKey != DBNull.Value && (bool)isKey)
                 {
                     fieldFlags |= FieldFlags.ID;
                 }
 
                 var isAutoIncrement = row["IsAutoIncrement"];
-                if ((isAutoIncrement != DBNull.Value) && (bool)isAutoIncrement)
+                if (isAutoIncrement != DBNull.Value && (bool)isAutoIncrement)
                 {
                     fieldFlags |= FieldFlags.AutoIncrement;
                 }
 
                 var isUnique = row["IsUnique"];
-                if ((isUnique != DBNull.Value) && (bool)isUnique)
+                if (isUnique != DBNull.Value && (bool)isUnique)
                 {
                     fieldFlags |= FieldFlags.Unique;
                 }

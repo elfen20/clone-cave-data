@@ -195,7 +195,7 @@ namespace Cave.Data.Mysql
                             var value = (int)field.MaximumLength;
                             var temp = (field.MaximumLength - value) * 100;
                             var decimalValue = (int)temp;
-                            if ((decimalValue >= value) || (decimalValue != temp))
+                            if (decimalValue >= value || decimalValue != temp)
                             {
                                 throw new ArgumentOutOfRangeException(string.Format("Field {0} has an invalid MaximumLength of {1},{2}. Correct values range from s,p = 1,0 to 65,30(default value) with 0 < s < p!", field.Name, value, decimalValue));
                             }

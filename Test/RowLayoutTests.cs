@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using NUnit.Framework;
 using Cave;
 using Cave.Data;
-using Test.Cave;
 
 namespace Test.Cave.Data
 {

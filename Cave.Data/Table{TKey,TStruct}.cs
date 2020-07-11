@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace Cave.Data
@@ -19,13 +21,37 @@ namespace Cave.Data
         public Table(ITable table)
         {
             BaseTable = table;
-            Layout = RowLayout.CreateTyped(typeof(TStruct));
-            RowLayout.CheckLayout(Layout, BaseTable.Layout);
-            KeyField = Layout.Identifier.Single();
-            if (KeyField.ValueType != typeof(TKey))
+            RowLayout layout = RowLayout.CreateTyped(typeof(TStruct));
+            if (table.Flags.HasFlag(TableFlags.IgnoreMissingFields))
             {
-                throw new ArgumentException($"Key needs to be of type {KeyField.ValueType}!", nameof(TKey));
+                var result = new List<IFieldProperties>();
+                foreach (var field in layout)
+                {
+                    var match = table.Layout.FirstOrDefault(f => f.Equals(field));
+                    if (match == null)
+                    {
+                        throw new InvalidDataException($"Field {field} cannot be found at table {table}");
+                    }
+                    var target = match.Clone();
+                    target.FieldInfo = field.FieldInfo;
+                    result.Add(target);
+                }
+                layout = new RowLayout(table.Name, result.ToArray(), typeof(TStruct));
             }
+            else
+            {
+                RowLayout.CheckLayout(layout, table.Layout);
+            }
+
+            Layout = layout;
+            var keyField = layout.Identifier.Single();
+            if (keyField.ValueType != typeof(TKey))
+            {
+                throw new ArgumentException($"Key needs to be of type {keyField.ValueType}!", nameof(TKey));
+            }
+
+            KeyField = keyField;
+            table.UseLayout(layout);
         }
 
         /// <inheritdoc/>
@@ -40,7 +66,8 @@ namespace Cave.Data
         /// <inheritdoc/>
         public override void Connect(IDatabase database, TableFlags flags, RowLayout layout) => BaseTable.Connect(database, flags, layout);
 
-        /// <inheritdoc/>
-        public override void UseLayout(RowLayout layout) => BaseTable.UseLayout(layout);
+        /// <summary>Not supported.</summary>
+        /// <param name="layout">Unused parameter.</param>
+        public override void UseLayout(RowLayout layout) => throw new NotSupportedException();
     }
 }

@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
-using Cave.Compression;
 using Cave.IO;
 
 namespace Cave.Data
@@ -42,18 +41,6 @@ namespace Cave.Data
             BaseStream = stream ?? throw new ArgumentNullException(nameof(Stream));
             Properties = properties.Valid ? properties : CsvProperties.Default;
             CloseBaseStream = closeBaseStream;
-
-            switch (Properties.Compression)
-            {
-                case CompressionType.Deflate:
-                    stream = new DeflateStream(stream, CompressionMode.Decompress, true);
-                    break;
-                case CompressionType.GZip:
-                    stream = new GZipStream(stream, CompressionMode.Decompress, true);
-                    break;
-                case CompressionType.None: break;
-                default: throw new ArgumentException(string.Format("Unknown Compression {0}", Properties.Compression), "Compression");
-            }
 
             reader = new DataReader(stream, Properties.Encoding, Properties.NewLineMode);
             if (!Properties.NoHeader)

@@ -557,7 +557,7 @@ namespace Cave
             AlternativeNames = null;
             DefaultValue = null;
 
-            if ((DataType == DataType.User) && fieldInfo.FieldType.IsArray)
+            if (DataType == DataType.User && fieldInfo.FieldType.IsArray)
             {
                 throw new NotSupportedException($"Array types (except byte[]) are not supported!\nPlease define a class with a valid ToString() member and static Parse(string) constructor instead!");
             }
@@ -709,7 +709,7 @@ namespace Cave
             }
 
             // check name
-            if ((other.Name != Name) && (other.NameAtDatabase != NameAtDatabase))
+            if (other.Name != Name && other.NameAtDatabase != NameAtDatabase)
             {
                 var splitters = " ,;".ToCharArray();
                 if (AlternativeNames?.Split(splitters, StringSplitOptions.RemoveEmptyEntries).Any(n => n == other.Name || n == other.NameAtDatabase) == true)
@@ -731,74 +731,8 @@ namespace Cave
                 return true;
             }
 
-            throw new Exception("CHECK");
-
-            /*
-            This was the old cave.data v1 equals code
-            remove this after all compatibility issues are checked.
-
-            // additional checks
-            if (FieldInfo != null)
-            {
-                if (other.FieldInfo != null)
-                {
-                    // both typed, full match needed
-                    return other.ValueType == ValueType;
-                }
-
-                // only this typed, other is db -> check conversions
-                switch (DataType)
-                {
-                    case DataType.TimeSpan:
-                    case DataType.DateTime:
-                        switch (DateTimeType)
-                        {
-                            case DateTimeType.BigIntTicks:
-                            case DateTimeType.BigIntHumanReadable: return other.DataType == DataType.Int64;
-                            case DateTimeType.DecimalSeconds: return other.DataType == DataType.Decimal;
-                            case DateTimeType.DoubleSeconds: return other.DataType == DataType.Double;
-                            case DateTimeType.DoubleEpoch: return other.DataType == DataType.Double;
-
-                            case DateTimeType.Undefined:
-                            case DateTimeType.Native: return other.DataType == DataType;
-                            default: return false;
-                        }
-                }
-                return true;
-            }
-
-            if (other.FieldInfo == null)
-            {
-                // TODO check if this is enough
-                if (DataType == other.DataType)
-                {
-                    return true;
-                }
-
-                return TypeAtDatabase == other.TypeAtDatabase;
-            }
-
-
-            // only other typed, other is db -> check conversions
-            switch (other.DataType)
-            {
-                case DataType.TimeSpan:
-                case DataType.DateTime:
-                    switch (other.DateTimeType)
-                    {
-                        case DateTimeType.BigIntTicks:
-                        case DateTimeType.BigIntHumanReadable: return TypeAtDatabase == DataType.Int64;
-                        case DateTimeType.DecimalSeconds: return DataType == DataType.Decimal;
-                        case DateTimeType.DoubleSeconds: return DataType == DataType.Double;
-                        case DateTimeType.Undefined:
-                        case DateTimeType.Native: return other.DataType == DataType;
-                        default:
-                            Trace.TraceError($"Missing implementation for DateTimeType {other.DateTimeType}");
-                            return false;
-                    }
-            }
-            return true;
-            */
+            Trace.WriteLine($"FieldProperties.Equals {this} != {other}");
+            return false;
         }
 
         /// <summary>Returns a <see cref="string" /> that represents this instance.</summary>
@@ -833,7 +767,7 @@ namespace Cave
             }
 
             result.Append($" {Name}");
-            if ((MaximumLength > 0) && (MaximumLength < int.MaxValue))
+            if (MaximumLength > 0 && MaximumLength < int.MaxValue)
             {
                 result.Append($" ({MaximumLength})");
             }

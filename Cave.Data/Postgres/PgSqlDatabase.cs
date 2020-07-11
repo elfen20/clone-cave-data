@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -241,7 +240,7 @@ namespace Cave.Data.Postgres
                             var prec = (int)fieldProperties.MaximumLength;
                             var temp = (fieldProperties.MaximumLength - prec) * 100;
                             var scale = (int)temp;
-                            if ((scale >= prec) || (scale != temp))
+                            if (scale >= prec || scale != temp)
                             {
                                 throw new ArgumentOutOfRangeException(string.Format("Field {0} has an invalid MaximumLength of {1},{2}. Correct values range from s,p = 1,0 to 65,30(default value) with 0 < s < p!", fieldProperties.Name, prec, scale));
                             }

@@ -1,5 +1,6 @@
 using System;
-using System.Text;
+using System.Collections.Generic;
+using System.Linq;
 using Cave.Collections;
 
 namespace Cave.Data
@@ -115,32 +116,7 @@ namespace Cave.Data
         #region overrides
 
         /// <inheritdoc/>
-        public override string ToString()
-        {
-            var result = new StringBuilder();
-            result.Append("Row[");
-            result.Append(Values.Length);
-            result.Append("] ");
-            result.Append(" ");
-            var l_First = true;
-            foreach (var obj in Values)
-            {
-                if (l_First)
-                {
-                    l_First = false;
-                }
-                else
-                {
-                    result.Append(" ");
-                }
-
-                if (obj != null)
-                {
-                    result.Append(obj.ToString());
-                }
-            }
-            return result.ToString();
-        }
+        public override string ToString() => CsvWriter.RowToString(CsvProperties.Default, Layout, this);
 
         #endregion
 
@@ -158,7 +134,24 @@ namespace Cave.Data
         /// <typeparam name="T">The expected type.</typeparam>
         /// <param name="fieldIndex">The index of the field.</param>
         /// <returns>Returns the field value.</returns>
-        public T GetValue<T>(int fieldIndex) => (T)TypeExtension.ConvertValue(typeof(T), Values[fieldIndex], null);
+        public T GetValue<T>(int fieldIndex)
+        {
+            var result = TypeExtension.ConvertValue(typeof(T), Values[fieldIndex], null);
+            if (result is null)
+            {
+                return default(T);
+            }
+            else
+            {
+                return (T)result;
+            }
+        }
+
+        /// <summary>
+        /// Gets a dictionary containing all field.Name = value combinations of this row.
+        /// </summary>
+        /// <returns>Returns a new <see cref="IDictionary{TKey, TValue}"/> instance.</returns>
+        public IDictionary<string, object> ToDictionary() => Layout.ToDictionary(field => field.Name, field => Values[field.Index]);
 
         /// <summary>
         /// Determines whether the specified <see cref="object" />, is equal to this instance.
@@ -204,7 +197,7 @@ namespace Cave.Data
             int hash = 0x1234;
             foreach (var obj in Values)
             {
-                hash.Rol();
+                hash = hash.BitwiseRotateLeft(1);
                 if (obj is null)
                 {
                     continue;
@@ -213,7 +206,7 @@ namespace Cave.Data
                 {
                     foreach (var item in (Array)obj)
                     {
-                        hash.Rol();
+                        hash = hash.BitwiseRotateLeft(1);
                         hash ^= item?.GetHashCode() ?? 0;
                     }
                 }

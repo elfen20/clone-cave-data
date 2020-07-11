@@ -42,7 +42,7 @@ namespace Cave.Data
 
         /// <summary>Obtains all IDs with the specified hashcode.</summary>
         /// <param name="value">The value.</param>
-        /// <returns>Returns the rows.</returns>
+        /// <returns>The rows.</returns>
         public IEnumerable<object[]> Find(object value)
         {
 #if USE_BOXING

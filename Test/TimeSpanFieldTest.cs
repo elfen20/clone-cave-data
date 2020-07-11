@@ -4,7 +4,7 @@ using System;
 using System.IO;
 
 #pragma warning disable CS0649
-
+#pragma warning disable CS0659
 namespace Test
 {
     [TestFixture]
@@ -130,3 +130,4 @@ namespace Test
 }
 
 #pragma warning restore CS0649
+#pragma warning restore CS0659
