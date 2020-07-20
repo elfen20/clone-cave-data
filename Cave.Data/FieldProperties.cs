@@ -437,12 +437,12 @@ namespace Cave
         {
             if (TypeAtDatabase == 0)
             {
-                TypeAtDatabase = DataType;
+                throw new ArgumentNullException(nameof(TypeAtDatabase));
             }
 
             if (NameAtDatabase == null)
             {
-                NameAtDatabase = Name;
+                throw new ArgumentNullException(nameof(NameAtDatabase));
             }
 
             switch (DataType)
@@ -529,7 +529,15 @@ namespace Cave
         /// <param name="index">Field index.</param>
         /// <param name="fieldInfo">The field information.</param>
         /// <exception cref="NotSupportedException">Array types (except byte[]) are not supported!.</exception>
-        public void LoadFieldInfo(int index, FieldInfo fieldInfo)
+        public void LoadFieldInfo(int index, FieldInfo fieldInfo) => LoadFieldInfo(index, fieldInfo, NamingStrategy.Exact);
+
+        /// <summary>
+        /// Loads field properties using the specified FieldInfo.
+        /// </summary>
+        /// <param name="index">Field index.</param>
+        /// <param name="fieldInfo">The field information.</param>
+        /// <exception cref="NotSupportedException">Array types (except byte[]) are not supported!.</exception>
+        public void LoadFieldInfo(int index, FieldInfo fieldInfo, NamingStrategy namingStrategy)
         {
             FieldInfo = fieldInfo ?? throw new ArgumentNullException(nameof(fieldInfo));
             Index = index;
@@ -545,7 +553,7 @@ namespace Cave
             }
 
             DataType = RowLayout.DataTypeFromType(ValueType);
-            NameAtDatabase = fieldInfo.Name;
+            NameAtDatabase = RowLayout.GetNamingStrategyName(namingStrategy, fieldInfo.Name);
             TypeAtDatabase = DataType;
             Flags = FieldFlags.None;
             MaximumLength = 0;
@@ -634,9 +642,9 @@ namespace Cave
                     DefaultValue = defaultValueAttribute.Value;
                 }
             }
-            if (NameAtDatabase == null)
+            if (TypeAtDatabase == 0)
             {
-                NameAtDatabase = Name;
+                TypeAtDatabase = DataType;
             }
             Validate();
         }

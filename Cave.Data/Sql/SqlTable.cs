@@ -128,8 +128,10 @@ namespace Cave.Data.Sql
             var field = new FieldProperties()
             {
                 Name = fieldname,
+                NameAtDatabase = fieldname,
                 Flags = FieldFlags.None,
                 DataType = DataType.String,
+                TypeAtDatabase = DataType.String,
             };
             field.Validate();
             SqlCmd query;
@@ -160,8 +162,10 @@ namespace Cave.Data.Sql
             var field = new FieldProperties()
             {
                 Name = fieldname,
+                NameAtDatabase = fieldname,
                 Flags = FieldFlags.None,
                 DataType = DataType.String,
+                TypeAtDatabase = DataType.String,
             };
             field.Validate();
             string query;
@@ -1088,7 +1092,7 @@ namespace Cave.Data.Sql
                         IncreaseSequenceNumber();
                         Trace.TraceInformation("{0} transactions committed to {1}.", n, FQTN);
                     }
-                    execute = Task.Factory.StartNew((cmd) => Execute((SqlCmd)cmd), commandBuilder);
+                    execute = Task.Factory.StartNew((cmd) => Execute((SqlCommandBuilder)cmd), commandBuilder);
                     n += i;
                 }
                 catch (Exception ex)

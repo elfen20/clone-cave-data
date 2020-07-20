@@ -128,7 +128,14 @@ namespace Cave.Data
         /// <param name="type">Type to parse fields from.</param>
         /// <param name="onlyPublic">if set to <c>true</c> [use only public].</param>
         /// <returns>A new <see cref="RowLayout" /> instance.</returns>
-        public static RowLayout CreateAlien(Type type, bool onlyPublic)
+        public static RowLayout CreateAlien(Type type, bool onlyPublic) => CreateAlien(type, onlyPublic, NamingStrategy.Exact);
+
+        /// <summary>Creates an alien row layout without using any field properies.</summary>
+        /// <param name="type">Type to parse fields from.</param>
+        /// <param name="onlyPublic">if set to <c>true</c> [use only public].</param>
+        /// <param name="namingStrategy">Naming strategy for fields.</param>
+        /// <returns>A new <see cref="RowLayout" /> instance.</returns>
+        public static RowLayout CreateAlien(Type type, bool onlyPublic, NamingStrategy namingStrategy)
         {
             if (type == null)
             {
@@ -154,7 +161,7 @@ namespace Cave.Data
                     }
 
                     var field = new FieldProperties();
-                    field.LoadFieldInfo(i, fieldInfo);
+                    field.LoadFieldInfo(i, fieldInfo, namingStrategy);
                     properties[i] = field;
                 }
                 catch (Exception ex)
@@ -181,6 +188,8 @@ namespace Cave.Data
         /// <returns>A new <see cref="RowLayout" /> instance.</returns>
         public static RowLayout CreateTyped(Type type, string[] excludedFields) => CreateTyped(type, null, null, excludedFields);
 
+
+
         /// <summary>Creates a RowLayout instance for the specified struct.</summary>
         /// <param name="type">The type to build the rowlayout for.</param>
         /// <param name="nameOverride">The table name override.</param>
@@ -206,11 +215,8 @@ namespace Cave.Data
                             $"Type {type} is not a struct! Only structs may be used as row definition!");
                     }
 
-                    var tableName = TableAttribute.GetName(type);
-                    if (string.IsNullOrEmpty(tableName))
-                    {
-                        tableName = type.Name;
-                    }
+                    var tableAttribute = TableAttribute.Get(type);
+                    var tableName = GetNamingStrategyName(tableAttribute.NamingStrategy, tableAttribute.Name ?? type.Name);
 
                     if (!string.IsNullOrEmpty(nameOverride))
                     {
@@ -222,8 +228,7 @@ namespace Cave.Data
                         throw new ArgumentException("Invalid characters at table name!");
                     }
 
-                    var rawInfos =
-                        type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+                    var rawInfos = type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
                     var properties = new List<IFieldProperties>(rawInfos.Length);
                     for (var i = 0; i < rawInfos.Length; i++)
                     {
@@ -244,10 +249,8 @@ namespace Cave.Data
                             }
 
                             var fieldProperties = new FieldProperties();
-                            fieldProperties.LoadFieldInfo(i, fieldInfo);
-                            properties.Add(storage == null
-                                ? fieldProperties
-                                : storage.GetDatabaseFieldProperties(fieldProperties));
+                            fieldProperties.LoadFieldInfo(i, fieldInfo, tableAttribute.NamingStrategy);
+                            properties.Add(storage == null ? fieldProperties : storage.GetDatabaseFieldProperties(fieldProperties));
                         }
                         catch (Exception ex)
                         {
@@ -264,6 +267,22 @@ namespace Cave.Data
                 }
 
                 return result;
+            }
+        }
+
+        public static string GetNamingStrategyName(NamingStrategy namingStrategy, string name)
+        {
+            if (name == null)
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+
+            switch (namingStrategy)
+            {
+                case NamingStrategy.Exact: return name;
+                //case NamingStrategy.CamelCase: return name.GetCamelCaseName();
+                //case NamingStrategy.SnakeCase: return name.GetSnakeCaseName();
+                default: throw new NotImplementedException();
             }
         }
 

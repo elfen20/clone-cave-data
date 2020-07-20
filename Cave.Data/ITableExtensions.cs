@@ -232,6 +232,7 @@ namespace Cave.Data
         public static GenerateTableCodeResult GenerateStruct(this RowLayout layout, string databaseName, string tableName = null, string className = null)
         {
             #region GetName()
+            // TODO: use NamingStrategy
             string GetName(string text)
             {
                 text = text.ReplaceInvalidChars(ASCII.Strings.Letters + ASCII.Strings.Digits, "_");

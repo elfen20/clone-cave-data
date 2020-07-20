@@ -27,13 +27,17 @@ namespace Cave.Data
         /// <summary>
         /// Gets the "real" field name (at the database).
         /// </summary>
-        public string Name { get; private set; }
+        public string Name { get; set; }
+
+        /// <summary>
+        /// Gets or sets the <see cref="NamingStrategy"/> used for this table (name and fields).
+        /// </summary>
+        public NamingStrategy NamingStrategy { get; set; }
 
         /// <summary>Gets the name set within a TableAttribute for the specified type.</summary>
         /// <param name="type">Type to search for attributes.</param>
-        /// <returns>The name of the table.</returns>
-        /// <exception cref="Exception">Type {0} does not define a TableAttribute!.</exception>
-        public static string GetName(Type type)
+        /// <returns>A <see cref="TableAttribute"/> or null.</returns>
+        internal static TableAttribute Get(Type type)
         {
             if (type == null)
             {
@@ -42,13 +46,15 @@ namespace Cave.Data
 
             foreach (Attribute attribute in type.GetCustomAttributes(false))
             {
-                var tableAttribute = attribute as TableAttribute;
-                if (tableAttribute != null)
+                if (attribute is TableAttribute result)
                 {
-                    return tableAttribute.Name;
+                    return result;
                 }
             }
-            throw new ArgumentException(string.Format("Type {0} does not define a TableAttribute!", type));
+            return new TableAttribute()
+            {
+                Name = type.Name
+            };
         }
     }
 }

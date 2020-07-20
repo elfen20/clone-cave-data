@@ -319,8 +319,9 @@ namespace Cave.Data.Mysql
         protected override IDbConnection GetDbConnectionType()
         {
             var type =
-                Type.GetType("MySql.Data.MySqlClient.MySqlConnection, MySql.Data", false) ??
-                Type.GetType("MySql.Data.MySqlClient.MySqlConnection, MySqlConnector", false) ??
+                AppDom.FindType("MySql.Data.MySqlClient.MySqlConnection", "MySql.Data", AppDom.LoadFlags.NoException) ??
+                AppDom.FindType("MySql.Data.MySqlClient.MySqlConnection", "MySqlConnector", AppDom.LoadFlags.NoException) ??
+                AppDom.FindType("MySqlConnector.MySqlConnection", "MySqlConnector", AppDom.LoadFlags.NoException) ??
                 throw new TypeLoadException("Could not load type MySql.Data.MySqlClient.MySqlConnection!");
             return (IDbConnection)Activator.CreateInstance(type);
         }

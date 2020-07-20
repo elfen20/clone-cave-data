@@ -28,6 +28,8 @@ namespace Cave.Data.SQLite
             };
             foreach (var field in fields)
             {
+                field.NameAtDatabase = field.Name;
+                field.TypeAtDatabase = field.DataType;
                 field.Validate();
             }
             var expected = RowLayout.CreateUntyped(name, fields.ToArray());

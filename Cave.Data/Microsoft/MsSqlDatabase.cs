@@ -264,7 +264,7 @@ namespace Cave.Data.Microsoft
 
                 if ((fieldProperties.Flags & FieldFlags.Index) != 0)
                 {
-                    var command = string.Format("CREATE INDEX {0} ON {1} ({2})", SqlStorage.EscapeString("idx_" + layout.Name + "_" + fieldProperties.Name), SqlStorage.FQTN(Name, layout.Name), SqlStorage.EscapeFieldName(fieldProperties));
+                    var command = $"CREATE INDEX idx_{SqlStorage.EscapeString(fieldProperties.NameAtDatabase)} ON {SqlStorage.FQTN(Name, layout.Name)} ({SqlStorage.EscapeFieldName(fieldProperties)})";
                     SqlStorage.Execute(database: Name, table: layout.Name, cmd: command);
                 }
             }
