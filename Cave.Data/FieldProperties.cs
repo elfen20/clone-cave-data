@@ -435,15 +435,8 @@ namespace Cave
         /// <returns>Returns a reference to this instance.</returns>
         public IFieldProperties Validate()
         {
-            if (TypeAtDatabase == 0)
-            {
-                throw new InvalidOperationException($"Property {nameof(TypeAtDatabase)} has to be set!");
-            }
-
-            if (NameAtDatabase == null)
-            {
-                throw new InvalidOperationException($"Property {nameof(NameAtDatabase)} has to be set!");
-            }
+            if (TypeAtDatabase == 0) { TypeAtDatabase = DataType; }
+            if (NameAtDatabase == null) { NameAtDatabase = Name; }
 
             switch (DataType)
             {
