@@ -564,7 +564,8 @@ namespace Cave
             StringEncoding = StringEncoding.Undefined;
             AlternativeNames = null;
             DefaultValue = null;
-            if ((DataType == DataType.User) && fieldInfo.FieldType.IsArray)
+
+            if (DataType == DataType.User && fieldInfo.FieldType.IsArray)
             {
                 throw new NotSupportedException(
                     "Array types (except byte[]) are not supported!\nPlease define a class with a valid ToString() member and static Parse(string) constructor instead!");
