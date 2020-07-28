@@ -9,17 +9,14 @@ namespace Cave.Data
 {
     class SqlConnectionPool
     {
-        readonly SqlStorage storage;
         readonly LinkedList<SqlConnection> queue = new LinkedList<SqlConnection>();
+        readonly SqlStorage storage;
         readonly Set<SqlConnection> used = new Set<SqlConnection>();
         TimeSpan? timeout = TimeSpan.FromMinutes(5);
 
-        /// <summary>Initializes a new instance of the <see cref="SqlConnectionPool"/> class.</summary>
+        /// <summary>Initializes a new instance of the <see cref="SqlConnectionPool" /> class.</summary>
         /// <param name="storage">The storage.</param>
-        public SqlConnectionPool(SqlStorage storage)
-        {
-            this.storage = storage;
-        }
+        public SqlConnectionPool(SqlStorage storage) => this.storage = storage;
 
         /// <summary>Gets or sets the connection close timeout.</summary>
         /// <value>The connection close timeout.</value>
@@ -38,16 +35,18 @@ namespace Cave.Data
         {
             lock (this)
             {
-                foreach (SqlConnection connection in used)
+                foreach (var connection in used)
                 {
-                    Trace.TraceInformation(string.Format("Closing connection {0} (pool clearing)", connection));
+                    Trace.TraceInformation($"Closing connection {connection} (pool clearing)");
                     connection.Close();
                 }
-                foreach (SqlConnection connection in queue)
+
+                foreach (var connection in queue)
                 {
-                    Trace.TraceInformation(string.Format("Closing connection {0} (pool clearing)", connection));
+                    Trace.TraceInformation($"Closing connection {connection} (pool clearing)");
                     connection.Close();
                 }
+
                 queue.Clear();
                 used.Clear();
             }
@@ -55,19 +54,19 @@ namespace Cave.Data
 
         /// <summary>Gets the connection.</summary>
         /// <param name="databaseName">Name of the database.</param>
-        /// <returns>A new or free <see cref="SqlConnection"/> instance.</returns>
+        /// <returns>A new or free <see cref="SqlConnection" /> instance.</returns>
         public SqlConnection GetConnection(string databaseName)
         {
             lock (this)
             {
-                SqlConnection connection = GetQueuedConnection(databaseName);
+                var connection = GetQueuedConnection(databaseName);
                 if (connection == null)
                 {
                     Trace.TraceInformation("Creating new connection for Database {0} (Idle:{1} Used:{2})", databaseName, queue.Count, used.Count);
-                    IDbConnection iDbConnection = storage.CreateNewConnection(databaseName);
+                    var iDbConnection = storage.CreateNewConnection(databaseName);
                     connection = new SqlConnection(databaseName, iDbConnection);
                     used.Add(connection);
-                    Trace.TraceInformation(string.Format("Created new connection for Database {0} (Idle:{1} Used:{2})", databaseName, queue.Count, used.Count));
+                    Trace.TraceInformation($"Created new connection for Database {databaseName} (Idle:{queue.Count} Used:{used.Count})");
                 }
                 else
                 {
@@ -76,20 +75,19 @@ namespace Cave.Data
                         connection.ChangeDatabase(databaseName);
                     }
                 }
+
                 return connection;
             }
         }
 
-        /// <summary>
-        /// Returns a connection to the connection pool for reuse.
-        /// </summary>
+        /// <summary>Returns a connection to the connection pool for reuse.</summary>
         /// <param name="connection">The connection to return to the queue.</param>
         /// <param name="close">Force close of the connection.</param>
         public void ReturnConnection(ref SqlConnection connection, bool close = false)
         {
             if (connection == null)
             {
-                throw new ArgumentNullException("Connection");
+                throw new ArgumentNullException(nameof(connection));
             }
 
             lock (this)
@@ -97,7 +95,7 @@ namespace Cave.Data
                 if (used.Contains(connection))
                 {
                     used.Remove(connection);
-                    if (!close && connection.State == ConnectionState.Open)
+                    if (!close && (connection.State == ConnectionState.Open))
                     {
                         queue.AddFirst(connection);
                         connection = null;
@@ -105,31 +103,29 @@ namespace Cave.Data
                     }
                 }
             }
-            Trace.TraceInformation(string.Format("Closing connection {0} (sql error)", connection));
+
+            Trace.TraceInformation($"Closing connection {connection} (sql error)");
             connection.Close();
             connection = null;
         }
 
         /// <summary>Closes this instance.</summary>
-        public void Close()
-        {
-            Clear();
-        }
+        public void Close() { Clear(); }
 
         SqlConnection GetQueuedConnection(string database)
         {
-            LinkedListNode<SqlConnection> nextNode = queue.First;
+            var nextNode = queue.First;
             LinkedListNode<SqlConnection> selectedNode = null;
             while (nextNode != null)
             {
                 // get current and next node
-                LinkedListNode<SqlConnection> currentNode = nextNode;
+                var currentNode = nextNode;
                 nextNode = currentNode.Next;
 
                 // remove dead and old connections
-                if (currentNode.Value.State != ConnectionState.Open || DateTime.UtcNow > currentNode.Value.LastUsed + timeout.Value)
+                if ((currentNode.Value.State != ConnectionState.Open) || (DateTime.UtcNow > (currentNode.Value.LastUsed + timeout.Value)))
                 {
-                    Trace.TraceInformation(string.Format("Closing connection {0} (livetime exceeded) (Idle:{1} Used:{2})", currentNode.Value, queue.Count, used.Count));
+                    Trace.TraceInformation($"Closing connection {currentNode.Value} (livetime exceeded) (Idle:{queue.Count} Used:{used.Count})");
                     currentNode.Value.Dispose();
                     queue.Remove(currentNode);
                     continue;
@@ -154,10 +150,11 @@ namespace Cave.Data
                     break;
                 }
             }
+
             if (selectedNode != null)
             {
                 // if we got a connection bound to a specific database but need an unbound, we have to create a new one.
-                if (database == null && selectedNode.Value.Database != null)
+                if ((database == null) && (selectedNode.Value.Database != null))
                 {
                     return null;
                 }

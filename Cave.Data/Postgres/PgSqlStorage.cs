@@ -7,74 +7,69 @@ using Cave.Data.Sql;
 namespace Cave.Data.Postgres
 {
     /// <summary>
-    /// Provides a postgre sql storage implementation.
-    /// Attention: <see cref="float"/> variables stored at the mysqldatabase loose their last precision digit (a value of 1 may differ by &lt;= 0.000001f).
+    ///     Provides a postgre sql storage implementation. Attention: <see cref="float" /> variables stored at the
+    ///     mysqldatabase loose their last precision digit (a value of 1 may differ by &lt;= 0.000001f).
     /// </summary>
     public sealed class PgSqlStorage : SqlStorage
     {
-        /// <summary>
-        /// Gets the mysql storage version.
-        /// </summary>
-        public readonly string VersionString;
-
-        /// <summary>
-        /// Gets the mysql storage version.
-        /// </summary>
+        /// <summary>Gets the mysql storage version.</summary>
         public readonly Version Version;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PgSqlStorage"/> class.
-        /// </summary>
+        /// <summary>Gets the mysql storage version.</summary>
+        public readonly string VersionString;
+
+        /// <summary>Initializes a new instance of the <see cref="PgSqlStorage" /> class.</summary>
         /// <param name="connectionString">the connection details.</param>
         /// <param name="flags">The connection flags.</param>
         public PgSqlStorage(ConnectionString connectionString, ConnectionFlags flags = default)
             : base(connectionString, flags)
         {
-            VersionString = (string)QueryValue("SELECT VERSION()");
+            VersionString = (string) QueryValue("SELECT VERSION()");
             var parts = VersionString.Split(' ');
             Version = new Version(parts[1]);
-            Trace.TraceInformation(string.Format("pgsql version {0}", Version));
+            Trace.TraceInformation($"pgsql version {Version}");
         }
 
         #region properties
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override bool SupportsNamedParameters => true;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override bool SupportsAllFieldsGroupBy => true;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override string ParameterPrefix => "@_";
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override bool SupportsNativeTransactions { get; } = true;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override float FloatPrecision => 0.00001f;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override TimeSpan DateTimePrecision => TimeSpan.FromSeconds(1);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override TimeSpan TimeSpanPrecision => TimeSpan.FromMilliseconds(1);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override string[] DatabaseNames
         {
             get
             {
                 var result = new List<string>();
                 var rows = Query(database: "SCHEMATA", cmd: "SELECT datname FROM pg_database;");
-                foreach (Row row in rows)
+                foreach (var row in rows)
                 {
-                    result.Add((string)row[0]);
+                    result.Add((string) row[0]);
                 }
+
                 return result.ToArray();
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         protected internal override bool DBConnectionCanChangeDataBase => true;
 
         #endregion
@@ -84,37 +79,42 @@ namespace Cave.Data.Postgres
         /// <summary>Gets the postgresql name of the database/table/field.</summary>
         /// <param name="name">Name of the object.</param>
         /// <returns>The name of the database object.</returns>
-        public static string GetObjectName(string name)
-        {
-            return name.ReplaceInvalidChars(ASCII.Strings.Letters + ASCII.Strings.Digits, "_");
-        }
+        public static string GetObjectName(string name) => name.ReplaceInvalidChars(ASCII.Strings.Letters + ASCII.Strings.Digits, "_");
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override IFieldProperties GetDatabaseFieldProperties(IFieldProperties field)
         {
             if (field == null)
             {
-                throw new ArgumentNullException("LocalField");
+                throw new ArgumentNullException(nameof(field));
             }
 
             var result = field.Clone();
             result.NameAtDatabase = GetObjectName(field.Name);
-
             switch (field.DataType)
             {
-                case DataType.UInt8: result.TypeAtDatabase = DataType.Int16; break;
-                case DataType.UInt16: result.TypeAtDatabase = DataType.Int32; break;
-                case DataType.UInt32: result.TypeAtDatabase = DataType.Int64; break;
-                case DataType.UInt64: result.TypeAtDatabase = DataType.Decimal; break;
+                case DataType.UInt8:
+                    result.TypeAtDatabase = DataType.Int16;
+                    break;
+                case DataType.UInt16:
+                    result.TypeAtDatabase = DataType.Int32;
+                    break;
+                case DataType.UInt32:
+                    result.TypeAtDatabase = DataType.Int64;
+                    break;
+                case DataType.UInt64:
+                    result.TypeAtDatabase = DataType.Decimal;
+                    break;
             }
+
             return result;
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override IDbConnection CreateNewConnection(string databaseName)
         {
-            IDbConnection connection = base.CreateNewConnection(databaseName);
-            using (IDbCommand command = connection.CreateCommand())
+            var connection = base.CreateNewConnection(databaseName);
+            using (var command = connection.CreateCommand())
             {
                 command.CommandText = "SET CLIENT_ENCODING TO 'UTF8'; SET NAMES 'UTF8';";
                 if (LogVerboseMessages)
@@ -126,93 +126,99 @@ namespace Cave.Data.Postgres
                 // so we ignore this: int affectedRows =
                 command.ExecuteNonQuery();
             }
+
             return connection;
         }
 
-        /// <inheritdoc/>
-        public override string EscapeFieldName(IFieldProperties field)
-        {
-            return "\"" + field.NameAtDatabase + "\"";
-        }
+        /// <inheritdoc />
+        public override string EscapeFieldName(IFieldProperties field) => "\"" + field.NameAtDatabase + "\"";
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override string FQTN(string database, string table)
         {
             if (table.IndexOf('"') > -1)
             {
                 throw new ArgumentException("Tablename is invalid!");
             }
+
             return "\"" + table + "\"";
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override bool HasDatabase(string database)
         {
-            var value = QueryValue(database: "SCHEMATA", cmd: "SELECT COUNT(*) FROM pg_database WHERE datname LIKE " + EscapeString(GetObjectName(database)) + ";");
+            var value = QueryValue(database: "SCHEMATA",
+                cmd: "SELECT COUNT(*) FROM pg_database WHERE datname LIKE " + EscapeString(GetObjectName(database)) + ";");
             return Convert.ToInt32(value) > 0;
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override IDatabase GetDatabase(string database)
         {
             if (!HasDatabase(database))
             {
-                throw new ArgumentException(string.Format("Database does not exist!"));
+                throw new ArgumentException("Database does not exist!");
             }
 
             return new PgSqlDatabase(this, database);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override IDatabase CreateDatabase(string database)
         {
             if (database.HasInvalidChars(ASCII.Strings.SafeName))
             {
                 throw new ArgumentException("Database name contains invalid chars!");
             }
-            var cmd = $"CREATE DATABASE {GetObjectName(database)} WITH OWNER = {EscapeString(ConnectionString.UserName)} ENCODING 'UTF8' CONNECTION LIMIT = -1;";
+
+            var cmd =
+                $"CREATE DATABASE {GetObjectName(database)} WITH OWNER = {EscapeString(ConnectionString.UserName)} ENCODING 'UTF8' CONNECTION LIMIT = -1;";
             Execute(cmd);
             return GetDatabase(database);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void DeleteDatabase(string database)
         {
             if (database.HasInvalidChars(ASCII.Strings.SafeName))
             {
                 throw new ArgumentException("Database name contains invalid chars!");
             }
+
             Execute($"DROP DATABASE {GetObjectName(database)};");
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override decimal GetDecimalPrecision(float count)
         {
             if (count == 0)
             {
                 count = 65.30f;
             }
+
             return base.GetDecimalPrecision(count);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         protected override IDbConnection GetDbConnectionType()
         {
-            var type = Type.GetType("Npgsql.NpgsqlConnection, Npgsql", true);
-            return (IDbConnection)Activator.CreateInstance(type);
+            var flags = AppDom.LoadFlags.NoException | AppDom.LoadFlags.LoadAssemblies;
+            var type = AppDom.FindType("Npgsql.NpgsqlConnection", "Npgsql", flags);
+            return (IDbConnection) Activator.CreateInstance(type);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         protected override string GetConnectionString(string database)
         {
             var requireSSL = !AllowUnsafeConnections;
             if (requireSSL)
             {
-                if (ConnectionString.Server == "127.0.0.1" || ConnectionString.Server == "::1" || ConnectionString.Server == "localhost")
+                if ((ConnectionString.Server == "127.0.0.1") || (ConnectionString.Server == "::1") || (ConnectionString.Server == "localhost"))
                 {
                     requireSSL = false;
                 }
             }
+
             return
                 "Host=" + ConnectionString.Server + ";" +
                 "Username=" + ConnectionString.UserName + ";" +

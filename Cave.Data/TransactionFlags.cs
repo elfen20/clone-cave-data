@@ -2,9 +2,7 @@
 
 namespace Cave.Data
 {
-    /// <summary>
-    /// Transaction flags.
-    /// </summary>
+    /// <summary>Transaction flags.</summary>
     [Flags]
     public enum TransactionFlags
     {
@@ -15,6 +13,6 @@ namespace Cave.Data
         ThrowExceptions = 1,
 
         /// <summary>The default settings</summary>
-        Default = 0xFFFF,
+        Default = 0xFFFF
     }
 }

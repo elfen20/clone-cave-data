@@ -6,16 +6,12 @@ using Cave.Data.Sql;
 
 namespace Cave.Data.SQLite
 {
-    /// <summary>
-    /// Provides a sqlite storage implementation.
-    /// </summary>
+    /// <summary>Provides a sqlite storage implementation.</summary>
     public sealed class SQLiteStorage : SqlStorage
     {
         const string StaticConnectionString = "Data Source={0}";
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SQLiteStorage"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="SQLiteStorage" /> class.</summary>
         /// <param name="connectionString">the connection details.</param>
         /// <param name="flags">The connection flags.</param>
         public SQLiteStorage(ConnectionString connectionString, ConnectionFlags flags = default)
@@ -23,7 +19,7 @@ namespace Cave.Data.SQLite
         {
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override string[] DatabaseNames
         {
             get
@@ -33,29 +29,30 @@ namespace Cave.Data.SQLite
                 {
                     result.Add(Path.GetFileNameWithoutExtension(directory));
                 }
+
                 return result.ToArray();
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override bool SupportsNamedParameters => true;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override bool SupportsAllFieldsGroupBy => true;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override string ParameterPrefix => "@";
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override TimeSpan TimeSpanPrecision => TimeSpan.FromMilliseconds(1);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         protected internal override bool DBConnectionCanChangeDataBase => false;
 
         /// <summary>
-        /// Gets the database type for the specified field type.
-        /// Sqlite does not implement all different sql92 types directly instead they are reusing only 4 different types.
-        /// So we have to check only the sqlite value types and convert to the dotnet type.
+        ///     Gets the database type for the specified field type. Sqlite does not implement all different sql92 types
+        ///     directly instead they are reusing only 4 different types. So we have to check only the sqlite value types and
+        ///     convert to the dotnet type.
         /// </summary>
         /// <param name="dataType">Local DataType.</param>
         /// <returns>The database data type to use.</returns>
@@ -68,13 +65,11 @@ namespace Cave.Data.SQLite
                 case SQLiteValueType.INTEGER: return DataType.Int64;
                 case SQLiteValueType.REAL: return DataType.Double;
                 case SQLiteValueType.TEXT: return DataType.String;
-                default: throw new NotImplementedException(string.Format("FieldType {0} is not implemented!", dataType));
+                default: throw new NotImplementedException($"FieldType {dataType} is not implemented!");
             }
         }
 
-        /// <summary>
-        /// Gets the sqlite value type of the specified datatype.
-        /// </summary>
+        /// <summary>Gets the sqlite value type of the specified datatype.</summary>
         /// <param name="dataType">Data type.</param>
         /// <returns>The sqlite value type.</returns>
         public static SQLiteValueType GetValueType(DataType dataType)
@@ -83,7 +78,6 @@ namespace Cave.Data.SQLite
             {
                 case DataType.Binary:
                     return SQLiteValueType.BLOB;
-
                 case DataType.Bool:
                 case DataType.Enum:
                 case DataType.Int8:
@@ -95,82 +89,108 @@ namespace Cave.Data.SQLite
                 case DataType.UInt32:
                 case DataType.UInt64:
                     return SQLiteValueType.INTEGER;
-
                 case DataType.DateTime:
                 case DataType.Char:
                 case DataType.String:
                 case DataType.User:
                     return SQLiteValueType.TEXT;
-
                 case DataType.TimeSpan:
                 case DataType.Decimal:
                 case DataType.Double:
                 case DataType.Single:
                     return SQLiteValueType.REAL;
-
                 default:
-                    throw new NotImplementedException(string.Format("DataType {0} is not implemented!", dataType));
+                    throw new NotImplementedException($"DataType {dataType} is not implemented!");
             }
         }
 
+        /// <inheritdoc />
+        public override decimal GetDecimalPrecision(float count) => 0.000000000000001m;
+
+        /// <inheritdoc />
+        protected override IDbConnection GetDbConnectionType()
+        {
+            var flags = AppDom.LoadFlags.NoException | AppDom.LoadFlags.LoadAssemblies;
+            var type =
+                AppDom.FindType("System.Data.SQLite.SQLiteConnection", "System.Data.SQLite", flags) ??
+                AppDom.FindType("Mono.Data.SQLite.SQLiteConnection", "Mono.Data.SQLite", flags) ??
+                throw new TypeLoadException("Could neither load System.Data.SQLite.SQLiteConnection nor Mono.Data.SQLite.SQLiteConnection!");
+            return (IDbConnection) Activator.CreateInstance(type);
+        }
+
+        /// <inheritdoc />
+        protected override string GetConnectionString(string database)
+        {
+            if (string.IsNullOrEmpty(database))
+            {
+                throw new ArgumentNullException(nameof(database));
+            }
+
+            var path = GetFileName(database);
+            return string.Format(StaticConnectionString, path);
+        }
+
+        /// <summary>Gets the fileName for the specified database name.</summary>
+        /// <param name="database">Name of the database (file).</param>
+        /// <returns>Fullpath to the database file.</returns>
+        string GetFileName(string database) => Path.GetFullPath(Path.Combine(ConnectionString.Location, database + ".db"));
+
         #region IStorage functions
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override IFieldProperties GetDatabaseFieldProperties(IFieldProperties field)
         {
             if (field == null)
             {
-                throw new ArgumentNullException("LocalField");
+                throw new ArgumentNullException(nameof(field));
             }
 
-            DataType typeAtDatabase = GetDatabaseDataType(field.DataType);
+            var typeAtDatabase = GetDatabaseDataType(field.DataType);
             if (field.TypeAtDatabase != typeAtDatabase)
             {
                 var result = field.Clone();
                 result.TypeAtDatabase = typeAtDatabase;
                 return result;
             }
+
             return field;
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override string EscapeFieldName(IFieldProperties field)
         {
             if (field == null)
             {
-                throw new ArgumentNullException("FieldName");
+                throw new ArgumentNullException(nameof(field));
             }
 
             return "[" + field.NameAtDatabase + "]";
         }
 
-        /// <inheritdoc/>
-        public override string FQTN(string database, string table)
-        {
-            return table;
-        }
+        /// <inheritdoc />
+        public override string FQTN(string database, string table) => table;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override bool HasDatabase(string database) => File.Exists(GetFileName(database));
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override IDatabase GetDatabase(string database)
         {
             if (!HasDatabase(database))
             {
-                throw new InvalidOperationException(string.Format("Database '{0}' does not exist!", database));
+                throw new InvalidOperationException($"Database '{database}' does not exist!");
             }
 
             return new SQLiteDatabase(this, database);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override IDatabase CreateDatabase(string database)
         {
             var file = GetFileName(database);
             if (File.Exists(file))
             {
-                throw new InvalidOperationException(string.Format("Database '{0}' already exists!", database));
+                throw new InvalidOperationException($"Database '{database}' already exists!");
             }
 
             Directory.CreateDirectory(Path.GetDirectoryName(file));
@@ -178,55 +198,17 @@ namespace Cave.Data.SQLite
             return new SQLiteDatabase(this, database);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void DeleteDatabase(string database)
         {
             if (!HasDatabase(database))
             {
-                throw new InvalidOperationException(string.Format("Database '{0}' does not exist!", database));
+                throw new InvalidOperationException($"Database '{database}' does not exist!");
             }
 
             File.Delete(GetFileName(database));
         }
 
         #endregion
-
-        /// <inheritdoc/>
-        public override decimal GetDecimalPrecision(float count)
-        {
-            return 0.000000000000001m;
-        }
-
-        /// <inheritdoc/>
-        protected override IDbConnection GetDbConnectionType()
-        {
-            var type =
-                Type.GetType("System.Data.SQLite.SQLiteConnection, System.Data.SQLite", false) ??
-                Type.GetType("Mono.Data.SQLite.SQLiteConnection, Mono.Data.SQLite", false) ??
-                throw new TypeLoadException("Could neither load System.Data.SQLite.SQLiteConnection nor Mono.Data.SQLite.SQLiteConnection!");
-            return (IDbConnection)Activator.CreateInstance(type);
-        }
-
-        /// <inheritdoc/>
-        protected override string GetConnectionString(string database)
-        {
-            if (string.IsNullOrEmpty(database))
-            {
-                throw new ArgumentNullException("Database");
-            }
-
-            var path = GetFileName(database);
-            return string.Format(StaticConnectionString, path);
-        }
-
-        /// <summary>
-        /// Gets the fileName for the specified database name.
-        /// </summary>
-        /// <param name="database">Name of the database (file).</param>
-        /// <returns>Fullpath to the database file.</returns>
-        string GetFileName(string database)
-        {
-            return Path.GetFullPath(Path.Combine(ConnectionString.Location, database + ".db"));
-        }
     }
 }

@@ -4,17 +4,13 @@ using System.Linq;
 
 namespace Cave.Data
 {
-    /// <summary>
-    /// Provides table name caching for large databases.
-    /// </summary>
+    /// <summary>Provides table name caching for large databases.</summary>
     public class CachedDatabase : IDatabase
     {
-        IDatabase database;
+        readonly IDatabase database;
         Dictionary<string, ITable> tables = new Dictionary<string, ITable>();
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CachedDatabase"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="CachedDatabase" /> class.</summary>
         /// <param name="database">Database instance.</param>
         public CachedDatabase(IDatabase database)
         {
@@ -22,44 +18,31 @@ namespace Cave.Data
             Reload();
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public StringComparison TableNameComparison => database.TableNameComparison;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public bool IsSecure => database.IsSecure;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IStorage Storage => database.Storage;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public string Name => database.Name;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IList<string> TableNames => tables.Keys.ToArray();
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public bool IsClosed => database.IsClosed;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public ITable this[string tableName] => GetTable(tableName);
 
-        /// <summary>
-        /// Clears the cache and reloads all tablenames.
-        /// </summary>
-        public void Reload()
-        {
-            var newTables = new Dictionary<string, ITable>();
-            foreach (var table in database.TableNames)
-            {
-                newTables[table] = null;
-            }
-            tables = newTables;
-        }
-
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Close() => database.Close();
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public ITable CreateTable(RowLayout layout, TableFlags flags = TableFlags.None)
         {
             var result = database.CreateTable(layout, flags);
@@ -67,14 +50,14 @@ namespace Cave.Data
             return result;
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void DeleteTable(string tableName)
         {
             database.DeleteTable(tableName);
             tables.Remove(tableName);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public ITable GetTable(string tableName, TableFlags flags = default)
         {
             var cached = tables[tableName];
@@ -82,17 +65,31 @@ namespace Cave.Data
             {
                 tables[tableName] = cached = database.GetTable(tableName, flags);
             }
+
             if (cached.Flags != flags)
             {
-                throw new ArgumentOutOfRangeException("Table was already cached with different flags!");
+                throw new ArgumentOutOfRangeException(nameof(tableName),$"Table {cached} was already cached with flags {cached.Flags}!");
             }
+
             return cached;
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public ITable GetTable(RowLayout layout, TableFlags flags = default) => database.GetTable(layout, flags);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public bool HasTable(string tableName) => tables.Keys.Any(t => string.Equals(tableName, t, TableNameComparison));
+
+        /// <summary>Clears the cache and reloads all tablenames.</summary>
+        public void Reload()
+        {
+            var newTables = new Dictionary<string, ITable>();
+            foreach (var table in database.TableNames)
+            {
+                newTables[table] = null;
+            }
+
+            tables = newTables;
+        }
     }
 }

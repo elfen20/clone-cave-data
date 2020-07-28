@@ -3,25 +3,17 @@ using Cave.Data.Sql;
 
 namespace Cave.Data.SQLite
 {
-    /// <summary>
-    /// Provides a sqlite table implementation.
-    /// </summary>
+    /// <summary>Provides a sqlite table implementation.</summary>
     public class SQLiteTable : SqlTable
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SQLiteTable"/> class.
-        /// </summary>
-        protected SQLiteTable()
-        {
-        }
+        /// <summary>Initializes a new instance of the <see cref="SQLiteTable" /> class.</summary>
+        protected SQLiteTable() { }
 
-        /// <summary>
-        /// Connects to the specified database and tablename.
-        /// </summary>
+        /// <summary>Connects to the specified database and tablename.</summary>
         /// <param name="database">Database to connect to.</param>
         /// <param name="flags">Flags used to connect to the table.</param>
         /// <param name="tableName">The table to connect to.</param>
-        /// <returns>Returns a new <see cref="SQLiteTable"/> instance.</returns>
+        /// <returns>Returns a new <see cref="SQLiteTable" /> instance.</returns>
         public static SQLiteTable Connect(SQLiteDatabase database, TableFlags flags, string tableName)
         {
             var table = new SQLiteTable();
@@ -29,10 +21,10 @@ namespace Cave.Data.SQLite
             return table;
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override Row GetRowAt(int index) => QueryRow($"SELECT * FROM {FQTN} LIMIT {index},1");
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         protected override void CreateLastInsertedRowCommand(SqlCommandBuilder commandBuilder, Row row)
         {
             var idField = Layout.Identifier.Single();

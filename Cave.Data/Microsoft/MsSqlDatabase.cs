@@ -7,14 +7,10 @@ using Cave.IO;
 
 namespace Cave.Data.Microsoft
 {
-    /// <summary>
-    /// Provides a MsSql database implementation.
-    /// </summary>
+    /// <summary>Provides a MsSql database implementation.</summary>
     public sealed class MsSqlDatabase : SqlDatabase
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MsSqlDatabase"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="MsSqlDatabase" /> class.</summary>
         /// <param name="storage">the MsSql storage engine.</param>
         /// <param name="name">the name of the database.</param>
         public MsSqlDatabase(MsSqlStorage storage, string name)
@@ -22,17 +18,17 @@ namespace Cave.Data.Microsoft
         {
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override bool IsSecure
         {
             get
             {
                 var error = false;
-                SqlConnection connection = SqlStorage.GetConnection(Name);
+                var connection = SqlStorage.GetConnection(Name);
                 try
                 {
                     var value = SqlStorage.QueryValue("SELECT encrypt_option FROM sys.dm_exec_connections WHERE session_id = @@SPID");
-                    return bool.Parse((string)value);
+                    return bool.Parse((string) value);
                 }
                 catch (Exception ex)
                 {
@@ -46,28 +42,30 @@ namespace Cave.Data.Microsoft
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override ITable GetTable(string tableName, TableFlags flags) => MsSqlTable.Connect(this, flags, tableName);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override ITable CreateTable(RowLayout layout, TableFlags flags)
         {
             if (layout == null)
             {
-                throw new ArgumentNullException("Layout");
+                throw new ArgumentNullException(nameof(layout));
             }
 
             LogCreateTable(layout);
             if ((flags & TableFlags.InMemory) != 0)
             {
-                throw new NotSupportedException(string.Format("Table '{0}' does not support TableFlags.{1}", layout.Name, TableFlags.InMemory));
+                throw new NotSupportedException($"Table '{layout.Name}' does not support TableFlags.{TableFlags.InMemory}");
             }
+
             if (layout.Name.HasInvalidChars(ASCII.Strings.SafeName))
             {
-                throw new ArgumentException("Table name contains invalid chars!");
+                throw new ArgumentException($"Table name {layout.Name} contains invalid chars!");
             }
+
             var queryText = new StringBuilder();
-            queryText.AppendFormat("CREATE TABLE {0} (", SqlStorage.FQTN(Name, layout.Name));
+            queryText.Append($"CREATE TABLE {SqlStorage.FQTN(Name, layout.Name)} (");
             for (var i = 0; i < layout.FieldCount; i++)
             {
                 var fieldProperties = layout[i];
@@ -79,10 +77,12 @@ namespace Cave.Data.Microsoft
                 queryText.Append(fieldProperties.NameAtDatabase + " ");
                 switch (fieldProperties.DataType)
                 {
-                    case DataType.Binary: queryText.Append("VARBINARY(MAX)"); break;
-
-                    case DataType.Bool: queryText.Append("BIT"); break;
-
+                    case DataType.Binary:
+                        queryText.Append("VARBINARY(MAX)");
+                        break;
+                    case DataType.Bool:
+                        queryText.Append("BIT");
+                        break;
                     case DataType.DateTime:
                         switch (fieldProperties.DateTimeType)
                         {
@@ -103,8 +103,8 @@ namespace Cave.Data.Microsoft
                                 break;
                             default: throw new NotImplementedException();
                         }
-                        break;
 
+                        break;
                     case DataType.TimeSpan:
                         switch (fieldProperties.DateTimeType)
                         {
@@ -125,42 +125,35 @@ namespace Cave.Data.Microsoft
                                 break;
                             default: throw new NotImplementedException();
                         }
-                        break;
 
+                        break;
                     case DataType.Int8:
                         queryText.Append("SMALLINT");
                         break;
-
                     case DataType.Int16:
                         queryText.Append("SMALLINT");
                         break;
-
                     case DataType.Int32:
                         queryText.Append("INTEGER");
                         break;
-
                     case DataType.Int64:
                         queryText.Append("BIGINT");
                         break;
-
                     case DataType.Single:
                         queryText.Append("REAL");
                         break;
-
                     case DataType.Double:
                         queryText.Append("FLOAT(53)");
                         break;
-
                     case DataType.Enum:
                         queryText.Append("BIGINT");
                         break;
-
                     case DataType.User:
                     case DataType.String:
                         switch (fieldProperties.StringEncoding)
                         {
                             case StringEncoding.ASCII:
-                                if (fieldProperties.MaximumLength > 0 && fieldProperties.MaximumLength <= 255)
+                                if ((fieldProperties.MaximumLength > 0) && (fieldProperties.MaximumLength <= 255))
                                 {
                                     queryText.AppendFormat("VARCHAR({0})", fieldProperties.MaximumLength);
                                 }
@@ -168,10 +161,11 @@ namespace Cave.Data.Microsoft
                                 {
                                     queryText.Append("VARCHAR(MAX)");
                                 }
+
                                 break;
                             case StringEncoding.UTF16:
                             case StringEncoding.UTF8:
-                                if (fieldProperties.MaximumLength > 0 && fieldProperties.MaximumLength <= 255)
+                                if ((fieldProperties.MaximumLength > 0) && (fieldProperties.MaximumLength <= 255))
                                 {
                                     queryText.AppendFormat("NVARCHAR({0})", fieldProperties.MaximumLength);
                                 }
@@ -179,39 +173,45 @@ namespace Cave.Data.Microsoft
                                 {
                                     queryText.Append("NVARCHAR(MAX)");
                                 }
-                                break;
-                            default: throw new NotSupportedException(string.Format("MSSQL Server does not support {0}!", fieldProperties.StringEncoding));
-                        }
-                        break;
 
+                                break;
+                            default: throw new NotSupportedException($"MSSQL Server does not support {fieldProperties.StringEncoding}!");
+                        }
+
+                        break;
                     case DataType.Decimal:
                         if (fieldProperties.MaximumLength > 0)
                         {
-                            var l_PreDecimal = (int)fieldProperties.MaximumLength;
+                            var l_PreDecimal = (int) fieldProperties.MaximumLength;
                             var l_Temp = (fieldProperties.MaximumLength - l_PreDecimal) * 100;
-                            var l_Decimal = (int)l_Temp;
-                            if (l_Decimal >= l_PreDecimal || l_Decimal != l_Temp)
+                            var l_Decimal = (int) l_Temp;
+                            if ((l_Decimal >= l_PreDecimal) || (l_Decimal != l_Temp))
                             {
-                                throw new ArgumentOutOfRangeException(string.Format("Field {0} has an invalid MaximumLength of {1},{2}. Correct values range from s,p = 1,0 to 28,27 with 0 < s < p!", fieldProperties.Name, l_PreDecimal, l_Decimal));
+                                throw new ArgumentOutOfRangeException(
+                                    $"Field {fieldProperties.Name} has an invalid MaximumLength of {l_PreDecimal},{l_Decimal}. Correct values range from s,p = 1,0 to 28,27 with 0 < s < p!");
                             }
+
                             queryText.AppendFormat("NUMERIC({0},{1})", l_PreDecimal, l_Decimal);
                         }
                         else
                         {
                             queryText.Append("NUMERIC(28,8)");
                         }
-                        break;
 
-                    default: throw new NotImplementedException(string.Format("Unknown DataType {0}!", fieldProperties.DataType));
+                        break;
+                    default: throw new NotImplementedException($"Unknown DataType {fieldProperties.DataType}!");
                 }
+
                 if ((fieldProperties.Flags & FieldFlags.ID) != 0)
                 {
                     queryText.Append(" PRIMARY KEY");
                 }
+
                 if ((fieldProperties.Flags & FieldFlags.AutoIncrement) != 0)
                 {
                     queryText.Append(" IDENTITY");
                 }
+
                 if ((fieldProperties.Flags & FieldFlags.Unique) != 0)
                 {
                     queryText.Append(" UNIQUE");
@@ -237,21 +237,26 @@ namespace Cave.Data.Microsoft
                         case DataType.String:
                             if (fieldProperties.MaximumLength <= 0)
                             {
-                                throw new NotSupportedException(string.Format("Unique string fields without length are not supported! Please define Field.MaxLength at table {0} field {1}", layout.Name, fieldProperties.Name));
+                                throw new NotSupportedException(
+                                    $"Unique string fields without length are not supported! Please define Field.MaxLength at table {layout.Name} field {fieldProperties.Name}");
                             }
+
                             break;
-                        default: throw new NotSupportedException(string.Format("Uniqueness for table {0} field {1} is not supported!", layout.Name, fieldProperties.Name));
+                        default: throw new NotSupportedException($"Uniqueness for table {layout.Name} field {fieldProperties.Name} is not supported!");
                     }
                 }
+
                 if (fieldProperties.Description != null)
                 {
                     if (fieldProperties.Description.HasInvalidChars(ASCII.Strings.Printable))
                     {
                         throw new ArgumentException("Description of field '{0}' contains invalid chars!", fieldProperties.Name);
                     }
+
                     queryText.Append(" COMMENT '" + fieldProperties.Description.Substring(0, 60) + "'");
                 }
             }
+
             queryText.Append(")");
             SqlStorage.Execute(database: Name, table: layout.Name, cmd: queryText.ToString());
             for (var i = 0; i < layout.FieldCount; i++)
@@ -264,23 +269,26 @@ namespace Cave.Data.Microsoft
 
                 if ((fieldProperties.Flags & FieldFlags.Index) != 0)
                 {
-                    var command = string.Format("CREATE INDEX {0} ON {1} ({2})", SqlStorage.EscapeString("idx_" + layout.Name + "_" + fieldProperties.Name), SqlStorage.FQTN(Name, layout.Name), SqlStorage.EscapeFieldName(fieldProperties));
+                    var command =
+                        $"CREATE INDEX idx_{SqlStorage.EscapeString(fieldProperties.NameAtDatabase)} ON {SqlStorage.FQTN(Name, layout.Name)} ({SqlStorage.EscapeFieldName(fieldProperties)})";
                     SqlStorage.Execute(database: Name, table: layout.Name, cmd: command);
                 }
             }
-            return GetTable(layout, TableFlags.None);
+
+            return GetTable(layout);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         protected override string[] GetTableNames()
         {
             var result = new List<string>();
             var rows = SqlStorage.Query("EXEC stables @table_owner='dbo',@table_qualifier='" + Name + "';");
-            foreach (Row row in rows)
+            foreach (var row in rows)
             {
-                var tableName = (string)row[2];
+                var tableName = (string) row[2];
                 result.Add(tableName);
             }
+
             return result.ToArray();
         }
     }

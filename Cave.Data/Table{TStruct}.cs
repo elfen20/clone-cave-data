@@ -1,22 +1,17 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
 namespace Cave.Data
 {
-    /// <summary>
-    /// Provides a table of structures (rows).
-    /// </summary>
+    /// <summary>Provides a table of structures (rows).</summary>
     /// <typeparam name="TStruct">Row structure type.</typeparam>
     public class Table<TStruct> : AbstractTable<TStruct>
         where TStruct : struct
     {
         #region constructor
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Table{TStruct}"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="Table{TStruct}" /> class.</summary>
         /// <param name="table">The table instance to wrap.</param>
         public Table(ITable table)
         {
@@ -32,10 +27,12 @@ namespace Cave.Data
                     {
                         throw new InvalidDataException($"Field {field} cannot be found at table {BaseTable}");
                     }
+
                     var target = match.Clone();
                     target.FieldInfo = field.FieldInfo;
                     result.Add(target);
                 }
+
                 Layout = new RowLayout(table.Name, result.ToArray(), typeof(TStruct));
             }
             else
@@ -43,18 +40,19 @@ namespace Cave.Data
                 Layout = RowLayout.CreateTyped(typeof(TStruct));
                 RowLayout.CheckLayout(Layout, BaseTable.Layout);
             }
+
             BaseTable.UseLayout(Layout);
         }
 
         #endregion
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override RowLayout Layout { get; }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         protected override ITable BaseTable { get; }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Connect(IDatabase database, TableFlags flags, RowLayout layout) => BaseTable.Connect(database, flags, layout);
 
         /// <summary>Not supported.</summary>

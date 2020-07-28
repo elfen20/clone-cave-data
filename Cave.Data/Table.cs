@@ -8,53 +8,60 @@ using Cave.Collections.Generic;
 
 namespace Cave.Data
 {
-    /// <summary>
-    /// Provides a base class implementing the <see cref="ITable"/> interface.
-    /// </summary>
+    /// <summary>Provides a base class implementing the <see cref="ITable" /> interface.</summary>
     [DebuggerDisplay("{Name}[{RowCount} Rows]")]
     public abstract class Table : ITable
     {
         int sequenceNumber;
 
-        #region constructor
+        #region SequenceNumber
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Table"/> class.
-        /// </summary>
-        protected Table()
-        {
-        }
+        /// <summary>Increases the sequence number.</summary>
+        /// <returns>The increased sequence number.</returns>
+        public int IncreaseSequenceNumber() => Interlocked.Increment(ref sequenceNumber);
+
+        #endregion
+
+        #region ToString and eXtended Text
+
+        /// <summary>Returns a <see cref="string" /> that represents this instance.</summary>
+        /// <returns>A <see cref="string" /> that represents this instance.</returns>
+        public override string ToString() => $"Table {Database.Name}.{Name}";
+
+        #endregion
+
+        #region constructor
 
         #endregion
 
         #region ITable properties
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public TableFlags Flags { get; private set; }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public int SequenceNumber => sequenceNumber;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IStorage Storage => Database.Storage;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IDatabase Database { get; private set; }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public string Name => Layout.Name;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public RowLayout Layout { get; private set; }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract long RowCount { get; }
 
         #endregion
 
         #region ITable functions
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual void Connect(IDatabase database, TableFlags flags, RowLayout layout)
         {
             if (Database != null)
@@ -72,23 +79,23 @@ namespace Cave.Data
             Layout = layout ?? throw new ArgumentNullException(nameof(layout));
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual void UseLayout(RowLayout layout)
         {
             Storage.CheckLayout(Layout, layout);
             Layout = layout;
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract long Count(Search search = default, ResultOption resultOption = default);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract void Clear();
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract Row GetRowAt(int index);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual void SetValue(string fieldName, object value)
         {
             var field = Layout[fieldName];
@@ -97,82 +104,70 @@ namespace Cave.Data
                 throw new ArgumentException("Identifier fields may can not be updated. Use Delete and Insert!");
             }
 
-            foreach (Row row in GetRows())
+            foreach (var row in GetRows())
             {
                 row.Values[field.Index] = value;
                 Update(row);
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract bool Exist(Search search);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract bool Exist(Row row);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract Row Insert(Row row);
 
-        /// <inheritdoc/>
-        public virtual void Insert(IEnumerable<Row> rows)
-        {
-            Commit(rows.Select(r => Transaction.Insert(r)));
-        }
+        /// <inheritdoc />
+        public virtual void Insert(IEnumerable<Row> rows) { Commit(rows.Select(r => Transaction.Insert(r))); }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract void Update(Row row);
 
-        /// <inheritdoc/>
-        public virtual void Update(IEnumerable<Row> rows)
-        {
-            Commit(rows.Select(r => Transaction.Updated(r)));
-        }
+        /// <inheritdoc />
+        public virtual void Update(IEnumerable<Row> rows) { Commit(rows.Select(r => Transaction.Updated(r))); }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract void Delete(Row row);
 
-        /// <inheritdoc/>
-        public virtual void Delete(IEnumerable<Row> rows)
-        {
-            Commit(rows.Select(r => Transaction.Delete(r)));
-        }
+        /// <inheritdoc />
+        public virtual void Delete(IEnumerable<Row> rows) { Commit(rows.Select(r => Transaction.Delete(r))); }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract int TryDelete(Search search);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract void Replace(Row row);
 
-        /// <inheritdoc/>
-        public virtual void Replace(IEnumerable<Row> rows)
-        {
-            Commit(rows.Select(r => Transaction.Replace(r)));
-        }
+        /// <inheritdoc />
+        public virtual void Replace(IEnumerable<Row> rows) { Commit(rows.Select(r => Transaction.Replace(r))); }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract Row GetRow(Search search = default, ResultOption resultOption = default);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract IList<Row> GetRows();
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract IList<Row> GetRows(Search search = default, ResultOption resultOption = default);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual double Sum(string fieldName, Search search = null)
         {
             double sum = 0;
             search = search ?? Search.None;
             var fieldNumber = Layout.GetFieldIndex(fieldName, true);
-
             var field = Layout[fieldNumber];
             switch (field.DataType)
             {
                 case DataType.TimeSpan:
-                    foreach (Row row in GetRows(search))
+                    foreach (var row in GetRows(search))
                     {
-                        sum += ((TimeSpan)row[fieldNumber]).TotalSeconds;
+                        sum += ((TimeSpan) row[fieldNumber]).TotalSeconds;
                     }
+
                     break;
                 case DataType.Binary:
                 case DataType.DateTime:
@@ -181,66 +176,70 @@ namespace Cave.Data
                 case DataType.Unknown:
                     throw new NotSupportedException($"Sum() is not supported for field {field}!");
                 default:
-                    foreach (Row row in GetRows(search))
+                    foreach (var row in GetRows(search))
                     {
                         sum += Convert.ToDouble(row[fieldNumber]);
                     }
+
                     break;
             }
+
             return sum;
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual TValue? Maximum<TValue>(string fieldName, Search search = null)
             where TValue : struct, IComparable
         {
             search = search ?? Search.None;
             var fieldNumber = Layout.GetFieldIndex(fieldName, true);
-
             var field = Layout[fieldNumber];
             var rows = GetRows(search);
             if (!rows.Any())
             {
                 return null;
             }
-            TValue current = (TValue)rows.First()[fieldNumber];
-            foreach (Row row in rows)
+
+            var current = (TValue) rows.First()[fieldNumber];
+            foreach (var row in rows)
             {
-                var value = (TValue)row[fieldNumber];
+                var value = (TValue) row[fieldNumber];
                 if (value.CompareTo(current) > 0)
                 {
                     current = value;
                 }
             }
+
             return current;
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual TValue? Minimum<TValue>(string fieldName, Search search = null)
             where TValue : struct, IComparable
         {
             search = search ?? Search.None;
             var fieldNumber = Layout.GetFieldIndex(fieldName, true);
-
             var field = Layout[fieldNumber];
             var rows = GetRows(search);
             if (!rows.Any())
             {
                 return null;
             }
-            TValue current = (TValue)rows.First()[fieldNumber];
-            foreach (Row row in rows)
+
+            var current = (TValue) rows.First()[fieldNumber];
+            foreach (var row in rows)
             {
-                var value = (TValue)row[fieldNumber];
+                var value = (TValue) row[fieldNumber];
                 if (value.CompareTo(current) > 0)
                 {
                     current = value;
                 }
             }
+
             return current;
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual IList<TValue> Distinct<TValue>(string field, Search search = null)
             where TValue : struct, IComparable
         {
@@ -249,13 +248,14 @@ namespace Cave.Data
             var result = new Set<TValue>();
             foreach (var row in rows)
             {
-                var value = (TValue)Fields.ConvertValue(typeof(TValue), row[index], CultureInfo.InvariantCulture);
+                var value = (TValue) Fields.ConvertValue(typeof(TValue), row[index], CultureInfo.InvariantCulture);
                 result.Include(value);
             }
+
             return result.AsList();
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual IList<TValue> GetValues<TValue>(string field, Search search = null)
             where TValue : struct, IComparable
         {
@@ -264,18 +264,19 @@ namespace Cave.Data
             var result = new List<TValue>();
             foreach (var row in rows)
             {
-                var value = (TValue)Fields.ConvertValue(typeof(TValue), row[index], CultureInfo.InvariantCulture);
+                var value = (TValue) Fields.ConvertValue(typeof(TValue), row[index], CultureInfo.InvariantCulture);
                 result.Add(value);
             }
+
             return result.AsList();
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual int Commit(IEnumerable<Transaction> transactions, TransactionFlags flags = TransactionFlags.Default)
         {
             if (transactions == null)
             {
-                throw new ArgumentNullException("TransactionLog");
+                throw new ArgumentNullException(nameof(transactions));
             }
 
             var i = 0;
@@ -285,12 +286,21 @@ namespace Cave.Data
                 {
                     switch (transaction.Type)
                     {
-                        case TransactionType.Inserted: Insert(transaction.Row); break;
-                        case TransactionType.Replaced: Replace(transaction.Row); break;
-                        case TransactionType.Updated: Update(transaction.Row); break;
-                        case TransactionType.Deleted: Delete(transaction.Row); break;
+                        case TransactionType.Inserted:
+                            Insert(transaction.Row);
+                            break;
+                        case TransactionType.Replaced:
+                            Replace(transaction.Row);
+                            break;
+                        case TransactionType.Updated:
+                            Update(transaction.Row);
+                            break;
+                        case TransactionType.Deleted:
+                            Delete(transaction.Row);
+                            break;
                         default: throw new NotImplementedException();
                     }
+
                     i++;
                 }
                 catch (Exception ex)
@@ -300,30 +310,14 @@ namespace Cave.Data
                     {
                         throw;
                     }
+
                     break;
                 }
             }
+
             return i;
         }
 
-        #endregion
-
-        #region SequenceNumber
-
-        /// <summary>Increases the sequence number.</summary>
-        /// <returns>The increased sequence number.</returns>
-        public int IncreaseSequenceNumber() => Interlocked.Increment(ref sequenceNumber);
-
-        #endregion
-
-        #region ToString and eXtended Text
-
-        /// <summary>Returns a <see cref="string" /> that represents this instance.</summary>
-        /// <returns>A <see cref="string" /> that represents this instance.</returns>
-        public override string ToString()
-        {
-            return $"Table {Database.Name}.{Name}";
-        }
         #endregion
     }
 }

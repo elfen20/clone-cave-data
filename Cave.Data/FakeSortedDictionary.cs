@@ -7,20 +7,14 @@ namespace Cave.Data
 {
     class FakeSortedDictionary<TKey, TValue> : IEnumerable<KeyValuePair<TKey, TValue>>
     {
-        IDictionary<TKey, TValue> unsorted;
+        readonly IDictionary<TKey, TValue> unsorted;
         TKey[] sortedKeys;
 
         #region constructor
 
-        public FakeSortedDictionary()
-        {
-            unsorted = new Dictionary<TKey, TValue>();
-        }
+        public FakeSortedDictionary() => unsorted = new Dictionary<TKey, TValue>();
 
-        public FakeSortedDictionary(int capacity)
-        {
-            unsorted = new Dictionary<TKey, TValue>(capacity);
-        }
+        public FakeSortedDictionary(int capacity) => unsorted = new Dictionary<TKey, TValue>(capacity);
 
         #endregion
 
@@ -38,17 +32,12 @@ namespace Cave.Data
                     unsorted.Keys.CopyTo(sortedKeys, 0);
                     Array.Sort(sortedKeys);
                 }
+
                 return sortedKeys;
             }
         }
 
-        public IList<TValue> Values
-        {
-            get
-            {
-                return SortedKeys.Select(k => unsorted[k]).ToList();
-            }
-        }
+        public IList<TValue> Values { get { return SortedKeys.Select(k => unsorted[k]).ToList(); } }
 
         public int Count => unsorted.Count;
 
@@ -86,20 +75,11 @@ namespace Cave.Data
             sortedKeys = null;
         }
 
-        public bool Contains(KeyValuePair<TKey, TValue> item)
-        {
-            return unsorted.Contains(item);
-        }
+        public bool Contains(KeyValuePair<TKey, TValue> item) => unsorted.Contains(item);
 
-        public bool ContainsKey(TKey key)
-        {
-            return unsorted.ContainsKey(key);
-        }
+        public bool ContainsKey(TKey key) => unsorted.ContainsKey(key);
 
-        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
-        {
-            unsorted.CopyTo(array, arrayIndex);
-        }
+        public void CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex) { unsorted.CopyTo(array, arrayIndex); }
 
         public bool Remove(TKey key)
         {
@@ -113,10 +93,7 @@ namespace Cave.Data
             return unsorted.Remove(item);
         }
 
-        public bool TryGetValue(TKey key, out TValue value)
-        {
-            return unsorted.TryGetValue(key, out value);
-        }
+        public bool TryGetValue(TKey key, out TValue value) => unsorted.TryGetValue(key, out value);
 
         public IList<KeyValuePair<TKey, TValue>> ToArray()
         {
@@ -127,6 +104,7 @@ namespace Cave.Data
             {
                 result[i++] = new KeyValuePair<TKey, TValue>(key, unsorted[key]);
             }
+
             return result;
         }
 

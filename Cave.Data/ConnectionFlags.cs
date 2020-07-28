@@ -2,9 +2,7 @@
 
 namespace Cave.Data
 {
-    /// <summary>
-    /// Database connection flags.
-    /// </summary>
+    /// <summary>Database connection flags.</summary>
     [Flags]
     public enum ConnectionFlags
     {
@@ -19,6 +17,6 @@ namespace Cave.Data
         AllowCreate = 2,
 
         /// <summary>Enable verbose logging</summary>
-        VerboseLogging = 4,
+        VerboseLogging = 4
     }
 }

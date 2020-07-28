@@ -5,9 +5,7 @@ using System.Linq;
 
 namespace Cave.Data
 {
-    /// <summary>
-    /// Provides a table field index implementation.
-    /// </summary>
+    /// <summary>Provides a table field index implementation.</summary>
     public sealed class FieldIndex : IFieldIndex
     {
 #if USE_BOXING
@@ -16,17 +14,15 @@ namespace Cave.Data
         /// </summary>
         SortedDictionary<BoxedValue, Set<string>> index;
 #else
-        /// <summary>
-        /// resolves value to IDs.
-        /// </summary>
-        FakeSortedDictionary<object, List<object[]>> index;
+        /// <summary>resolves value to IDs.</summary>
+        readonly FakeSortedDictionary<object, List<object[]>> index;
 
 #pragma warning disable SA1214 // Readonly fields should appear before non-readonly fields
         readonly object nullValue = new BoxedValue(null);
 #pragma warning restore SA1214 // Readonly fields should appear before non-readonly fields
 #endif
 
-        /// <summary>Initializes a new instance of the <see cref="FieldIndex"/> class.</summary>
+        /// <summary>Initializes a new instance of the <see cref="FieldIndex" /> class.</summary>
         public FieldIndex()
         {
 #if USE_BOXING
@@ -53,18 +49,14 @@ namespace Cave.Data
             return index.ContainsKey(obj) ? index[obj].ToArray() : new object[][] { };
         }
 
-        /// <summary>
-        /// Clears the index.
-        /// </summary>
+        /// <summary>Clears the index.</summary>
         internal void Clear()
         {
             index.Clear();
             Count = 0;
         }
 
-        /// <summary>
-        /// Adds an ID, object combination to the index.
-        /// </summary>
+        /// <summary>Adds an ID, object combination to the index.</summary>
         internal void Add(object[] row, int fieldNumber)
         {
             var value = row.GetValue(fieldNumber);
@@ -79,8 +71,9 @@ namespace Cave.Data
             }
             else
             {
-                index[obj] = new List<object[]> { row, };
+                index[obj] = new List<object[]> { row };
             }
+
             Count++;
         }
 
@@ -88,11 +81,9 @@ namespace Cave.Data
         /// <param name="oldRow">Row to remove.</param>
         /// <param name="newRow">Row to add.</param>
         /// <param name="fieldNumber">Fieldnumber.</param>
-        /// <exception cref="ArgumentException">Value {value} is not present at index (equals check {index})!
-        /// or
-        /// Row {row} is not present at index! (Present: {value} => {rows})!
-        /// or
-        /// Could not remove row {row} value {value}!.
+        /// <exception cref="ArgumentException">
+        ///     Value {value} is not present at index (equals check {index})! or Row {row} is not
+        ///     present at index! (Present: {value} => {rows})! or Could not remove row {row} value {value}!.
         /// </exception>
         internal void Replace(object[] oldRow, object[] newRow, int fieldNumber)
         {
@@ -108,11 +99,9 @@ namespace Cave.Data
         /// <summary>Removes a row from the index.</summary>
         /// <param name="row">The row.</param>
         /// <param name="fieldNumber">The fieldnumber.</param>
-        /// <exception cref="ArgumentException">Value {value} is not present at index (equals check {index})!
-        /// or
-        /// Row {row} is not present at index! (Present: {value} => {rows})!
-        /// or
-        /// Could not remove row {row} value {value}!.
+        /// <exception cref="ArgumentException">
+        ///     Value {value} is not present at index (equals check {index})! or Row {row} is not
+        ///     present at index! (Present: {value} => {rows})! or Could not remove row {row} value {value}!.
         /// </exception>
         internal void Delete(object[] row, int fieldNumber)
         {
@@ -124,12 +113,12 @@ namespace Cave.Data
 #endif
 
             // remove ID from old hash
-            if (!index.TryGetValue(obj, out List<object[]> rows))
+            if (!index.TryGetValue(obj, out var rows))
             {
                 throw new ArgumentException($"Value {value} is not present at index (equals check {index.Join(",")})!");
             }
 
-            int i = GetRowIndex(rows, row);
+            var i = GetRowIndex(rows, row);
             if (i < 0)
             {
                 throw new KeyNotFoundException($"Row {row} is not present at index! (Present: {value} => {rows.Join(",")})!");
@@ -146,59 +135,40 @@ namespace Cave.Data
                     throw new ArgumentException($"Could not remove row {row} value {value}!");
                 }
             }
+
             Count--;
         }
 
         int GetRowIndex(IList<object[]> rows, object[] row)
         {
-            for (int i = 0; i < rows.Count; i++)
+            for (var i = 0; i < rows.Count; i++)
             {
                 if (rows[i].SequenceEqual(row))
                 {
                     return i;
                 }
             }
+
             return -1;
         }
 
         class BoxedValue : IComparable<BoxedValue>, IEquatable<BoxedValue>, IComparable
         {
-            object val;
+            readonly object val;
 
-            public BoxedValue(object value)
-            {
-                val = value;
-            }
+            public BoxedValue(object value) => val = value;
 
-            public override int GetHashCode()
-            {
-                return val == null ? 0 : val.GetHashCode();
-            }
+            public int CompareTo(object obj) => obj is BoxedValue ? CompareTo((BoxedValue) obj) : Comparer.Default.Compare(val, obj);
 
-            public override bool Equals(object obj)
-            {
-                return obj is BoxedValue ? Equals((BoxedValue)obj) : Equals(obj, val);
-            }
+            public int CompareTo(BoxedValue other) => Comparer.Default.Compare(val, other.val);
 
-            public int CompareTo(BoxedValue other)
-            {
-                return Comparer.Default.Compare(val, other.val);
-            }
+            public bool Equals(BoxedValue other) => Equals(other.val, val);
 
-            public bool Equals(BoxedValue other)
-            {
-                return Equals(other.val, val);
-            }
+            public override int GetHashCode() => val == null ? 0 : val.GetHashCode();
 
-            public override string ToString()
-            {
-                return val == null ? "<null>" : val.ToString();
-            }
+            public override bool Equals(object obj) => obj is BoxedValue ? Equals((BoxedValue) obj) : Equals(obj, val);
 
-            public int CompareTo(object obj)
-            {
-                return obj is BoxedValue ? CompareTo((BoxedValue)obj) : Comparer.Default.Compare(val, obj);
-            }
+            public override string ToString() => val == null ? "<null>" : val.ToString();
         }
     }
 }

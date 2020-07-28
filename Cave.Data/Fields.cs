@@ -7,21 +7,17 @@ using System.Reflection;
 
 namespace Cave.Data
 {
-    /// <summary>
-    /// Provides static functions for struct field reflections.
-    /// </summary>
+    /// <summary>Provides static functions for struct field reflections.</summary>
     public static class Fields
     {
-        /// <summary>
-        /// Checks whether a field has the <see cref="FieldAttribute"/> and returns the name of the field.
-        /// </summary>
+        /// <summary>Checks whether a field has the <see cref="FieldAttribute" /> and returns the name of the field.</summary>
         /// <param name="member">The field / property info.</param>
         /// <returns>The name specified with the field attribute or null.</returns>
         public static string GetName(MemberInfo member)
         {
             if (member == null)
             {
-                throw new ArgumentNullException("fieldInfo");
+                throw new ArgumentNullException(nameof(member));
             }
 
             foreach (var attribute in member.GetCustomAttributes(true))
@@ -31,19 +27,18 @@ namespace Cave.Data
                     return !string.IsNullOrEmpty(fieldAttribute.Name) ? fieldAttribute.Name : member.Name;
                 }
             }
+
             return null;
         }
 
-        /// <summary>
-        /// Checks whether a field has the <see cref="FieldAttribute"/> and returns the length of the field.
-        /// </summary>
+        /// <summary>Checks whether a field has the <see cref="FieldAttribute" /> and returns the length of the field.</summary>
         /// <param name="member">The field / property info.</param>
         /// <returns>The length specified with the field attribute or 0.</returns>
         public static uint GetLength(MemberInfo member)
         {
             if (member == null)
             {
-                throw new ArgumentNullException("fieldInfo");
+                throw new ArgumentNullException(nameof(member));
             }
 
             foreach (var attribute in member.GetCustomAttributes(true))
@@ -53,19 +48,18 @@ namespace Cave.Data
                     return fieldAttribute.Length;
                 }
             }
+
             return 0;
         }
 
-        /// <summary>
-        /// Checks whether a field has the <see cref="FieldAttribute"/> and returns the flags of the field.
-        /// </summary>
+        /// <summary>Checks whether a field has the <see cref="FieldAttribute" /> and returns the flags of the field.</summary>
         /// <param name="member">The field / property info.</param>
-        /// <returns>The flags specified with the field attribute or <see cref="FieldFlags.None"/>.</returns>
+        /// <returns>The flags specified with the field attribute or <see cref="FieldFlags.None" />.</returns>
         public static FieldFlags GetFlags(MemberInfo member)
         {
             if (member == null)
             {
-                throw new ArgumentNullException("fieldInfo");
+                throw new ArgumentNullException(nameof(member));
             }
 
             foreach (var attribute in member.GetCustomAttributes(true))
@@ -75,20 +69,18 @@ namespace Cave.Data
                     return fieldAttribute.Flags;
                 }
             }
+
             return FieldFlags.None;
         }
 
-        /// <summary>
-        /// Gets the description of a field.
-        /// If the attribute is not present null is returned.
-        /// </summary>
+        /// <summary>Gets the description of a field. If the attribute is not present null is returned.</summary>
         /// <param name="member">The field / property info.</param>
         /// <returns>The description specified with the field attribute or null.</returns>
         public static string GetDescription(MemberInfo member)
         {
             if (member == null)
             {
-                throw new ArgumentNullException("fieldInfo");
+                throw new ArgumentNullException(nameof(member));
             }
 
             foreach (var attribute in member.GetCustomAttributes(false))
@@ -98,6 +90,7 @@ namespace Cave.Data
                     return descriptionAttribute.Description;
                 }
             }
+
             return null;
         }
 
@@ -110,10 +103,10 @@ namespace Cave.Data
         {
             if (value == null)
             {
-                throw new ArgumentNullException("value");
+                throw new ArgumentNullException(nameof(value));
             }
 
-            Type type = value.GetType();
+            var type = value.GetType();
             if (type.IsEnum)
             {
                 if (!Enum.IsDefined(type, value))
@@ -124,6 +117,7 @@ namespace Cave.Data
                 var name = Enum.GetName(value.GetType(), value);
                 return GetDescription(type.GetField(name));
             }
+
             foreach (var attribute in type.GetCustomAttributes(false))
             {
                 if (attribute is DescriptionAttribute descriptionAttribute)
@@ -131,12 +125,11 @@ namespace Cave.Data
                     return descriptionAttribute.Description;
                 }
             }
+
             return null;
         }
 
-        /// <summary>
-        /// Converts a (primitive) value to the desired type.
-        /// </summary>
+        /// <summary>Converts a (primitive) value to the desired type.</summary>
         /// <param name="toType">Type to convert to.</param>
         /// <param name="value">Value to convert.</param>
         /// <param name="cultureInfo">The culture to use during formatting.</param>
@@ -149,22 +142,18 @@ namespace Cave.Data
             }
             catch (Exception ex)
             {
-                throw new NotSupportedException(string.Format("The value '{0}' cannot be converted to target type '{1}'!", value, toType), ex);
+                throw new NotSupportedException($"The value '{value}' cannot be converted to target type '{toType}'!", ex);
             }
         }
 
-        /// <summary>
-        /// Converts a value to the desired field value.
-        /// </summary>
+        /// <summary>Converts a value to the desired field value.</summary>
         /// <typeparam name="T">The field type.</typeparam>
         /// <param name="value">The value.</param>
         /// <param name="provider">The format provider to use during formatting.</param>
         /// <returns>An object converted to the specified type.</returns>
-        public static T ConvertValue<T>(object value, IFormatProvider provider = null) => (T)ConvertValue(typeof(T), value, provider);
+        public static T ConvertValue<T>(object value, IFormatProvider provider = null) => (T) ConvertValue(typeof(T), value, provider);
 
-        /// <summary>
-        /// Converts a value to the desired field value.
-        /// </summary>
+        /// <summary>Converts a value to the desired field value.</summary>
         /// <param name="fieldType">The field type.</param>
         /// <param name="value">The value.</param>
         /// <param name="provider">The format provider to use during formatting.</param>
@@ -201,10 +190,8 @@ namespace Cave.Data
                 {
                     return Activator.CreateInstance(fieldType);
                 }
-                else
-                {
-                    return null;
-                }
+
+                return null;
             }
 
             if (fieldType == typeof(bool))
@@ -224,6 +211,7 @@ namespace Cave.Data
                         return false;
                 }
             }
+
             if (fieldType.IsPrimitive)
             {
                 return ConvertPrimitive(fieldType, value, provider);
@@ -244,17 +232,18 @@ namespace Cave.Data
             {
                 if (value is string)
                 {
-                    str = (string)value;
+                    str = (string) value;
                 }
                 else
                 {
                     // try to find public ToString(IFormatProvider) method in class
-                    MethodInfo method = value.GetType().GetMethod("ToString", BindingFlags.Public | BindingFlags.Instance, null, new Type[] { typeof(IFormatProvider) }, null);
+                    var method = value.GetType().GetMethod("ToString", BindingFlags.Public | BindingFlags.Instance, null, new[] { typeof(IFormatProvider) },
+                        null);
                     if (method != null)
                     {
                         try
                         {
-                            str = (string)method.Invoke(value, new object[] { provider });
+                            str = (string) method.Invoke(value, new object[] { provider });
                         }
                         catch (TargetInvocationException ex)
                         {
@@ -279,11 +268,12 @@ namespace Cave.Data
                     return new DateTime(ticks, DateTimeKind.Unspecified);
                 }
 
-                if (DateTimeParser.TryParseDateTime(str, out DateTime dt))
+                if (DateTimeParser.TryParseDateTime(str, out var dt))
                 {
                     return dt;
                 }
             }
+
             if (fieldType == typeof(TimeSpan))
             {
                 try
@@ -292,17 +282,19 @@ namespace Cave.Data
                     {
                         return TimeSpan.Parse(str);
                     }
+
                     if (str.EndsWith("ms"))
                     {
-                        return new TimeSpan((long)Math.Round(double.Parse(str.SubstringEnd(1)) * TimeSpan.TicksPerMillisecond));
+                        return new TimeSpan((long) Math.Round(double.Parse(str.SubstringEnd(1)) * TimeSpan.TicksPerMillisecond));
                     }
+
                     return str.EndsWith("s")
-                        ? new TimeSpan((long)Math.Round(double.Parse(str.SubstringEnd(1)) * TimeSpan.TicksPerSecond))
-                        : (object)new TimeSpan(long.Parse(str));
+                        ? new TimeSpan((long) Math.Round(double.Parse(str.SubstringEnd(1)) * TimeSpan.TicksPerSecond))
+                        : (object) new TimeSpan(long.Parse(str));
                 }
                 catch (Exception ex)
                 {
-                    throw new InvalidDataException(string.Format("Value '{0}' is not a valid TimeSpan!", str), ex);
+                    throw new InvalidDataException($"Value '{str}' is not a valid TimeSpan!", ex);
                 }
             }
 
@@ -310,7 +302,8 @@ namespace Cave.Data
             {
                 // try to find public static Parse(string, IFormatProvider) method in class
                 var errors = new List<Exception>();
-                MethodInfo method = fieldType.GetMethod("Parse", BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string), typeof(IFormatProvider) }, null);
+                var method = fieldType.GetMethod("Parse", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(string), typeof(IFormatProvider) },
+                    null);
                 if (method != null)
                 {
                     try
@@ -322,7 +315,8 @@ namespace Cave.Data
                         errors.Add(ex.InnerException);
                     }
                 }
-                method = fieldType.GetMethod("Parse", BindingFlags.Public | BindingFlags.Static, null, new Type[] { typeof(string) }, null);
+
+                method = fieldType.GetMethod("Parse", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(string) }, null);
                 if (method != null)
                 {
                     try
@@ -334,18 +328,17 @@ namespace Cave.Data
                         errors.Add(ex.InnerException);
                     }
                 }
+
                 if (errors.Count > 0)
                 {
                     throw new AggregateException(errors.ToArray());
                 }
 
-                throw new MissingMethodException(string.Format("Type {0} has no public static Parse(string, IFormatProvider) or Parse(string) method!", fieldType));
+                throw new MissingMethodException($"Type {fieldType} has no public static Parse(string, IFormatProvider) or Parse(string) method!");
             }
         }
 
-        /// <summary>
-        /// Sets all fieldvalues of a struct/class object.
-        /// </summary>
+        /// <summary>Sets all fieldvalues of a struct/class object.</summary>
         /// <param name="obj">structure object.</param>
         /// <param name="fields">fields to be set.</param>
         /// <param name="values">values to set.</param>
@@ -354,35 +347,33 @@ namespace Cave.Data
         {
             if (obj == null)
             {
-                throw new ArgumentNullException("obj");
+                throw new ArgumentNullException(nameof(obj));
             }
 
             if (fields == null)
             {
-                throw new ArgumentNullException("fields");
+                throw new ArgumentNullException(nameof(fields));
             }
 
             if (values == null)
             {
-                throw new ArgumentNullException("values");
+                throw new ArgumentNullException(nameof(values));
             }
 
             if (cultureInfo == null)
             {
-                throw new ArgumentNullException("cultureInfo");
+                throw new ArgumentNullException(nameof(cultureInfo));
             }
 
             for (var i = 0; i < values.Count; i++)
             {
-                FieldInfo fieldInfo = fields[i];
+                var fieldInfo = fields[i];
                 var value = ConvertValue(fieldInfo.FieldType, values[i], cultureInfo);
                 fields[i].SetValue(obj, value);
             }
         }
 
-        /// <summary>
-        /// Gets an array containing all values of the specified fields.
-        /// </summary>
+        /// <summary>Gets an array containing all values of the specified fields.</summary>
         /// <param name="fields">The fields to read.</param>
         /// <param name="structure">The structure to read fields from.</param>
         /// <returns>An array containing all values.</returns>
@@ -398,12 +389,11 @@ namespace Cave.Data
             {
                 result[i] = fields[i].GetValue(structure);
             }
+
             return result;
         }
 
-        /// <summary>
-        /// Gets an array containing all values of the specified fields.
-        /// </summary>
+        /// <summary>Gets an array containing all values of the specified fields.</summary>
         /// <param name="properties">The properties to read.</param>
         /// <param name="obj">The object to read properties from.</param>
         /// <returns>An array containing all values.</returns>
@@ -423,15 +413,12 @@ namespace Cave.Data
                 result[i] = properties[i].GetValue(obj);
 #endif
             }
+
             return result;
         }
 
-        /// <summary>
-        /// Gets a string for the specified field value.
-        /// </summary>
-        /// <remarks>
-        /// The result of this function can be used by <see cref="ConvertValue(Type, object, IFormatProvider)"/>.
-        /// </remarks>
+        /// <summary>Gets a string for the specified field value.</summary>
+        /// <remarks>The result of this function can be used by <see cref="ConvertValue(Type, object, IFormatProvider)" />.</remarks>
         /// <param name="value">The value.</param>
         /// <param name="datatype">The datatype.</param>
         /// <param name="dateTimeKind">The date time kind (optional).</param>
@@ -439,60 +426,67 @@ namespace Cave.Data
         /// <param name="stringMarker">The string marker.</param>
         /// <param name="provider">The format provider.</param>
         /// <returns>Returns a string describing the value.</returns>
-        public static string GetString(object value, DataType datatype, DateTimeKind dateTimeKind = default, DateTimeType dateTimeType = default, string stringMarker = null, IFormatProvider provider = null)
+        public static string GetString(object value, DataType datatype, DateTimeKind dateTimeKind = default, DateTimeType dateTimeType = default,
+            string stringMarker = null, IFormatProvider provider = null)
         {
             if (provider == null)
             {
                 provider = CultureInfo.InvariantCulture;
             }
+
             if (stringMarker == null)
             {
                 stringMarker = string.Empty;
             }
+
             if (value == null)
             {
                 return "null";
             }
+
             switch (datatype)
             {
                 case DataType.DateTime:
                 {
-                    var dt = (DateTime)value;
+                    var dt = (DateTime) value;
                     switch (dateTimeKind)
                     {
-                        case DateTimeKind.Utc: dt = dt.ToUniversalTime(); break;
-                        case DateTimeKind.Local: dt = dt.ToLocalTime(); break;
+                        case DateTimeKind.Utc:
+                            dt = dt.ToUniversalTime();
+                            break;
+                        case DateTimeKind.Local:
+                            dt = dt.ToLocalTime();
+                            break;
                     }
+
                     switch (dateTimeType)
                     {
                         default: throw new NotSupportedException($"DateTimeType {dateTimeType} is not supported");
                         case DateTimeType.BigIntHumanReadable: return dt.ToString(Storage.BigIntDateTimeFormat, provider).TrimStart('0');
                         case DateTimeType.Native: return dt.ToString(StringExtensions.InterOpDateTimeFormat, provider).Box(stringMarker);
                         case DateTimeType.BigIntTicks: return dt.Ticks.ToString(provider);
-                        case DateTimeType.DecimalSeconds: return (dt.Ticks / (decimal)TimeSpan.TicksPerSecond).ToString(provider);
-                        case DateTimeType.DoubleSeconds: return (dt.Ticks / (double)TimeSpan.TicksPerSecond).ToString(provider);
-                        case DateTimeType.DoubleEpoch: return ((dt.Ticks - Storage.EpochTicks) / (double)TimeSpan.TicksPerSecond).ToString(provider);
+                        case DateTimeType.DecimalSeconds: return (dt.Ticks / (decimal) TimeSpan.TicksPerSecond).ToString(provider);
+                        case DateTimeType.DoubleSeconds: return (dt.Ticks / (double) TimeSpan.TicksPerSecond).ToString(provider);
+                        case DateTimeType.DoubleEpoch: return ((dt.Ticks - Storage.EpochTicks) / (double) TimeSpan.TicksPerSecond).ToString(provider);
                     }
                 }
                 case DataType.Binary:
                 {
-                    var data = (byte[])value;
+                    var data = (byte[]) value;
                     return (data.Length == 0 ? string.Empty : Base64.NoPadding.Encode(data)).Box(stringMarker);
                 }
                 case DataType.Bool:
                 {
-                    return (bool)value ? "true" : "false";
+                    return (bool) value ? "true" : "false";
                 }
                 case DataType.TimeSpan:
                 {
-                    var ts = (TimeSpan)value;
+                    var ts = (TimeSpan) value;
                     switch (dateTimeType)
                     {
                         default: throw new NotSupportedException($"DateTimeType {dateTimeType} is not supported.");
-
                         case DateTimeType.BigIntHumanReadable:
                             return new DateTime(ts.Ticks).ToString(Storage.BigIntDateTimeFormat, provider);
-
                         case DateTimeType.Undefined:
                         case DateTimeType.Native:
                         {
@@ -501,21 +495,20 @@ namespace Cave.Data
                             {
                                 text = text.Box(stringMarker);
                             }
+
                             return text;
                         }
                         case DateTimeType.BigIntTicks:
                             return ts.Ticks.ToString(provider);
-
                         case DateTimeType.DecimalSeconds:
-                            return $"{(ts.Ticks / (decimal)TimeSpan.TicksPerSecond).ToString(provider)}";
-
+                            return $"{(ts.Ticks / (decimal) TimeSpan.TicksPerSecond).ToString(provider)}";
                         case DateTimeType.DoubleSeconds:
                             return ts.TotalSeconds.ToString("R", provider);
                     }
                 }
                 case DataType.Single:
                 {
-                    var f = (float)value;
+                    var f = (float) value;
                     if (float.IsNaN(f) || float.IsInfinity(f))
                     {
                         throw new InvalidDataException($"Cannot serialize float with value {f}!");
@@ -525,7 +518,7 @@ namespace Cave.Data
                 }
                 case DataType.Double:
                 {
-                    var d = (double)value;
+                    var d = (double) value;
                     if (double.IsNaN(d) || double.IsInfinity(d))
                     {
                         throw new InvalidDataException($"Cannot serialize double with value {d}!");
@@ -533,26 +526,23 @@ namespace Cave.Data
 
                     return d.ToString(provider);
                 }
-                case DataType.Decimal: return ((decimal)value).ToString(provider);
-                case DataType.Int8: return ((sbyte)value).ToString(provider);
-                case DataType.Int16: return ((short)value).ToString(provider);
-                case DataType.Int32: return ((int)value).ToString(provider);
-                case DataType.Int64: return ((long)value).ToString(provider);
-
-                case DataType.UInt8: return ((byte)value).ToString(provider);
-                case DataType.UInt16: return ((ushort)value).ToString(provider);
-                case DataType.UInt32: return ((uint)value).ToString(provider);
-                case DataType.UInt64: return ((ulong)value).ToString(provider);
-
+                case DataType.Decimal: return ((decimal) value).ToString(provider);
+                case DataType.Int8: return ((sbyte) value).ToString(provider);
+                case DataType.Int16: return ((short) value).ToString(provider);
+                case DataType.Int32: return ((int) value).ToString(provider);
+                case DataType.Int64: return ((long) value).ToString(provider);
+                case DataType.UInt8: return ((byte) value).ToString(provider);
+                case DataType.UInt16: return ((ushort) value).ToString(provider);
+                case DataType.UInt32: return ((uint) value).ToString(provider);
+                case DataType.UInt64: return ((ulong) value).ToString(provider);
                 case DataType.Enum: return value.ToString().Box(stringMarker);
                 case DataType.Char: return value.ToString().Box(stringMarker);
-
                 case DataType.String:
                 case DataType.User:
                 default: break;
             }
 
-            var s = value is IConvertible ? ((IConvertible)value).ToString(provider) : value.ToString();
+            var s = value is IConvertible ? ((IConvertible) value).ToString(provider) : value.ToString();
             return s.EscapeUtf8().Box(stringMarker);
         }
     }

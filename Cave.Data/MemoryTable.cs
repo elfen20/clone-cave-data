@@ -8,12 +8,17 @@ using Cave.Collections.Generic;
 
 namespace Cave.Data
 {
-    /// <summary>
-    /// Provides a table stored completely in memory.
-    /// </summary>
+    /// <summary>Provides a table stored completely in memory.</summary>
     [DebuggerDisplay("{Name}")]
     public class MemoryTable : Table
     {
+        #region constructors
+
+        /// <summary>Initializes a new instance of the <see cref="MemoryTable" /> class.</summary>
+        protected MemoryTable() { }
+
+        #endregion
+
         #region fields
 
         /// <summary>Gets a value indicating whether this instance is readonly.</summary>
@@ -30,17 +35,6 @@ namespace Cave.Data
 
         #endregion
 
-        #region constructors
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MemoryTable"/> class.
-        /// </summary>
-        protected MemoryTable()
-        {
-        }
-
-        #endregion
-
         #region properties
 
         #region IsReadonly
@@ -49,8 +43,9 @@ namespace Cave.Data
         /// <value><c>true</c> if this instance is readonly; otherwise, <c>false</c>.</value>
         /// <exception cref="ReadOnlyException">Table {0} is readonly!.</exception>
         /// <remarks>
-        /// If the table is not readonly this can be set to readonly. Once set to readonly a reset is not possible.
-        /// But you can recreate a writeable table by using a new <see cref="MemoryTable" /> and the <see cref="LoadTable(ITable, Search, ProgressCallback, object)" /> function.
+        ///     If the table is not readonly this can be set to readonly. Once set to readonly a reset is not possible. But
+        ///     you can recreate a writeable table by using a new <see cref="MemoryTable" /> and the
+        ///     <see cref="LoadTable(ITable, Search, ProgressCallback, object)" /> function.
         /// </remarks>
         public bool IsReadonly
         {
@@ -65,11 +60,12 @@ namespace Cave.Data
                 isReadonly = value;
             }
         }
+
         #endregion
 
         #region RowCount
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override long RowCount => rows.Count;
 
         #endregion
@@ -80,39 +76,24 @@ namespace Cave.Data
 
         #region public static Create()
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MemoryTable"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="MemoryTable" /> class.</summary>
         /// <param name="type">Table layout.</param>
-        /// <returns>Returns a new <see cref="MemoryTable"/> instance.</returns>
-        public static MemoryTable Create(Type type)
-        {
-            return Create(RowLayout.CreateTyped(type));
-        }
+        /// <returns>Returns a new <see cref="MemoryTable" /> instance.</returns>
+        public static MemoryTable Create(Type type) => Create(RowLayout.CreateTyped(type));
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MemoryTable"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="MemoryTable" /> class.</summary>
         /// <param name="layout">Table layout.</param>
-        /// <returns>Returns a new <see cref="MemoryTable"/> instance.</returns>
-        public static MemoryTable Create(RowLayout layout)
-        {
-            return Create(MemoryDatabase.Default, layout);
-        }
+        /// <returns>Returns a new <see cref="MemoryTable" /> instance.</returns>
+        public static MemoryTable Create(RowLayout layout) => Create(MemoryDatabase.Default, layout);
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MemoryTable"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="MemoryTable" /> class.</summary>
         /// <param name="database">The database the.</param>
         /// <param name="layout">The layout of the table.</param>
         /// <param name="options">The options.</param>
-        /// <returns>Returns a new <see cref="MemoryTable"/> instance.</returns>
+        /// <returns>Returns a new <see cref="MemoryTable" /> instance.</returns>
         public static MemoryTable Create(IDatabase database, RowLayout layout, MemoryTableOptions options = 0)
         {
-            var result = new MemoryTable
-            {
-                memoryTableOptions = options,
-            };
+            var result = new MemoryTable { memoryTableOptions = options };
             result.Connect(database, default, layout);
             return result;
         }
@@ -140,11 +121,13 @@ namespace Cave.Data
                         indexCount++;
                     }
                 }
+
                 if (indexCount > 0)
                 {
                     return indices;
                 }
             }
+
             return null;
         }
 
@@ -152,7 +135,7 @@ namespace Cave.Data
 
         #region Initialize()
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Connect(IDatabase database, TableFlags flags, RowLayout layout)
         {
             base.Connect(database, flags, layout);
@@ -175,7 +158,7 @@ namespace Cave.Data
             Trace.TraceInformation("Loading table {0}", table);
             if (table == null)
             {
-                throw new ArgumentNullException("Table");
+                throw new ArgumentNullException(nameof(table));
             }
 
             Storage.CheckLayout(Layout, table.Layout);
@@ -185,9 +168,8 @@ namespace Cave.Data
             }
 
             Clear();
-            int offset = 0;
+            var offset = 0;
             var rowCount = table.RowCount;
-
             if (rowCount == 0)
             {
                 return;
@@ -196,7 +178,6 @@ namespace Cave.Data
             while (true)
             {
                 var rows = table.GetRows(search, ResultOption.Limit(Storage.TransactionRowCount) + ResultOption.Offset(offset));
-
                 var nextOffset = offset + rows.Count;
                 Insert(rows);
                 if (callback != null)
@@ -210,17 +191,18 @@ namespace Cave.Data
                 }
                 else
                 {
-                    var progress = RowCount * 100f / rowCount;
-                    Trace.TraceInformation(string.Format("Loaded {0} rows from table {1} starting with offset {2} to {3} ({4:N}%)", rows.Count, table, offset, nextOffset, progress));
+                    var progress = (RowCount * 100f) / rowCount;
+                    Trace.TraceInformation($"Loaded {rows.Count} rows from table {table} starting with offset {offset} to {nextOffset} ({progress:N}%)");
                 }
-                offset = nextOffset;
 
+                offset = nextOffset;
                 if (rows.Count < Storage.TransactionRowCount)
                 {
                     if (rowCount != RowCount)
                     {
                         throw new Exception();
                     }
+
                     break;
                 }
             }
@@ -238,7 +220,7 @@ namespace Cave.Data
         {
             if (isReadonly)
             {
-                throw new ReadOnlyException(string.Format("Table {0} is readonly!", this));
+                throw new ReadOnlyException($"Table {this} is readonly!");
             }
 
             if (rows == null)
@@ -247,7 +229,7 @@ namespace Cave.Data
             }
 
             Clear();
-            foreach (Row row in rows)
+            foreach (var row in rows)
             {
                 Insert(row);
             }
@@ -258,8 +240,8 @@ namespace Cave.Data
         #region GetRowAt
 
         /// <summary>
-        /// This function does a lookup on the ids of the table and returns the row with the n-th ID where n is the given index.
-        /// Note that indices may change on each update, insert, delete and sorting is not garanteed!.
+        ///     This function does a lookup on the ids of the table and returns the row with the n-th ID where n is the given
+        ///     index. Note that indices may change on each update, insert, delete and sorting is not garanteed!.
         /// </summary>
         /// <param name="index">The index of the row to be fetched.</param>
         /// <returns>The row.</returns>
@@ -269,21 +251,21 @@ namespace Cave.Data
 
         #region Exist
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override bool Exist(Search search)
         {
             search.LoadLayout(Layout);
             return rows.Values.Any(row => search.Check(row));
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override bool Exist(Row row) => Exist(new Identifier(row, Layout));
 
         #endregion
 
         #region Replace
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Replace(Row row)
         {
             var id = new Identifier(row, Layout);
@@ -297,7 +279,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Replace(IEnumerable<Row> rows)
         {
             foreach (var row in rows)
@@ -310,14 +292,14 @@ namespace Cave.Data
 
         #region Insert
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override Row Insert(Row row)
         {
             var id = new Identifier(row, Layout);
             return Insert(row, id);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Insert(IEnumerable<Row> rows)
         {
             foreach (var row in rows)
@@ -330,14 +312,14 @@ namespace Cave.Data
 
         #region Update
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Update(Row row)
         {
             var id = new Identifier(row, Layout);
             Update(row, id);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Update(IEnumerable<Row> rows)
         {
             foreach (var row in rows)
@@ -350,12 +332,12 @@ namespace Cave.Data
 
         #region Delete
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Delete(Row row)
         {
             if (isReadonly)
             {
-                throw new ReadOnlyException(string.Format("Table {0} is readonly!", this));
+                throw new ReadOnlyException($"Table {this} is readonly!");
             }
 
             if (Database.Storage.LogVerboseMessages)
@@ -366,14 +348,14 @@ namespace Cave.Data
             var id = new Identifier(row, Layout);
             if (!rows.Remove(id))
             {
-                throw new ArgumentException(string.Format("Row {0} not found at table {1}!", row, Name));
+                throw new ArgumentException($"Row {row} not found at table {Name}!");
             }
 
             if (indices != null)
             {
                 for (var i = 0; i < Layout.FieldCount; i++)
                 {
-                    FieldIndex index = indices[i];
+                    var index = indices[i];
                     if (index == null)
                     {
                         continue;
@@ -383,15 +365,16 @@ namespace Cave.Data
 #if DEBUG
                     if (index.Count != RowCount)
                     {
-                        throw new Exception(string.Format("BFDE: Operation: {0}, index.Count {1}, RowCount {2}", "Delete", index.Count, RowCount));
+                        throw new Exception($"BFDE: Operation: {"Delete"}, index.Count {index.Count}, RowCount {RowCount}");
                     }
 #endif
                 }
             }
+
             IncreaseSequenceNumber();
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Delete(IEnumerable<Row> rows)
         {
             foreach (var row in rows)
@@ -417,6 +400,7 @@ namespace Cave.Data
                 Delete(row);
                 count++;
             }
+
             return count;
         }
 
@@ -424,12 +408,12 @@ namespace Cave.Data
 
         #region Clear
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Clear()
         {
             if (isReadonly)
             {
-                throw new ReadOnlyException(string.Format("Table {0} is readonly!", this));
+                throw new ReadOnlyException($"Table {this} is readonly!");
             }
 
             if (Database.Storage.LogVerboseMessages)
@@ -446,50 +430,43 @@ namespace Cave.Data
 
         #region Count
 
-        /// <inheritdoc/>
-        public override long Count(Search search = null, ResultOption resultOption = null) => GetRows(search, resultOption, false).Count;
+        /// <inheritdoc />
+        public override long Count(Search search = null, ResultOption resultOption = null) => GetRows(search, resultOption).Count;
 
         #endregion
 
         #region GetRows()
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override IList<Row> GetRows() => rows.Values.Select(r => new Row(Layout, r, true)).ToList();
 
         #endregion
 
         #region GetRows
 
-        /// <inheritdoc/>
-        public override IList<Row> GetRows(Search search = null, ResultOption resultOption = null) => GetRows(search, resultOption, false);
+        /// <inheritdoc />
+        public override IList<Row> GetRows(Search search = null, ResultOption resultOption = null) => GetRows(search, resultOption);
 
         #endregion
 
         #region GetRow
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override Row GetRow(Search search = null, ResultOption resultOption = null) => GetRows(search, resultOption).Single();
 
         #endregion
 
         #region additional functionality
 
-        /// <summary>
-        /// Checks an identififer for existance.
-        /// </summary>
+        /// <summary>Checks an identififer for existance.</summary>
         /// <param name="id">The identifier.</param>
         /// <returns>True if the id is found at the table, false otherwise.</returns>
         public bool Exist(Identifier id) => rows.ContainsKey(id);
 
-        /// <summary>
-        /// Gets a row from the table.
-        /// </summary>
+        /// <summary>Gets a row from the table.</summary>
         /// <param name="id">The identifier of the row to be fetched.</param>
         /// <returns>The row.</returns>
-        public Row GetRow(Identifier id)
-        {
-            return new Row(Layout, rows[id], true);
-        }
+        public Row GetRow(Identifier id) => new Row(Layout, rows[id], true);
 
         /// <summary>Obtains the rows with the given ids.</summary>
         /// <param name="ids">Identifiers of the rows to fetch from the table.</param>
@@ -501,6 +478,7 @@ namespace Cave.Data
             {
                 result.Add(new Row(Layout, rows[id], true));
             }
+
             return result;
         }
 
@@ -519,7 +497,7 @@ namespace Cave.Data
                 resultOption = ResultOption.None;
             }
 
-            if (search == null || search.Mode == SearchMode.None)
+            if ((search == null) || (search.Mode == SearchMode.None))
             {
                 skipSearch = true;
             }
@@ -532,30 +510,26 @@ namespace Cave.Data
             var sorting = new Set<int, ResultOptionMode>();
             var limit = -1;
             var offset = -1;
-
             if (resultOption != null)
             {
-                foreach (ResultOption option in resultOption.ToArray())
+                foreach (var option in resultOption.ToArray())
                 {
                     switch (option.Mode)
                     {
                         case ResultOptionMode.None: break;
-
                         case ResultOptionMode.Group:
                         {
                             var fieldIndex = Layout.GetFieldIndex(option.Parameter, true);
                             grouping.Add(fieldIndex);
                         }
-                        break;
-
+                            break;
                         case ResultOptionMode.SortAsc:
                         case ResultOptionMode.SortDesc:
                         {
                             var fieldIndex = Layout.GetFieldIndex(option.Parameter, true);
                             sorting.Add(fieldIndex, option.Mode);
                         }
-                        break;
-
+                            break;
                         case ResultOptionMode.Limit:
                         {
                             if (limit >= 0)
@@ -566,7 +540,6 @@ namespace Cave.Data
                             limit = Math.Abs(int.Parse(option.Parameter));
                             break;
                         }
-
                         case ResultOptionMode.Offset:
                         {
                             if (offset >= 0)
@@ -577,11 +550,11 @@ namespace Cave.Data
                             offset = Math.Abs(int.Parse(option.Parameter));
                             break;
                         }
-
                         default: throw new NotSupportedException($"Option {option.Mode} is not supported!");
                     }
                 }
             }
+
             IEnumerable<Row> result;
             if (skipSearch)
             {
@@ -606,6 +579,7 @@ namespace Cave.Data
                         groupedRows.Add(row);
                     }
                 }
+
                 result = groupedRows;
             }
 
@@ -618,7 +592,7 @@ namespace Cave.Data
                     sorting.Reverse();
                 }
 
-                foreach (ItemPair<int, ResultOptionMode> sort in sorting)
+                foreach (var sort in sorting)
                 {
                     var sorter = new TableSorter(Layout[sort.A], sort.B);
                     sorted.Sort(sorter);
@@ -630,7 +604,7 @@ namespace Cave.Data
                 sorted = result.AsList();
             }
 
-            if (offset > -1 || limit > -1)
+            if ((offset > -1) || (limit > -1))
             {
                 if (offset < 0)
                 {
@@ -648,10 +622,12 @@ namespace Cave.Data
                 }
 
                 limit = Math.Min(limit, sorted.Count - offset);
-                return limit <= 0 ? new Row[0] : (IList<Row>)sorted.GetRange(offset, limit);
+                return limit <= 0 ? new Row[0] : (IList<Row>) sorted.GetRange(offset, limit);
             }
+
             return sorted;
         }
+
         #endregion
 
         #region private functions
@@ -660,7 +636,7 @@ namespace Cave.Data
         {
             if (isReadonly)
             {
-                throw new ReadOnlyException(string.Format("Table {0} is readonly!", this));
+                throw new ReadOnlyException($"Table {this} is readonly!");
             }
 
             if (Database.Storage.LogVerboseMessages)
@@ -680,7 +656,7 @@ namespace Cave.Data
             {
                 for (var i = 0; i < Layout.FieldCount; i++)
                 {
-                    FieldIndex index = indices[i];
+                    var index = indices[i];
                     if (index == null)
                     {
                         continue;
@@ -690,11 +666,12 @@ namespace Cave.Data
 #if DEBUG
                     if (index.Count != RowCount)
                     {
-                        throw new Exception(string.Format("BFDE: Operation: {0}, index.Count {1}, RowCount {2}", "Add", index.Count, RowCount));
+                        throw new Exception($"BFDE: Operation: {"Add"}, index.Count {index.Count}, RowCount {RowCount}");
                     }
 #endif
                 }
             }
+
             IncreaseSequenceNumber();
             return row;
         }
@@ -710,15 +687,16 @@ namespace Cave.Data
                     default:
                         throw new NotSupportedException($"Autoincrement field {field} not supported!");
                     case DataType.DateTime:
-                        if (value == null || (DateTime)value == default(DateTime))
+                        if ((value == null) || ((DateTime) value == default))
                         {
                             value = DateTime.UtcNow;
                         }
+
                         break;
                     case DataType.User:
                         if (field.ValueType == typeof(Guid))
                         {
-                            if (value == null || (Guid)value == default(Guid))
+                            if ((value == null) || ((Guid) value == default))
                             {
                                 value = Guid.NewGuid();
                             }
@@ -727,56 +705,66 @@ namespace Cave.Data
                         {
                             throw new NotSupportedException($"Autoincrement field {field} not supported!");
                         }
+
                         break;
                     case DataType.Int8:
-                        if (value == null || (sbyte)value == default(sbyte))
+                        if ((value == null) || ((sbyte) value == default(sbyte)))
                         {
                             value = (Maximum<sbyte>(field.Name) ?? 0) + 1;
                         }
+
                         break;
                     case DataType.UInt8:
-                        if (value == null || (byte)value == default(byte))
+                        if ((value == null) || ((byte) value == default(byte)))
                         {
                             value = (Maximum<byte>(field.Name) ?? 0) + 1;
                         }
+
                         break;
                     case DataType.Int16:
-                        if (value == null || (short)value == default(short))
+                        if ((value == null) || ((short) value == default(short)))
                         {
                             value = (Maximum<short>(field.Name) ?? 0) + 1;
                         }
+
                         break;
                     case DataType.UInt16:
-                        if (value == null || (ushort)value == default(ushort))
+                        if ((value == null) || ((ushort) value == default(ushort)))
                         {
                             value = (Maximum<ushort>(field.Name) ?? 0) + 1;
                         }
+
                         break;
                     case DataType.Int32:
-                        if (value == null || (int)value == default(int))
+                        if ((value == null) || ((int) value == default))
                         {
                             value = (Maximum<int>(field.Name) ?? 0) + 1;
                         }
+
                         break;
                     case DataType.UInt32:
-                        if (value == null || (uint)value == default(uint))
+                        if ((value == null) || ((uint) value == default))
                         {
                             value = (Maximum<uint>(field.Name) ?? 0) + 1;
                         }
+
                         break;
                     case DataType.Int64:
-                        if (value == null || (long)value == default(long))
+                        if ((value == null) || ((long) value == default))
                         {
                             value = (Maximum<long>(field.Name) ?? 0) + 1;
                         }
+
                         break;
                     case DataType.UInt64:
-                        if (value == null || (ulong)value == default(ulong))
+                        if ((value == null) || ((ulong) value == default))
                         {
                             value = (Maximum<ulong>(field.Name) ?? 0) + 1;
                         }
+
                         break;
                 }
+
                 values[field.Index] = value;
             }
 
@@ -786,16 +774,17 @@ namespace Cave.Data
             {
                 throw new InvalidDataException("Could not create autoincrement identifier!");
             }
+
             id = newId;
             row = newRow;
         }
 
         void Update(Row row, Identifier id)
         {
-            object[] values = row.CopyValues();
+            var values = row.CopyValues();
             if (isReadonly)
             {
-                throw new ReadOnlyException(string.Format("Table {0} is readonly!", this));
+                throw new ReadOnlyException($"Table {this} is readonly!");
             }
 
             if (Database.Storage.LogVerboseMessages)
@@ -803,7 +792,7 @@ namespace Cave.Data
                 Trace.TraceInformation("Update {0} ID {1} at {2}", values, id, this);
             }
 
-            if (!rows.TryGetValue(id, out object[] oldValues))
+            if (!rows.TryGetValue(id, out var oldValues))
             {
                 throw new KeyNotFoundException("ID not present!");
             }
@@ -813,7 +802,7 @@ namespace Cave.Data
             {
                 for (var i = 0; i < Layout.FieldCount; i++)
                 {
-                    FieldIndex index = indices[i];
+                    var index = indices[i];
                     if (index == null)
                     {
                         continue;
@@ -823,11 +812,12 @@ namespace Cave.Data
 #if DEBUG
                     if (index.Count != RowCount)
                     {
-                        throw new Exception(string.Format("BFDE: Operation: {0}, index.Count {1}, RowCount {2}", "Replace", index.Count, RowCount));
+                        throw new Exception($"BFDE: Operation: {"Replace"}, index.Count {index.Count}, RowCount {RowCount}");
                     }
 #endif
                 }
             }
+
             IncreaseSequenceNumber();
         }
 

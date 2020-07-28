@@ -4,25 +4,17 @@ using Cave.Data.Sql;
 
 namespace Cave.Data.Mysql
 {
-    /// <summary>
-    /// Provides a mysql table implementation.
-    /// </summary>
+    /// <summary>Provides a mysql table implementation.</summary>
     public class MySqlTable : SqlTable
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MySqlTable"/> class.
-        /// </summary>
-        protected MySqlTable()
-        {
-        }
+        /// <summary>Initializes a new instance of the <see cref="MySqlTable" /> class.</summary>
+        protected MySqlTable() { }
 
-        /// <summary>
-        /// Connects to the specified database and tablename.
-        /// </summary>
+        /// <summary>Connects to the specified database and tablename.</summary>
         /// <param name="database">Database to connect to.</param>
         /// <param name="flags">Flags used to connect to the table.</param>
         /// <param name="tableName">The table to connect to.</param>
-        /// <returns>Returns a new <see cref="MySqlTable"/> instance.</returns>
+        /// <returns>Returns a new <see cref="MySqlTable" /> instance.</returns>
         public static MySqlTable Connect(MySqlDatabase database, TableFlags flags, string tableName)
         {
             var table = new MySqlTable();
@@ -32,19 +24,13 @@ namespace Cave.Data.Mysql
 
         /// <summary>Runs the repair table command.</summary>
         /// <returns>Result strings.</returns>
-        public string[] Repair()
-        {
-            return MysqlInternalCommand($"REPAIR TABLE {FQTN} EXTENDED");
-        }
+        public string[] Repair() => MysqlInternalCommand($"REPAIR TABLE {FQTN} EXTENDED");
 
         /// <summary>Runs the optimize table command.</summary>
         /// <returns>Result strings.</returns>
-        public string[] Optimize()
-        {
-            return MysqlInternalCommand($"OPTIMIZE TABLE {FQTN}");
-        }
+        public string[] Optimize() => MysqlInternalCommand($"OPTIMIZE TABLE {FQTN}");
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         protected override void CreateLastInsertedRowCommand(SqlCommandBuilder commandBuilder, Row row)
         {
             var idField = Layout.Identifier.Single();
@@ -55,7 +41,7 @@ namespace Cave.Data.Mysql
         {
             var results = new List<string>();
             var rows = Storage.Query(database: Database.Name, table: Name, cmd: cmd);
-            foreach (Row row in rows)
+            foreach (var row in rows)
             {
                 var i = Layout.GetFieldIndex("Msg_text", true);
                 var text = row[i].ToString();
@@ -63,6 +49,7 @@ namespace Cave.Data.Mysql
                 var type = row[i].ToString();
                 results.Add($"{type} {text}");
             }
+
             return results.ToArray();
         }
     }

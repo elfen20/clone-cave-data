@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -10,9 +11,8 @@ using Cave.IO;
 
 namespace Cave.Data
 {
-    /// <summary>
-    ///     Provides a row layout implementation.
-    /// </summary>
+    /// <summary>Provides a row layout implementation.</summary>
+    [DebuggerDisplay("{"+nameof(RowLayout.Name)+ "} [{"+nameof(RowLayout.FieldCount)+"}]")]
     public sealed class RowLayout : IEquatable<RowLayout>, IEnumerable<IFieldProperties>
     {
         /// <inheritdoc />
@@ -45,25 +45,20 @@ namespace Cave.Data
             return true;
         }
 
-        /// <summary>
-        ///     Clears the layout cache.
-        /// </summary>
+        /// <summary>Clears the layout cache.</summary>
         public static void ClearCache()
         {
-            lock (layoutCache)
+            lock (LayoutCache)
             {
-                layoutCache.Clear();
+                LayoutCache.Clear();
             }
         }
 
-        /// <summary>
-        ///     Checks two layouts for equality.
-        /// </summary>
+        /// <summary>Checks two layouts for equality.</summary>
         /// <param name="expected">The expected layout.</param>
         /// <param name="current">The layout to check.</param>
         /// <param name="fieldPropertiesConversion">field conversion function to use.</param>
-        public static void CheckLayout(RowLayout expected, RowLayout current,
-            Func<IFieldProperties, IFieldProperties> fieldPropertiesConversion = null)
+        public static void CheckLayout(RowLayout expected, RowLayout current, Func<IFieldProperties, IFieldProperties> fieldPropertiesConversion = null)
         {
             if (ReferenceEquals(expected, current))
             {
@@ -128,11 +123,18 @@ namespace Cave.Data
         /// <param name="type">Type to parse fields from.</param>
         /// <param name="onlyPublic">if set to <c>true</c> [use only public].</param>
         /// <returns>A new <see cref="RowLayout" /> instance.</returns>
-        public static RowLayout CreateAlien(Type type, bool onlyPublic)
+        public static RowLayout CreateAlien(Type type, bool onlyPublic) => CreateAlien(type, onlyPublic, NamingStrategy.Exact);
+
+        /// <summary>Creates an alien row layout without using any field properies.</summary>
+        /// <param name="type">Type to parse fields from.</param>
+        /// <param name="onlyPublic">if set to <c>true</c> [use only public].</param>
+        /// <param name="namingStrategy">Naming strategy for fields.</param>
+        /// <returns>A new <see cref="RowLayout" /> instance.</returns>
+        public static RowLayout CreateAlien(Type type, bool onlyPublic, NamingStrategy namingStrategy)
         {
             if (type == null)
             {
-                throw new ArgumentNullException("Type");
+                throw new ArgumentNullException(nameof(type));
             }
 
             var bindingFlags = BindingFlags.Public | BindingFlags.Instance;
@@ -154,7 +156,7 @@ namespace Cave.Data
                     }
 
                     var field = new FieldProperties();
-                    field.LoadFieldInfo(i, fieldInfo);
+                    field.LoadFieldInfo(i, fieldInfo, namingStrategy);
                     properties[i] = field;
                 }
                 catch (Exception ex)
@@ -167,9 +169,7 @@ namespace Cave.Data
             return new RowLayout(type.Name, properties, type);
         }
 
-        /// <summary>
-        ///     Creates a new layout with the given name and field properties.
-        /// </summary>
+        /// <summary>Creates a new layout with the given name and field properties.</summary>
         /// <param name="name">Name of the layout.</param>
         /// <param name="fields">FieldProperties to use.</param>
         /// <returns>A new <see cref="RowLayout" /> instance.</returns>
@@ -194,10 +194,10 @@ namespace Cave.Data
                 throw new ArgumentNullException(nameof(type));
             }
 
-            lock (layoutCache)
+            lock (LayoutCache)
             {
                 var cacheName = $"{type.FullName},{nameOverride}";
-                if (!layoutCache.TryGetValue(cacheName, out var result))
+                if (!LayoutCache.TryGetValue(cacheName, out var result))
                 {
                     var isStruct = type.IsValueType && !type.IsEnum && !type.IsPrimitive;
                     if (!isStruct)
@@ -206,12 +206,8 @@ namespace Cave.Data
                             $"Type {type} is not a struct! Only structs may be used as row definition!");
                     }
 
-                    var tableName = TableAttribute.GetName(type);
-                    if (string.IsNullOrEmpty(tableName))
-                    {
-                        tableName = type.Name;
-                    }
-
+                    var tableAttribute = TableAttribute.Get(type);
+                    var tableName = GetNameByStrategy(tableAttribute.NamingStrategy, tableAttribute.Name ?? type.Name);
                     if (!string.IsNullOrEmpty(nameOverride))
                     {
                         tableName = nameOverride;
@@ -222,8 +218,7 @@ namespace Cave.Data
                         throw new ArgumentException("Invalid characters at table name!");
                     }
 
-                    var rawInfos =
-                        type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+                    var rawInfos = type.GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
                     var properties = new List<IFieldProperties>(rawInfos.Length);
                     for (var i = 0; i < rawInfos.Length; i++)
                     {
@@ -244,10 +239,8 @@ namespace Cave.Data
                             }
 
                             var fieldProperties = new FieldProperties();
-                            fieldProperties.LoadFieldInfo(i, fieldInfo);
-                            properties.Add(storage == null
-                                ? fieldProperties
-                                : storage.GetDatabaseFieldProperties(fieldProperties));
+                            fieldProperties.LoadFieldInfo(i, fieldInfo, tableAttribute.NamingStrategy);
+                            properties.Add(storage == null ? fieldProperties : storage.GetDatabaseFieldProperties(fieldProperties));
                         }
                         catch (Exception ex)
                         {
@@ -259,7 +252,7 @@ namespace Cave.Data
                     result = new RowLayout(tableName, properties.ToArray(), type);
                     if (!DisableLayoutCache)
                     {
-                        layoutCache[cacheName] = result;
+                        LayoutCache[cacheName] = result;
                     }
                 }
 
@@ -267,9 +260,27 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>
-        ///     Gets the <see cref="DataType" /> for a given <see cref="Type" />.
-        /// </summary>
+        /// <summary>Builds a new name matching the the specified <paramref name="namingStrategy" />.</summary>
+        /// <param name="namingStrategy">Naming strategy to use.</param>
+        /// <param name="name">Original name.</param>
+        /// <returns>A new string containing the new name.</returns>
+        public static string GetNameByStrategy(NamingStrategy namingStrategy, string name)
+        {
+            if (name == null)
+            {
+                throw new ArgumentNullException(nameof(name));
+            }
+
+            switch (namingStrategy)
+            {
+                case NamingStrategy.Exact: return name;
+                case NamingStrategy.CamelCase: return name.GetCamelCaseName();
+                case NamingStrategy.SnakeCase: return name.GetSnakeCaseName();
+                default: throw new NotImplementedException();
+            }
+        }
+
+        /// <summary>Gets the <see cref="DataType" /> for a given <see cref="Type" />.</summary>
         /// <param name="type">The <see cref="Type" /> to convert.</param>
         /// <returns>The data type.</returns>
         public static DataType DataTypeFromType(Type type)
@@ -368,8 +379,8 @@ namespace Cave.Data
         }
 
         /// <summary>
-        ///     Retrieves a string for the specified value.
-        ///     The string may be parsed back to a value using <see cref="ParseValue(int, string, string, IFormatProvider)" />.
+        ///     Retrieves a string for the specified value. The string may be parsed back to a value using
+        ///     <see cref="ParseValue(int, string, string, IFormatProvider)" />.
         /// </summary>
         /// <param name="fieldIndex">The field number.</param>
         /// <param name="value">The value.</param>
@@ -395,7 +406,7 @@ namespace Cave.Data
                 case "TimeSpan":
                     switch (field.DataType)
                     {
-                        case DataType.TimeSpan: return ((TimeSpan)value).FormatTime();
+                        case DataType.TimeSpan: return ((TimeSpan) value).FormatTime();
                         default: return Convert.ToDouble(value).FormatTime();
                     }
                 case "FormatValue":
@@ -408,19 +419,19 @@ namespace Cave.Data
 
             switch (field.DataType)
             {
-                case DataType.Int8: return ((sbyte)value).ToString(field.DisplayFormat);
-                case DataType.Int16: return ((short)value).ToString(field.DisplayFormat);
-                case DataType.Int32: return ((int)value).ToString(field.DisplayFormat);
-                case DataType.Int64: return ((long)value).ToString(field.DisplayFormat);
-                case DataType.UInt8: return ((byte)value).ToString(field.DisplayFormat);
-                case DataType.UInt16: return ((ushort)value).ToString(field.DisplayFormat);
-                case DataType.UInt32: return ((uint)value).ToString(field.DisplayFormat);
-                case DataType.UInt64: return ((ulong)value).ToString(field.DisplayFormat);
-                case DataType.Binary: return Base64.NoPadding.Encode((byte[])value);
-                case DataType.DateTime: return ((DateTime)value).ToString(field.DisplayFormat);
-                case DataType.Single: return ((float)value).ToString(field.DisplayFormat);
-                case DataType.Double: return ((double)value).ToString(field.DisplayFormat);
-                case DataType.Decimal: return ((decimal)value).ToString(field.DisplayFormat);
+                case DataType.Int8: return ((sbyte) value).ToString(field.DisplayFormat);
+                case DataType.Int16: return ((short) value).ToString(field.DisplayFormat);
+                case DataType.Int32: return ((int) value).ToString(field.DisplayFormat);
+                case DataType.Int64: return ((long) value).ToString(field.DisplayFormat);
+                case DataType.UInt8: return ((byte) value).ToString(field.DisplayFormat);
+                case DataType.UInt16: return ((ushort) value).ToString(field.DisplayFormat);
+                case DataType.UInt32: return ((uint) value).ToString(field.DisplayFormat);
+                case DataType.UInt64: return ((ulong) value).ToString(field.DisplayFormat);
+                case DataType.Binary: return Base64.NoPadding.Encode((byte[]) value);
+                case DataType.DateTime: return ((DateTime) value).ToString(field.DisplayFormat);
+                case DataType.Single: return ((float) value).ToString(field.DisplayFormat);
+                case DataType.Double: return ((double) value).ToString(field.DisplayFormat);
+                case DataType.Decimal: return ((decimal) value).ToString(field.DisplayFormat);
                 default: return value == null ? string.Empty : value.ToString();
             }
         }
@@ -447,16 +458,12 @@ namespace Cave.Data
             return Enum.Parse(field.ValueType, value.ToString(), true);
         }
 
-        /// <summary>
-        ///     Gets the name of the field with the given number.
-        /// </summary>
+        /// <summary>Gets the name of the field with the given number.</summary>
         /// <param name="index">The field index.</param>
         /// <returns>The name of the field.</returns>
         public string GetName(int index) => properties[index].Name;
 
-        /// <summary>
-        ///     Gets the value of a field from the specified struct.
-        /// </summary>
+        /// <summary>Gets the value of a field from the specified struct.</summary>
         /// <param name="index">The field index.</param>
         /// <param name="item">The struct to read the value from.</param>
         /// <returns>The value of the specified field.</returns>
@@ -470,9 +477,7 @@ namespace Cave.Data
             return properties[index].FieldInfo.GetValue(item);
         }
 
-        /// <summary>
-        ///     Sets a value at the specified struct.
-        /// </summary>
+        /// <summary>Sets a value at the specified struct.</summary>
         /// <param name="index">The field index.</param>
         /// <param name="item">The struct to set the value at.</param>
         /// <param name="value">The value to set.</param>
@@ -491,9 +496,7 @@ namespace Cave.Data
             properties[index].FieldInfo.SetValue(item, value);
         }
 
-        /// <summary>
-        ///     Gets all values of the struct.
-        /// </summary>
+        /// <summary>Gets all values of the struct.</summary>
         /// <param name="item">The struct to get the values from.</param>
         /// <returns>Returns all values of the struct.</returns>
         /// <typeparam name="TStruct">Structure type.</typeparam>
@@ -517,16 +520,14 @@ namespace Cave.Data
                 var value = result[i] = properties[i].FieldInfo.GetValue(item);
                 if (value is DateTime dt && (dt.Kind == DateTimeKind.Unspecified))
                 {
-                    throw new ArgumentOutOfRangeException("DateTime.Kind may not be DateTimeKind.Unspecified!");
+                    result[i] = new DateTime(dt.Ticks, DateTimeKind.Local);
                 }
             }
 
             return result;
         }
 
-        /// <summary>
-        ///     Loads the structure fields into a new <see cref="Row" /> instance.
-        /// </summary>
+        /// <summary>Loads the structure fields into a new <see cref="Row" /> instance.</summary>
         /// <typeparam name="TStruct">Structure type.</typeparam>
         /// <param name="item">Structure to read.</param>
         /// <returns>A new row instance.</returns>
@@ -534,16 +535,14 @@ namespace Cave.Data
             where TStruct : struct
             => new Row(this, GetValues(item), false);
 
-        /// <summary>
-        ///     Sets all values of the struct.
-        /// </summary>
+        /// <summary>Sets all values of the struct.</summary>
         /// <param name="item">The struct to set the values at.</param>
         /// <param name="values">The values to set.</param>
         public void SetValues(ref object item, object[] values)
         {
             if (values == null)
             {
-                throw new ArgumentNullException("Values");
+                throw new ArgumentNullException(nameof(values));
             }
 
             if (!IsTyped)
@@ -575,24 +574,18 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>
-        ///     Checks whether a field with the specified name exists or not.
-        /// </summary>
+        /// <summary>Checks whether a field with the specified name exists or not.</summary>
         /// <param name="fieldName">The field name.</param>
         /// <returns>True is the field exists.</returns>
         public bool HasField(string fieldName) => GetFieldIndex(fieldName, false) > -1;
 
-        /// <summary>
-        ///     Gets the field index of the specified field name.
-        /// </summary>
+        /// <summary>Gets the field index of the specified field name.</summary>
         /// <param name="fieldName">The field name to search for.</param>
         /// <returns>The field index of the specified field name.</returns>
-        [Obsolete("Use int GetFieldIndex(string fieldName, bool throwException) instead!"),]
+        [Obsolete("Use int GetFieldIndex(string fieldName, bool throwException) instead!")]
         public int GetFieldIndex(string fieldName) => GetFieldIndex(fieldName, false);
 
-        /// <summary>
-        ///     Gets the field index of the specified field name.
-        /// </summary>
+        /// <summary>Gets the field index of the specified field name.</summary>
         /// <param name="fieldName">The field name to search for.</param>
         /// <param name="throwException">Throw exception if field cannot be found.</param>
         /// <returns>The field index of the specified field name.</returns>
@@ -664,7 +657,7 @@ namespace Cave.Data
         {
             if (writer == null)
             {
-                throw new ArgumentNullException("Writer");
+                throw new ArgumentNullException(nameof(writer));
             }
 
             writer.Write7BitEncoded32(FieldCount);
@@ -674,10 +667,6 @@ namespace Cave.Data
                 Save(writer, properties[i]);
             }
         }
-
-        /// <summary>Returns a <see cref="string" /> that represents this instance.</summary>
-        /// <returns>A <see cref="string" /> that represents this instance.</returns>
-        public override string ToString() => $"RowLayout [{FieldCount}] {Name}";
 
         /// <summary>Saves the fieldproperties to the specified writer.</summary>
         /// <param name="writer">The writer.</param>
@@ -689,9 +678,9 @@ namespace Cave.Data
                 throw new ArgumentNullException(nameof(writer));
             }
 
-            writer.Write7BitEncoded32((int)field.DataType);
-            writer.Write7BitEncoded32((int)field.TypeAtDatabase);
-            writer.Write7BitEncoded32((int)field.Flags);
+            writer.Write7BitEncoded32((int) field.DataType);
+            writer.Write7BitEncoded32((int) field.TypeAtDatabase);
+            writer.Write7BitEncoded32((int) field.Flags);
             writer.WritePrefixed(field.Name);
             writer.WritePrefixed(field.NameAtDatabase);
             var typeName =
@@ -699,8 +688,8 @@ namespace Cave.Data
             writer.WritePrefixed(typeName);
             if (field.DataType == DataType.DateTime)
             {
-                writer.Write7BitEncoded32((int)field.DateTimeKind);
-                writer.Write7BitEncoded32((int)field.DateTimeType);
+                writer.Write7BitEncoded32((int) field.DateTimeKind);
+                writer.Write7BitEncoded32((int) field.DateTimeType);
             }
 
             if ((field.DataType == DataType.String) || (field.DataType == DataType.User))
@@ -711,38 +700,30 @@ namespace Cave.Data
 
         #region fields
 
-        /// <summary>
-        ///     Gets the name of the layout.
-        /// </summary>
+        /// <summary>Gets the name of the layout.</summary>
         public readonly string Name;
 
         /// <summary>The row type.</summary>
         public readonly Type RowType;
 
-        /// <summary>
-        ///     Gets the fieldcount.
-        /// </summary>
+        /// <summary>Gets the fieldcount.</summary>
         public readonly int FieldCount;
 
-        static readonly Dictionary<string, RowLayout> layoutCache = new Dictionary<string, RowLayout>();
+        static readonly Dictionary<string, RowLayout> LayoutCache = new Dictionary<string, RowLayout>();
         readonly IList<IFieldProperties> properties;
 
         #endregion
 
         #region constructor
 
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="RowLayout" /> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="RowLayout" /> class.</summary>
         public RowLayout()
         {
             properties = new IFieldProperties[0];
             Name = "Undefined";
         }
 
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="RowLayout" /> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="RowLayout" /> class.</summary>
         /// <param name="name">The Name of the Layout.</param>
         /// <param name="fields">The fieldproperties to use.</param>
         /// <param name="rowtype">Dotnet row type.</param>
@@ -750,7 +731,7 @@ namespace Cave.Data
         {
             if (string.IsNullOrEmpty(name))
             {
-                throw new ArgumentNullException("Name");
+                throw new ArgumentNullException(nameof(name));
             }
 
             if (name.HasInvalidChars(ASCII.Strings.SafeName))
@@ -768,14 +749,10 @@ namespace Cave.Data
 
         #region properties
 
-        /// <summary>
-        ///     Gets or sets a value indicating whether caching for known typed layouts is disabled or not.
-        /// </summary>
+        /// <summary>Gets or sets a value indicating whether caching for known typed layouts is disabled or not.</summary>
         public static bool DisableLayoutCache { get; set; }
 
-        /// <summary>
-        ///     Gets a value indicating whether the layout was created from a typed struct or not.
-        /// </summary>
+        /// <summary>Gets a value indicating whether the layout was created from a typed struct or not.</summary>
         public bool IsTyped => RowType != null;
 
         /// <summary>Gets the fields marked with the <see cref="FieldFlags.ID" />.</summary>

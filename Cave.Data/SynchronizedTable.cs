@@ -3,44 +3,36 @@ using System.Collections.Generic;
 
 namespace Cave.Data
 {
-    /// <summary>
-    /// Provides a synchronized wrapper for table instances.
-    /// </summary>
+    /// <summary>Provides a synchronized wrapper for table instances.</summary>
     public class SynchronizedTable : ITable
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SynchronizedTable"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="SynchronizedTable" /> class.</summary>
         /// <param name="table">The table to synchronize.</param>
-        public SynchronizedTable(ITable table)
-        {
+        public SynchronizedTable(ITable table) =>
             BaseTable = !(table is SynchronizedTable) ? table : throw new ArgumentException("Table is already synchronized!");
-        }
 
-        /// <summary>
-        /// Gets the base table used.
-        /// </summary>
+        /// <summary>Gets the base table used.</summary>
         public ITable BaseTable { get; }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public TableFlags Flags => BaseTable.Flags;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public int SequenceNumber => BaseTable.SequenceNumber;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IStorage Storage => BaseTable.Storage;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IDatabase Database => BaseTable.Database;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public string Name => BaseTable.Name;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public RowLayout Layout => BaseTable.Layout;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public long RowCount
         {
             get
@@ -52,7 +44,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Connect(IDatabase database, TableFlags flags, RowLayout layout)
         {
             lock (BaseTable)
@@ -61,7 +53,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual void UseLayout(RowLayout layout)
         {
             lock (BaseTable)
@@ -70,7 +62,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public long Count(Search search = null, ResultOption resultOption = null)
         {
             lock (BaseTable)
@@ -79,7 +71,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Clear()
         {
             lock (BaseTable)
@@ -88,7 +80,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public Row GetRowAt(int index)
         {
             lock (BaseTable)
@@ -97,7 +89,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void SetValue(string field, object value)
         {
             lock (BaseTable)
@@ -106,7 +98,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public bool Exist(Search search)
         {
             lock (BaseTable)
@@ -115,7 +107,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public bool Exist(Row row)
         {
             lock (BaseTable)
@@ -124,7 +116,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public Row Insert(Row row)
         {
             lock (BaseTable)
@@ -133,7 +125,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Insert(IEnumerable<Row> rows)
         {
             lock (BaseTable)
@@ -142,7 +134,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Update(Row row)
         {
             lock (BaseTable)
@@ -151,7 +143,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Update(IEnumerable<Row> rows)
         {
             lock (BaseTable)
@@ -160,7 +152,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Delete(Row row)
         {
             lock (BaseTable)
@@ -169,7 +161,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Delete(IEnumerable<Row> rows)
         {
             lock (BaseTable)
@@ -178,7 +170,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public int TryDelete(Search search)
         {
             lock (BaseTable)
@@ -187,7 +179,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Replace(Row row)
         {
             lock (BaseTable)
@@ -196,7 +188,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Replace(IEnumerable<Row> rows)
         {
             lock (BaseTable)
@@ -205,7 +197,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public Row GetRow(Search search = null, ResultOption resultOption = null)
         {
             lock (BaseTable)
@@ -214,7 +206,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IList<Row> GetRows()
         {
             lock (BaseTable)
@@ -223,7 +215,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IList<Row> GetRows(Search search = null, ResultOption resultOption = null)
         {
             lock (BaseTable)
@@ -232,7 +224,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public double Sum(string fieldName, Search search = null)
         {
             lock (BaseTable)
@@ -241,7 +233,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public TValue? Maximum<TValue>(string fieldName, Search search = null)
             where TValue : struct, IComparable
         {
@@ -251,7 +243,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public TValue? Minimum<TValue>(string fieldName, Search search = null)
             where TValue : struct, IComparable
         {
@@ -261,7 +253,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IList<TValue> Distinct<TValue>(string field, Search search = null)
             where TValue : struct, IComparable
         {
@@ -271,7 +263,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IList<TValue> GetValues<TValue>(string field, Search search = null)
             where TValue : struct, IComparable
         {
@@ -281,7 +273,7 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public int Commit(IEnumerable<Transaction> transactions, TransactionFlags flags = TransactionFlags.Default)
         {
             lock (BaseTable)

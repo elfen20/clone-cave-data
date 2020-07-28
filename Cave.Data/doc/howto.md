@@ -1,4 +1,13 @@
-﻿# Connect to server and list databases and tables
+﻿# Packages supported and tested
+To connect to a database server a working IDbConnection implementation needs to be used.
+Currently the library supports the following implementations:
+- nuget: npgsql **pgsql://user:pass@server)**
+- nuget or gac: mysql.data **mysql://user:pass@server)**
+- nuget: mysqlconnector **mysql://user:pass@server)**
+- nuget or gac: sqlite **sqlite://localhost/path/filename**
+- gac: mssql **mssql://server** (supports windows auth)
+
+# Connect to server and list databases and tables
 ```csharp
 // connect to a postgresql server
 var store = Connector.ConnectStorage("pgsql://user:pass@server")

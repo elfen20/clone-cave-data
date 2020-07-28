@@ -1,8 +1,6 @@
 ﻿namespace Cave.Data
 {
-    /// <summary>
-    /// Sql search modes.
-    /// </summary>
+    /// <summary>Sql search modes.</summary>
     public enum SearchMode
     {
         /// <summary>no search, returns all datasets</summary>
@@ -33,6 +31,6 @@
         SmallerOrEqual = 8,
 
         /// <summary>value comparison: value in specified list</summary>
-        In = 9,
+        In = 9
     }
 }

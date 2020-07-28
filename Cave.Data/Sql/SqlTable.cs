@@ -10,21 +10,30 @@ using Cave.Collections.Generic;
 
 namespace Cave.Data.Sql
 {
-    /// <summary>
-    /// Provides a table implementation for generic sql92 databases.
-    /// </summary>
+    /// <summary>Provides a table implementation for generic sql92 databases.</summary>
     public abstract class SqlTable : Table
     {
-        SqlStorage sqlStorage;
+        /// <summary>Gets the name of the table.</summary>
+        /// <returns>Database.Tablename.</returns>
+        public override string ToString() => Storage.FQTN(Database.Name, Name);
+
+        /// <summary>Gets the command to retrieve the last inserted row.</summary>
+        /// <param name="commandBuilder">The command builder to append to.</param>
+        /// <param name="row">The row to retrieve.</param>
+        protected abstract void CreateLastInsertedRowCommand(SqlCommandBuilder commandBuilder, Row row);
+
+        /// <summary>Retrieves the full layout information for this table.</summary>
+        /// <param name="database">Database name.</param>
+        /// <param name="table">Table name.</param>
+        /// <returns>Returns a new <see cref="RowLayout" /> instance.</returns>
+        protected virtual RowLayout QueryLayout(string database, string table)
+        {
+            RowLayout layout = null;
+            Storage.Query($"SELECT * FROM {Storage.FQTN(database, table)} WHERE 1 = 0", ref layout, database, table);
+            return layout;
+        }
 
         #region constructor
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SqlTable"/> class.
-        /// </summary>
-        protected SqlTable()
-        {
-        }
 
         #endregion
 
@@ -32,16 +41,14 @@ namespace Cave.Data.Sql
 
         #region FQTN
 
-        /// <summary>
-        /// Gets the full qualified table name.
-        /// </summary>
+        /// <summary>Gets the full qualified table name.</summary>
         public string FQTN { get; private set; }
 
         #endregion
 
         #region RowCount
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override long RowCount
         {
             get
@@ -51,69 +58,69 @@ namespace Cave.Data.Sql
                 {
                     throw new InvalidDataException($"Could not read value from {FQTN}!");
                 }
+
                 return Convert.ToInt64(value);
             }
         }
 
         #endregion
 
-        /// <summary>
-        /// Gets the used <see cref="Sql.SqlStorage"/> backend.
-        /// </summary>
-        public new SqlStorage Storage => sqlStorage;
+        /// <summary>Gets or sets the used <see cref="Sql.SqlStorage" /> backend.</summary>
+        public new SqlStorage Storage { get; set; }
 
         #endregion
 
         #region public ITable functions
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Connect(IDatabase database, TableFlags flags, RowLayout layout)
         {
-            sqlStorage = database.Storage as SqlStorage;
-            if (sqlStorage == null)
+            Storage = database.Storage as SqlStorage;
+            if (Storage == null)
             {
                 throw new InvalidOperationException("Database has to be a SqlDatabase!");
             }
-            FQTN = sqlStorage.FQTN(database.Name, layout.Name);
+
+            FQTN = Storage.FQTN(database.Name, layout.Name);
             var schema = QueryLayout(database.Name, layout.Name);
-            sqlStorage.CheckLayout(layout, schema);
+            Storage.CheckLayout(layout, schema);
             base.Connect(database, flags, schema);
         }
 
-        /// <summary>
-        /// Initializes the interface class. This is the first method to call after create.
-        /// </summary>
+        /// <summary>Initializes the interface class. This is the first method to call after create.</summary>
         /// <param name="database">Database the table belongs to.</param>
         /// <param name="flags">Flags used to connect to the table.</param>
         /// <param name="tableName">Table name to load.</param>
         public void Initialize(IDatabase database, TableFlags flags, string tableName)
         {
-            sqlStorage = database.Storage as SqlStorage;
-            if (sqlStorage == null)
+            Storage = database.Storage as SqlStorage;
+            if (Storage == null)
             {
                 throw new InvalidOperationException("Database has to be a SqlDatabase!");
             }
-            FQTN = sqlStorage.FQTN(database.Name, tableName);
+
+            FQTN = Storage.FQTN(database.Name, tableName);
             var schema = QueryLayout(database.Name, tableName);
             base.Connect(database, flags, schema);
         }
 
         #region SetValue
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void SetValue(string fieldName, object value)
         {
             var field = Layout[fieldName];
-            var command = "UPDATE " + FQTN + " SET " + sqlStorage.EscapeFieldName(field);
+            var command = "UPDATE " + FQTN + " SET " + Storage.EscapeFieldName(field);
             if (value == null)
             {
-                sqlStorage.Execute(command + "=NULL");
+                Storage.Execute(command + "=NULL");
             }
             else
             {
-                var parameter = new SqlParam(sqlStorage.ParameterPrefix, value);
+                var parameter = new SqlParam(Storage.ParameterPrefix, value);
                 Execute(new SqlCmd($"{command}={parameter.Name};", parameter));
             }
+
             IncreaseSequenceNumber();
         }
 
@@ -121,67 +128,73 @@ namespace Cave.Data.Sql
 
         #region GetValues
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override IList<TValue> GetValues<TValue>(string fieldname, Search search = null)
         {
-            var escapedFieldName = sqlStorage.EscapeFieldName(Layout[fieldname]);
-            var field = new FieldProperties()
+            var escapedFieldName = Storage.EscapeFieldName(Layout[fieldname]);
+            var field = new FieldProperties
             {
                 Name = fieldname,
+                NameAtDatabase = fieldname,
                 Flags = FieldFlags.None,
                 DataType = DataType.String,
+                TypeAtDatabase = DataType.String
             };
             field.Validate();
             SqlCmd query;
-
             if (search == null)
             {
                 query = $"SELECT {escapedFieldName} FROM {FQTN}";
             }
             else
             {
-                SqlSearch s = ToSqlSearch(search);
+                var s = ToSqlSearch(search);
                 query = new SqlCmd($"SELECT {escapedFieldName} FROM {FQTN} WHERE {s}", s.Parameters);
             }
-            var rows = sqlStorage.Query(query, Database.Name, Name);
+
+            var rows = Storage.Query(query, Database.Name, Name);
             var result = new List<TValue>();
-            foreach (Row row in rows)
+            foreach (var row in rows)
             {
-                var value = (TValue)Fields.ConvertValue(typeof(TValue), row[0], CultureInfo.InvariantCulture);
+                var value = (TValue) Fields.ConvertValue(typeof(TValue), row[0], CultureInfo.InvariantCulture);
                 result.Add(value);
             }
+
             return result.AsList();
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override IList<TValue> Distinct<TValue>(string fieldname, Search search = null)
         {
-            var escapedFieldName = sqlStorage.EscapeFieldName(Layout[fieldname]);
-            var field = new FieldProperties()
+            var escapedFieldName = Storage.EscapeFieldName(Layout[fieldname]);
+            var field = new FieldProperties
             {
                 Name = fieldname,
+                NameAtDatabase = fieldname,
                 Flags = FieldFlags.None,
                 DataType = DataType.String,
+                TypeAtDatabase = DataType.String
             };
             field.Validate();
             string query;
-
             if (search == null)
             {
                 query = $"SELECT DISTINCT {escapedFieldName} FROM {FQTN}";
             }
             else
             {
-                SqlSearch s = ToSqlSearch(search);
+                var s = ToSqlSearch(search);
                 query = $"SELECT DISTINCT {escapedFieldName} FROM {FQTN} WHERE {s}";
             }
-            var rows = sqlStorage.Query(query, Database.Name, Name);
+
+            var rows = Storage.Query(query, Database.Name, Name);
             var result = new Set<TValue>();
-            foreach (Row row in rows)
+            foreach (var row in rows)
             {
-                var value = (TValue)Fields.ConvertValue(typeof(TValue), row[0], CultureInfo.InvariantCulture);
+                var value = (TValue) Fields.ConvertValue(typeof(TValue), row[0], CultureInfo.InvariantCulture);
                 result.Include(value);
             }
+
             return result.AsList();
         }
 
@@ -189,25 +202,26 @@ namespace Cave.Data.Sql
 
         #region Sum
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override double Sum(string fieldName, Search search = null)
         {
             var field = Layout[fieldName];
-            search = search ?? Search.None;
-            SqlSearch s = ToSqlSearch(search);
+            search ??= Search.None;
+            var s = ToSqlSearch(search);
             var command = new StringBuilder();
             command.Append("SELECT SUM(");
-            command.Append(sqlStorage.EscapeFieldName(field));
+            command.Append(Storage.EscapeFieldName(field));
             command.Append(") FROM ");
             command.Append(FQTN);
             command.Append(" WHERE ");
-            command.Append(s.ToString());
-            double result = double.NaN;
-            object value = sqlStorage.QueryValue(new SqlCmd(command.ToString(), s.Parameters.ToArray()));
+            command.Append(s);
+            var result = double.NaN;
+            var value = Storage.QueryValue(new SqlCmd(command.ToString(), s.Parameters.ToArray()));
             if (value == null)
             {
                 throw new InvalidDataException($"Could not read value from {FQTN}!");
             }
+
             switch (field.DataType)
             {
                 case DataType.Binary:
@@ -216,30 +230,28 @@ namespace Cave.Data.Sql
                 case DataType.User:
                 case DataType.Unknown:
                     throw new NotSupportedException($"Sum() is not supported for field {field}!");
-
                 case DataType.TimeSpan:
                     switch (field.DateTimeType)
                     {
                         case DateTimeType.BigIntHumanReadable:
                         case DateTimeType.Undefined:
                             throw new NotSupportedException($"Sum() is not supported for field {field}!");
-
                         case DateTimeType.BigIntTicks:
                             result = Convert.ToDouble(value) / TimeSpan.TicksPerSecond;
                             break;
-
                         case DateTimeType.DecimalSeconds:
                         case DateTimeType.Native:
                         case DateTimeType.DoubleSeconds:
                             result = Convert.ToDouble(value);
                             break;
                     }
-                    break;
 
+                    break;
                 default:
                     result = Convert.ToDouble(value);
                     break;
             }
+
             return result;
         }
 
@@ -247,10 +259,10 @@ namespace Cave.Data.Sql
 
         #region Insert
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override Row Insert(Row row)
         {
-            var commandBuilder = new SqlCommandBuilder(sqlStorage);
+            var commandBuilder = new SqlCommandBuilder(Storage);
             CreateInsert(commandBuilder, row, true);
             CreateLastInsertedRowCommand(commandBuilder, row);
             var result = QueryRow(commandBuilder);
@@ -262,10 +274,10 @@ namespace Cave.Data.Sql
 
         #region Replace
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Replace(Row row)
         {
-            var commandBuilder = new SqlCommandBuilder(sqlStorage);
+            var commandBuilder = new SqlCommandBuilder(Storage);
             CreateReplace(commandBuilder, row, true);
             Execute(commandBuilder);
             IncreaseSequenceNumber();
@@ -275,10 +287,10 @@ namespace Cave.Data.Sql
 
         #region Clear
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Clear()
         {
-            sqlStorage.Execute(database: Database.Name, table: Name, cmd: "DELETE FROM " + FQTN);
+            Storage.Execute(database: Database.Name, table: Name, cmd: "DELETE FROM " + FQTN);
             IncreaseSequenceNumber();
         }
 
@@ -286,7 +298,7 @@ namespace Cave.Data.Sql
 
         #region Count
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override long Count(Search search = default, ResultOption resultOption = default)
         {
             if (search == null)
@@ -299,17 +311,18 @@ namespace Cave.Data.Sql
                 resultOption = ResultOption.None;
             }
 
-            SqlSearch s = ToSqlSearch(search);
+            var s = ToSqlSearch(search);
             if (resultOption != ResultOption.None)
             {
                 return SqlCount(s, resultOption);
             }
 
-            var value = QueryValue(new SqlCmd("SELECT COUNT(*) FROM " + FQTN + " WHERE " + s.ToString(), s.Parameters.ToArray()));
+            var value = QueryValue(new SqlCmd("SELECT COUNT(*) FROM " + FQTN + " WHERE " + s, s.Parameters.ToArray()));
             if (value == null)
             {
                 throw new InvalidDataException($"Could not read row count from {FQTN}!");
             }
+
             return Convert.ToInt64(value);
         }
 
@@ -317,7 +330,7 @@ namespace Cave.Data.Sql
 
         #region Exist
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override bool Exist(Search search)
         {
             if (search == null)
@@ -325,26 +338,28 @@ namespace Cave.Data.Sql
                 search = Search.None;
             }
 
-            SqlSearch s = ToSqlSearch(search);
-            var query = "SELECT DISTINCT 1 FROM " + FQTN + " WHERE " + s.ToString();
+            var s = ToSqlSearch(search);
+            var query = "SELECT DISTINCT 1 FROM " + FQTN + " WHERE " + s;
             RowLayout layout = null;
             return Query(new SqlCmd(query, s.Parameters.ToArray()), ref layout).Count > 0;
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override bool Exist(Row row)
         {
-            Search search = Search.None;
-            int i = 0;
+            var search = Search.None;
+            var i = 0;
             foreach (var field in Layout.Identifier)
             {
                 i++;
                 search &= Search.FieldEquals(field.Name, row[field.Index]);
             }
+
             if (i < 1)
             {
                 throw new Exception("At least one identifier field needed!");
             }
+
             return Exist(search);
         }
 
@@ -352,14 +367,14 @@ namespace Cave.Data.Sql
 
         #region GetRows()
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override IList<Row> GetRows() => Query("SELECT * FROM " + FQTN);
 
         #endregion
 
         #region GetRows(Search, ResultOption)
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override IList<Row> GetRows(Search search = null, ResultOption resultOption = null)
         {
             if (search == null)
@@ -372,7 +387,7 @@ namespace Cave.Data.Sql
                 resultOption = ResultOption.None;
             }
 
-            SqlSearch s = ToSqlSearch(search);
+            var s = ToSqlSearch(search);
             s.CheckFieldsPresent(resultOption);
             return SqlGetRows(s, resultOption);
         }
@@ -381,28 +396,28 @@ namespace Cave.Data.Sql
 
         #region GetRowAt(index)
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override Row GetRowAt(int index) => GetRow(Search.None, ResultOption.Limit(1) + ResultOption.Offset(index));
 
         #endregion
 
         #region GetRow(Search, ResultOption)
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override Row GetRow(Search search = null, ResultOption resultOption = null) => GetRows(search, resultOption).Single();
 
         #endregion
 
         #region Delete(Row)
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Delete(Row row)
         {
-            var commandBuilder = new SqlCommandBuilder(sqlStorage);
+            var commandBuilder = new SqlCommandBuilder(Storage);
             commandBuilder.Append("DELETE FROM ");
             commandBuilder.Append(FQTN);
             AppendWhereClause(commandBuilder, row);
-            sqlStorage.Execute(database: Database.Name, table: Name, cmd: commandBuilder);
+            Storage.Execute(database: Database.Name, table: Name, cmd: commandBuilder);
             IncreaseSequenceNumber();
         }
 
@@ -410,11 +425,11 @@ namespace Cave.Data.Sql
 
         #region TryDelete
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override int TryDelete(Search search)
         {
-            SqlSearch s = ToSqlSearch(search);
-            var command = "DELETE FROM " + FQTN + " WHERE " + s.ToString();
+            var s = ToSqlSearch(search);
+            var command = "DELETE FROM " + FQTN + " WHERE " + s;
             var result = Execute(new SqlCmd(command, s.Parameters.ToArray()));
             IncreaseSequenceNumber();
             return result;
@@ -424,10 +439,10 @@ namespace Cave.Data.Sql
 
         #region Update
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Update(Row row)
         {
-            var commandBuilder = new SqlCommandBuilder(sqlStorage);
+            var commandBuilder = new SqlCommandBuilder(Storage);
             CreateUpdate(commandBuilder, row, true);
             Execute(commandBuilder);
             IncreaseSequenceNumber();
@@ -437,17 +452,13 @@ namespace Cave.Data.Sql
 
         #region QueryRow(SqlCmd cmd, ...)
 
-        /// <summary>
-        /// Queries for a dataset (selected fields, one row).
-        /// </summary>
+        /// <summary>Queries for a dataset (selected fields, one row).</summary>
         /// <param name="cmd">The database dependent sql statement.</param>
         /// <param name="layout">The expected schema layout (if unset the layout is returned).</param>
         /// <returns>The result row.</returns>
         public Row QueryRow(SqlCmd cmd, ref RowLayout layout) => Query(cmd, ref layout).Single();
 
-        /// <summary>
-        /// Queries for a dataset (selected fields, one row).
-        /// </summary>
+        /// <summary>Queries for a dataset (selected fields, one row).</summary>
         /// <param name="cmd">The database dependent sql statement.</param>
         /// <returns>The result row.</returns>
         public Row QueryRow(SqlCmd cmd)
@@ -460,9 +471,7 @@ namespace Cave.Data.Sql
 
         #region QueryValue(SqlCmd cmd, ...
 
-        /// <summary>
-        /// Querys a single value with a database dependent sql statement.
-        /// </summary>
+        /// <summary>Querys a single value with a database dependent sql statement.</summary>
         /// <param name="cmd">The database dependent sql statement.</param>
         /// <param name="value">The result.</param>
         /// <param name="fieldName">Name of the field (optional, only needed if multiple columns are returned).</param>
@@ -470,46 +479,35 @@ namespace Cave.Data.Sql
         /// <typeparam name="TValue">Result value type.</typeparam>
         public bool QueryValue<TValue>(SqlCmd cmd, out TValue value, string fieldName = null)
             where TValue : struct
-            => sqlStorage.QueryValue(cmd, out value, Database.Name, Name, fieldName);
+            => Storage.QueryValue(cmd, out value, Database.Name, Name, fieldName);
 
-        /// <summary>
-        /// Querys a single value with a database dependent sql statement.
-        /// </summary>
+        /// <summary>Querys a single value with a database dependent sql statement.</summary>
         /// <param name="cmd">The database dependent sql statement.</param>
         /// <param name="fieldName">Name of the field (optional, only needed if multiple columns are returned).</param>
         /// <returns>The result value or null.</returns>
         public object QueryValue(SqlCmd cmd, string fieldName = null)
-            => sqlStorage.QueryValue(cmd, Database.Name, Name, fieldName);
+            => Storage.QueryValue(cmd, Database.Name, Name, fieldName);
 
         #endregion
 
         #region Execute(SqlCmd cmd, ...)
 
-        /// <summary>
-        /// Executes a database dependent sql statement silently.
-        /// </summary>
+        /// <summary>Executes a database dependent sql statement silently.</summary>
         /// <param name="cmd">the database dependent sql statement.</param>
         /// <returns>Number of affected rows (if supported by the database).</returns>
-        public int Execute(SqlCmd cmd) => sqlStorage.Execute(cmd, Database.Name, Name);
+        public int Execute(SqlCmd cmd) => Storage.Execute(cmd, Database.Name, Name);
 
         #endregion
 
         #region Query(SqlCmd, ...)
 
-        /// <summary>
-        /// Queries for all matching datasets.
-        /// </summary>
+        /// <summary>Queries for all matching datasets.</summary>
         /// <param name="cmd">The database dependent sql statement.</param>
         /// <param name="layout">The expected schema layout (if unset the layout is returned).</param>
         /// <returns>The result rows.</returns>
-        public IList<Row> Query(SqlCmd cmd, ref RowLayout layout)
-        {
-            return sqlStorage.Query(cmd, ref layout, Database.Name, Name);
-        }
+        public IList<Row> Query(SqlCmd cmd, ref RowLayout layout) => Storage.Query(cmd, ref layout, Database.Name, Name);
 
-        /// <summary>
-        /// Queries for all matching datasets.
-        /// </summary>
+        /// <summary>Queries for all matching datasets.</summary>
         /// <param name="cmd">The database dependent sql statement.</param>
         /// <returns>The result rows.</returns>
         public IList<Row> Query(SqlCmd cmd)
@@ -522,7 +520,7 @@ namespace Cave.Data.Sql
 
         #region Commit
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override int Commit(IEnumerable<Transaction> transactions, TransactionFlags flags = TransactionFlags.Default)
         {
             try
@@ -544,61 +542,55 @@ namespace Cave.Data.Sql
 
         #region Maximum
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override TValue? Maximum<TValue>(string fieldName, Search search = null)
         {
             if (search == null)
             {
                 search = Search.None;
             }
-            SqlCommandBuilder command = new SqlCommandBuilder(sqlStorage);
+
+            var command = new SqlCommandBuilder(Storage);
             command.Append("SELECT MAX(");
-            command.Append(sqlStorage.EscapeFieldName(Layout[fieldName]));
+            command.Append(Storage.EscapeFieldName(Layout[fieldName]));
             command.Append(") FROM ");
             command.Append(FQTN);
             command.Append(" WHERE ");
             command.Append(ToSqlSearch(search).ToString());
-            var value = sqlStorage.QueryValue(database: Database.Name, table: Name, cmd: command);
-            return value == null ? (TValue?)null : (TValue)value;
+            var value = Storage.QueryValue(database: Database.Name, table: Name, cmd: command);
+            return value == null ? (TValue?) null : (TValue) value;
         }
 
         #endregion
 
         #region Minimum
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override TValue? Minimum<TValue>(string fieldName, Search search = null)
         {
             if (search == null)
             {
                 search = Search.None;
             }
-            SqlCommandBuilder command = new SqlCommandBuilder(sqlStorage);
+
+            var command = new SqlCommandBuilder(Storage);
             command.Append("SELECT MIN(");
-            command.Append(sqlStorage.EscapeFieldName(Layout[fieldName]));
+            command.Append(Storage.EscapeFieldName(Layout[fieldName]));
             command.Append(") FROM ");
             command.Append(FQTN);
             command.Append(" WHERE ");
             command.Append(ToSqlSearch(search).ToString());
-            var value = sqlStorage.QueryValue(database: Database.Name, table: Name, cmd: command);
-            return value == null ? (TValue?)null : (TValue)value;
+            var value = Storage.QueryValue(database: Database.Name, table: Name, cmd: command);
+            return value == null ? (TValue?) null : (TValue) value;
         }
 
         #endregion
 
         #endregion
 
-        /// <summary>
-        /// Gets the name of the table.
-        /// </summary>
-        /// <returns>Database.Tablename.</returns>
-        public override string ToString() => sqlStorage.FQTN(Database.Name, Name);
-
         #region protected sql92 find functions
 
-        /// <summary>
-        /// Searches for grouped datasets and returns the id of the first occurence (sql handles this differently).
-        /// </summary>
+        /// <summary>Searches for grouped datasets and returns the id of the first occurence (sql handles this differently).</summary>
         /// <param name="search">Search definition.</param>
         /// <param name="option">Options for the search.</param>
         /// <returns>Returns a list of rows matching the specified criteria.</returns>
@@ -607,7 +599,7 @@ namespace Cave.Data.Sql
             RowLayout layout;
             var command = new StringBuilder();
             command.Append("SELECT ");
-            if (sqlStorage.SupportsAllFieldsGroupBy)
+            if (Storage.SupportsAllFieldsGroupBy)
             {
                 layout = Layout;
                 command.Append("*");
@@ -623,17 +615,16 @@ namespace Cave.Data.Sql
                         command.Append(", ");
                     }
 
-                    command.Append(sqlStorage.EscapeFieldName(Layout[fieldName]));
+                    command.Append(Storage.EscapeFieldName(Layout[fieldName]));
                 }
             }
+
             command.Append(" FROM ");
             command.Append(FQTN);
             command.Append(" WHERE ");
-
-            command.Append(search.ToString());
-
+            command.Append(search);
             var groupCount = 0;
-            foreach (ResultOption o in option.Filter(ResultOptionMode.Group))
+            foreach (var o in option.Filter(ResultOptionMode.Group))
             {
                 if (groupCount++ == 0)
                 {
@@ -643,14 +634,14 @@ namespace Cave.Data.Sql
                 {
                     command.Append(",");
                 }
-                command.Append(sqlStorage.EscapeFieldName(Layout[o.Parameter]));
+
+                command.Append(Storage.EscapeFieldName(Layout[o.Parameter]));
             }
+
             return Query(new SqlCmd(command.ToString(), search.Parameters.ToArray()), ref layout);
         }
 
-        /// <summary>
-        /// Searches for grouped datasets and returns the number of items found.
-        /// </summary>
+        /// <summary>Searches for grouped datasets and returns the number of items found.</summary>
         /// <param name="search">Search definition.</param>
         /// <param name="option">Options for the search.</param>
         /// <returns>Numer of items found.</returns>
@@ -668,7 +659,7 @@ namespace Cave.Data.Sql
 
             var command = new StringBuilder();
             command.Append("SELECT COUNT(");
-            if (sqlStorage.SupportsAllFieldsGroupBy)
+            if (Storage.SupportsAllFieldsGroupBy)
             {
                 command.Append("*");
             }
@@ -682,22 +673,21 @@ namespace Cave.Data.Sql
                         command.Append(", ");
                     }
 
-                    command.Append(sqlStorage.EscapeFieldName(Layout[fieldName]));
+                    command.Append(Storage.EscapeFieldName(Layout[fieldName]));
                 }
             }
+
             command.Append(") FROM ");
             command.Append(FQTN);
             command.Append(" WHERE ");
-
-            command.Append(search.ToString());
-
+            command.Append(search);
             if (option.Contains(ResultOptionMode.Limit) | option.Contains(ResultOptionMode.Offset))
             {
-                throw new InvalidOperationException(string.Format("Cannot use Option.Group and Option.Limit/Offset at once!"));
+                throw new InvalidOperationException("Cannot use Option.Group and Option.Limit/Offset at once!");
             }
 
             var groupCount = 0;
-            foreach (ResultOption o in option.Filter(ResultOptionMode.Group))
+            foreach (var o in option.Filter(ResultOptionMode.Group))
             {
                 if (groupCount++ == 0)
                 {
@@ -707,7 +697,8 @@ namespace Cave.Data.Sql
                 {
                     command.Append(",");
                 }
-                command.Append(sqlStorage.EscapeFieldName(Layout[o.Parameter]));
+
+                command.Append(Storage.EscapeFieldName(Layout[o.Parameter]));
             }
 
             var value = QueryValue(new SqlCmd(command.ToString(), search.Parameters.ToArray()));
@@ -715,12 +706,11 @@ namespace Cave.Data.Sql
             {
                 throw new InvalidDataException($"Could not read value from {FQTN}!");
             }
+
             return Convert.ToInt64(value);
         }
 
-        /// <summary>
-        /// Searches the table for rows with given field value combinations.
-        /// </summary>
+        /// <summary>Searches the table for rows with given field value combinations.</summary>
         /// <param name="search">The search to run.</param>
         /// <param name="option">Options for the search and the result set.</param>
         /// <returns>Returns number of rows found.</returns>
@@ -740,12 +730,13 @@ namespace Cave.Data.Sql
             {
                 return SqlCountGroupBy(search, option);
             }
+
             var command = new StringBuilder();
             command.Append("SELECT COUNT(*) FROM ");
             command.Append(FQTN);
             command.Append(" WHERE ");
-            command.Append(search.ToString());
-            foreach (ResultOption o in option.ToArray())
+            command.Append(search);
+            foreach (var o in option.ToArray())
             {
                 switch (o.Mode)
                 {
@@ -754,20 +745,20 @@ namespace Cave.Data.Sql
                     case ResultOptionMode.None:
                         break;
                     default:
-                        throw new InvalidOperationException(string.Format("ResultOptionMode {0} not supported!", o.Mode));
+                        throw new InvalidOperationException($"ResultOptionMode {o.Mode} not supported!");
                 }
             }
-            var value = sqlStorage.QueryValue(new SqlCmd(command.ToString(), search.Parameters.ToArray()));
+
+            var value = Storage.QueryValue(new SqlCmd(command.ToString(), search.Parameters.ToArray()));
             if (value == null)
             {
                 throw new InvalidDataException($"Could not read value from {FQTN}!");
             }
+
             return Convert.ToInt64(value);
         }
 
-        /// <summary>
-        /// Searches the table for rows with given field value combinations.
-        /// </summary>
+        /// <summary>Searches the table for rows with given field value combinations.</summary>
         /// <param name="search">The search to run.</param>
         /// <param name="option">Options for the search and the result set.</param>
         /// <returns>Returns the ID of the row found or -1.</returns>
@@ -777,15 +768,14 @@ namespace Cave.Data.Sql
             {
                 return SqlGetGroupRows(search, option);
             }
+
             var command = new StringBuilder();
             command.Append("SELECT * FROM ");
             command.Append(FQTN);
             command.Append(" WHERE ");
-
-            command.Append(search.ToString());
-
+            command.Append(search);
             var orderCount = 0;
-            foreach (ResultOption o in option.Filter(ResultOptionMode.SortAsc, ResultOptionMode.SortDesc))
+            foreach (var o in option.Filter(ResultOptionMode.SortAsc, ResultOptionMode.SortDesc))
             {
                 if (orderCount++ == 0)
                 {
@@ -795,7 +785,8 @@ namespace Cave.Data.Sql
                 {
                     command.Append(",");
                 }
-                command.Append(sqlStorage.EscapeFieldName(Layout[o.Parameter]));
+
+                command.Append(Storage.EscapeFieldName(Layout[o.Parameter]));
                 if (o.Mode == ResultOptionMode.SortAsc)
                 {
                     command.Append(" ASC");
@@ -807,35 +798,35 @@ namespace Cave.Data.Sql
             }
 
             var limit = 0;
-            foreach (ResultOption o in option.Filter(ResultOptionMode.Limit))
+            foreach (var o in option.Filter(ResultOptionMode.Limit))
             {
                 if (limit++ > 0)
                 {
-                    throw new InvalidOperationException(string.Format("Cannot set two different limits!"));
+                    throw new InvalidOperationException("Cannot set two different limits!");
                 }
 
                 command.Append(" LIMIT " + o.Parameter);
             }
+
             var offset = 0;
-            foreach (ResultOption o in option.Filter(ResultOptionMode.Offset))
+            foreach (var o in option.Filter(ResultOptionMode.Offset))
             {
                 if (offset++ > 0)
                 {
-                    throw new InvalidOperationException(string.Format("Cannot set two different offsets!"));
+                    throw new InvalidOperationException("Cannot set two different offsets!");
                 }
 
                 command.Append(" OFFSET " + o.Parameter);
             }
+
             var layout = Layout;
             return Query(new SqlCmd(command.ToString(), search.Parameters.ToArray()), ref layout);
         }
 
-        /// <summary>
-        /// Converts the specified search to a <see cref="SqlSearch"/>.
-        /// </summary>
+        /// <summary>Converts the specified search to a <see cref="SqlSearch" />.</summary>
         /// <param name="search">Search definition.</param>
-        /// <returns>Returns a new <see cref="SqlSearch"/> instance.</returns>
-        protected SqlSearch ToSqlSearch(Search search) => new SqlSearch(sqlStorage, Layout, search);
+        /// <returns>Returns a new <see cref="SqlSearch" /> instance.</returns>
+        protected SqlSearch ToSqlSearch(Search search) => new SqlSearch(Storage, Layout, search);
 
         #endregion
 
@@ -852,7 +843,6 @@ namespace Cave.Data.Sql
             commandBuilder.Append(" (");
             var parameterBuilder = new StringBuilder();
             var firstCommand = true;
-
             if (Layout.FieldCount != row.FieldCount)
             {
                 throw new ArgumentException("Invalid fieldcount at row.", nameof(row));
@@ -860,7 +850,7 @@ namespace Cave.Data.Sql
 
             for (var i = 0; i < Layout.FieldCount; i++)
             {
-                IFieldProperties field = Layout[i];
+                var field = Layout[i];
                 if (field.Flags.HasFlag(FieldFlags.AutoIncrement))
                 {
                     continue;
@@ -875,16 +865,16 @@ namespace Cave.Data.Sql
                     commandBuilder.Append(", ");
                     parameterBuilder.Append(", ");
                 }
-                commandBuilder.Append(sqlStorage.EscapeFieldName(field));
 
-                var value = sqlStorage.GetDatabaseValue(field, row[i]);
+                commandBuilder.Append(Storage.EscapeFieldName(field));
+                var value = Storage.GetDatabaseValue(field, row[i]);
                 if (value == null)
                 {
                     parameterBuilder.Append("NULL");
                 }
                 else if (!useParameters)
                 {
-                    parameterBuilder.Append(sqlStorage.EscapeFieldValue(Layout[i], value));
+                    parameterBuilder.Append(Storage.EscapeFieldValue(Layout[i], value));
                 }
                 else
                 {
@@ -921,7 +911,7 @@ namespace Cave.Data.Sql
                     commandBuilder.Append(",");
                 }
 
-                commandBuilder.Append(sqlStorage.EscapeFieldName(field));
+                commandBuilder.Append(Storage.EscapeFieldName(field));
                 var value = row[i];
                 if (value == null)
                 {
@@ -930,14 +920,14 @@ namespace Cave.Data.Sql
                 else
                 {
                     commandBuilder.Append("=");
-                    value = sqlStorage.GetDatabaseValue(Layout[i], value);
+                    value = Storage.GetDatabaseValue(Layout[i], value);
                     if (useParameters)
                     {
                         commandBuilder.CreateAndAddParameter(value);
                     }
                     else
                     {
-                        commandBuilder.Append(sqlStorage.EscapeFieldValue(Layout[i], value));
+                        commandBuilder.Append(Storage.EscapeFieldValue(Layout[i], value));
                     }
                 }
             }
@@ -969,41 +959,22 @@ namespace Cave.Data.Sql
                 }
                 else
                 {
-                    value = sqlStorage.GetDatabaseValue(Layout[i], value);
+                    value = Storage.GetDatabaseValue(Layout[i], value);
                     if (useParameters)
                     {
                         cb.CreateAndAddParameter(value);
                     }
                     else
                     {
-                        cb.Append(sqlStorage.EscapeFieldValue(Layout[i], value));
+                        cb.Append(Storage.EscapeFieldValue(Layout[i], value));
                     }
                 }
             }
+
             cb.AppendLine(");");
         }
 
         #endregion
-
-        /// <summary>
-        /// Gets the command to retrieve the last inserted row.
-        /// </summary>
-        /// <param name="commandBuilder">The command builder to append to.</param>
-        /// <param name="row">The row to retrieve.</param>
-        protected abstract void CreateLastInsertedRowCommand(SqlCommandBuilder commandBuilder, Row row);
-
-        /// <summary>
-        /// Retrieves the full layout information for this table.
-        /// </summary>
-        /// <param name="database">Database name.</param>
-        /// <param name="table">Table name.</param>
-        /// <returns>Returns a new <see cref="RowLayout"/> instance.</returns>
-        protected virtual RowLayout QueryLayout(string database, string table)
-        {
-            RowLayout layout = null;
-            sqlStorage.Query($"SELECT * FROM {sqlStorage.FQTN(database, table)} WHERE 1 = 0", ref layout, database, table);
-            return layout;
-        }
 
         #region private functions
 
@@ -1012,23 +983,23 @@ namespace Cave.Data.Sql
             foreach (var field in Layout.Identifier)
             {
                 commandBuilder.Append(" WHERE ");
-                commandBuilder.Append(sqlStorage.EscapeFieldName(field));
+                commandBuilder.Append(Storage.EscapeFieldName(field));
                 commandBuilder.Append("=");
-                commandBuilder.Append(sqlStorage.GetDatabaseValue(field, row[field.Index]).ToString());
+                commandBuilder.Append(Storage.GetDatabaseValue(field, row[field.Index]).ToString());
             }
         }
 
         int InternalCommit(IEnumerable<Transaction> transactions, bool useParameters)
         {
-            int n = 0;
-            bool complete = false;
+            var n = 0;
+            var complete = false;
             var iterator = transactions.GetEnumerator();
             Task execute = null;
             while (!complete && iterator.MoveNext())
             {
-                var commandBuilder = new SqlCommandBuilder(sqlStorage);
+                var commandBuilder = new SqlCommandBuilder(Storage);
                 commandBuilder.AppendLine("START TRANSACTION;");
-                int i = 0;
+                var i = 0;
                 complete = true;
                 do
                 {
@@ -1036,30 +1007,37 @@ namespace Cave.Data.Sql
                     switch (transaction.Type)
                     {
                         #region TransactionType.Inserted
+
                         case TransactionType.Inserted:
                         {
                             CreateInsert(commandBuilder, transaction.Row, useParameters);
                         }
-                        break;
+                            break;
+
                         #endregion
 
                         #region TransactionType.Replaced
+
                         case TransactionType.Replaced:
                         {
                             CreateReplace(commandBuilder, transaction.Row, useParameters);
                         }
-                        break;
+                            break;
+
                         #endregion
 
                         #region TransactionType.Updated
+
                         case TransactionType.Updated:
                         {
                             CreateUpdate(commandBuilder, transaction.Row, useParameters);
                         }
-                        break;
+                            break;
+
                         #endregion
 
                         #region TransactionType.Deleted
+
                         case TransactionType.Deleted:
                         {
                             commandBuilder.Append("DELETE FROM ");
@@ -1067,18 +1045,21 @@ namespace Cave.Data.Sql
                             AppendWhereClause(commandBuilder, transaction.Row);
                             commandBuilder.AppendLine(";");
                         }
-                        break;
+                            break;
+
                         #endregion
 
                         default: throw new NotImplementedException();
                     }
-                    if (++i >= sqlStorage.TransactionRowCount)
+
+                    if (++i >= Storage.TransactionRowCount)
                     {
                         complete = false;
                         break;
                     }
                 }
                 while (iterator.MoveNext());
+
                 commandBuilder.AppendLine("COMMIT;");
                 try
                 {
@@ -1088,7 +1069,8 @@ namespace Cave.Data.Sql
                         IncreaseSequenceNumber();
                         Trace.TraceInformation("{0} transactions committed to {1}.", n, FQTN);
                     }
-                    execute = Task.Factory.StartNew((cmd) => Execute((SqlCmd)cmd), commandBuilder);
+
+                    execute = Task.Factory.StartNew(cmd => Execute((SqlCommandBuilder)cmd), commandBuilder);
                     n += i;
                 }
                 catch (Exception ex)
@@ -1098,11 +1080,13 @@ namespace Cave.Data.Sql
                     throw;
                 }
             }
+
             execute?.Wait();
             Trace.TraceInformation("{0} transactions committed to {1}.", n, FQTN);
             IncreaseSequenceNumber();
             return n;
         }
+
         #endregion
     }
 }

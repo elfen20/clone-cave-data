@@ -6,18 +6,39 @@ using Cave.IO;
 
 namespace Cave.Data
 {
-    /// <summary>
-    /// Provides writing of csv files using a struct or class.
-    /// </summary>
+    /// <summary>Provides writing of csv files using a struct or class.</summary>
     public sealed class CsvWriter : IDisposable
     {
         DataWriter writer;
 
+        #region IDisposable Support
+
+        /// <summary>Releases unmanaged and - optionally - managed resources.</summary>
+        /// <param name="disposing">
+        ///     <c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only
+        ///     unmanaged resources.
+        /// </param>
+        void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                if (CloseBaseStream)
+                {
+                    if (writer != null)
+                    {
+                        writer.BaseStream.Dispose();
+                    }
+                }
+
+                writer = null;
+            }
+        }
+
+        #endregion
+
         #region constructor
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CsvWriter"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="CsvWriter" /> class.</summary>
         /// <param name="layout">The table layout.</param>
         /// <param name="fileName">Filename to write to.</param>
         /// <param name="properties">Extended properties.</param>
@@ -26,20 +47,17 @@ namespace Cave.Data
         {
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="CsvWriter"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="CsvWriter" /> class.</summary>
         /// <param name="properties">Extended properties.</param>
         /// <param name="layout">The table layout.</param>
         /// <param name="stream">The stream.</param>
         /// <param name="closeBaseStream">if set to <c>true</c> [close base stream on close].</param>
         public CsvWriter(RowLayout layout, Stream stream, CsvProperties properties = default, bool closeBaseStream = false)
         {
-            BaseStream = stream ?? throw new ArgumentNullException(nameof(Stream));
+            BaseStream = stream ?? throw new ArgumentNullException(nameof(stream));
             Layout = layout ?? throw new ArgumentNullException(nameof(layout));
             Properties = properties.Valid ? properties : CsvProperties.Default;
             CloseBaseStream = closeBaseStream;
-
             writer = new DataWriter(stream, Properties.Encoding, Properties.NewLineMode);
             if (Properties.NoHeader)
             {
@@ -65,6 +83,7 @@ namespace Cave.Data
                     writer.Write(Properties.StringMarker.Value);
                 }
             }
+
             writer.WriteLine();
             writer.Flush();
         }
@@ -73,19 +92,13 @@ namespace Cave.Data
 
         #region properties
 
-        /// <summary>
-        /// Gets the underlying base stream.
-        /// </summary>
+        /// <summary>Gets the underlying base stream.</summary>
         public Stream BaseStream { get; }
 
-        /// <summary>
-        /// Gets the <see cref="CsvProperties"/>.
-        /// </summary>
+        /// <summary>Gets the <see cref="CsvProperties" />.</summary>
         public CsvProperties Properties { get; }
 
-        /// <summary>
-        /// Gets the row layout.
-        /// </summary>
+        /// <summary>Gets the row layout.</summary>
         public RowLayout Layout { get; }
 
         /// <summary>Gets a value indicating whether [close base stream on close].</summary>
@@ -96,9 +109,7 @@ namespace Cave.Data
 
         #region public static functions
 
-        /// <summary>
-        /// Creates a string representation of the specified row.
-        /// </summary>
+        /// <summary>Creates a string representation of the specified row.</summary>
         /// <typeparam name="TStruct">The structure type.</typeparam>
         /// <param name="row">The row.</param>
         /// <param name="provider">The format provider used for each field.</param>
@@ -110,9 +121,7 @@ namespace Cave.Data
             return RowToString(CsvProperties.Default, layout, layout.GetRow(row));
         }
 
-        /// <summary>
-        /// Creates a string representation of the specified row.
-        /// </summary>
+        /// <summary>Creates a string representation of the specified row.</summary>
         /// <param name="properties">The csv properties.</param>
         /// <param name="layout">The row layout.</param>
         /// <param name="row">The row.</param>
@@ -135,7 +144,7 @@ namespace Cave.Data
                     {
                         case DataType.Binary:
                         {
-                            var str = Base64.NoPadding.Encode((byte[])values[i]);
+                            var str = Base64.NoPadding.Encode((byte[]) values[i]);
                             result.Append(str);
                             break;
                         }
@@ -160,7 +169,7 @@ namespace Cave.Data
                         }
                         case DataType.Char:
                         {
-                            if (!properties.SaveDefaultValues && values[i].Equals((char)0))
+                            if (!properties.SaveDefaultValues && values[i].Equals((char) 0))
                             {
                                 break;
                             }
@@ -176,7 +185,7 @@ namespace Cave.Data
                                 break;
                             }
 
-                            var value = (decimal)values[i];
+                            var value = (decimal) values[i];
                             result.Append(value.ToString(properties.Format));
                             break;
                         }
@@ -187,7 +196,7 @@ namespace Cave.Data
                                 break;
                             }
 
-                            var value = (float)values[i];
+                            var value = (float) values[i];
                             result.Append(value.ToString("R", properties.Format));
                             break;
                         }
@@ -198,7 +207,7 @@ namespace Cave.Data
                                 break;
                             }
 
-                            var value = (double)values[i];
+                            var value = (double) values[i];
                             result.Append(value.ToString("R", properties.Format));
                             break;
                         }
@@ -223,12 +232,13 @@ namespace Cave.Data
                             string str;
                             if (properties.DateTimeFormat != null)
                             {
-                                str = ((DateTime)values[i]).ToString(properties.DateTimeFormat, properties.Format);
+                                str = ((DateTime) values[i]).ToString(properties.DateTimeFormat, properties.Format);
                             }
                             else
                             {
                                 str = field.GetString(values[i], $"{properties.StringMarker}", properties.Format);
                             }
+
                             result.Append(str);
                             break;
                         }
@@ -240,13 +250,14 @@ namespace Cave.Data
                                 break;
                             }
 
-                            var str = (values[i] == null) ? string.Empty : values[i].ToString();
+                            var str = values[i] == null ? string.Empty : values[i].ToString();
                             str = str.EscapeUtf8();
                             if (properties.StringMarker.HasValue)
                             {
                                 str = str.Replace($"{properties.StringMarker}", $"{properties.StringMarker}{properties.StringMarker}");
                                 result.Append(properties.StringMarker);
                             }
+
                             if (str.Length == 0)
                             {
                                 result.Append(" ");
@@ -270,6 +281,7 @@ namespace Cave.Data
                                     }
                                 }
                             }
+
                             if (properties.StringMarker.HasValue)
                             {
                                 result.Append(properties.StringMarker);
@@ -289,16 +301,15 @@ namespace Cave.Data
                             break;
                         }
                         default:
-                            throw new NotImplementedException(string.Format("DataType {0} is not implemented!", layout[i].DataType));
+                            throw new NotImplementedException($"DataType {layout[i].DataType} is not implemented!");
                     }
                 }
             }
+
             return result.ToString();
         }
 
-        /// <summary>
-        /// Creates a new csv file with the specified name and writes the whole table.
-        /// </summary>
+        /// <summary>Creates a new csv file with the specified name and writes the whole table.</summary>
         /// <param name="table">Table to write to the csv file.</param>
         /// <param name="fileName">File name of the csv file.</param>
         /// <param name="properties">Properties of the csv file.</param>
@@ -306,7 +317,7 @@ namespace Cave.Data
         {
             if (table == null)
             {
-                throw new ArgumentNullException("Table");
+                throw new ArgumentNullException(nameof(table));
             }
 
             var writer = new CsvWriter(table.Layout, fileName, properties);
@@ -320,9 +331,7 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>
-        /// Creates a new csv file with the specified name and writes the whole table.
-        /// </summary>
+        /// <summary>Creates a new csv file with the specified name and writes the whole table.</summary>
         /// <param name="table">Table to write to the csv file.</param>
         /// <param name="stream">The stream to write to.</param>
         /// <param name="properties">Properties of the csv file.</param>
@@ -330,7 +339,7 @@ namespace Cave.Data
         {
             if (table == null)
             {
-                throw new ArgumentNullException("Table");
+                throw new ArgumentNullException(nameof(table));
             }
 
             var writer = new CsvWriter(table.Layout, stream, properties);
@@ -344,9 +353,7 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>
-        /// Creates a new csv file with the specified name and writes the whole table.
-        /// </summary>
+        /// <summary>Creates a new csv file with the specified name and writes the whole table.</summary>
         /// <param name="rows">Rows to write to the csv file.</param>
         /// <param name="fileName">File name of the csv file.</param>
         /// <param name="properties">Properties of the csv file.</param>
@@ -366,9 +373,7 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>
-        /// Creates a new csv file with the specified name and writes the whole table.
-        /// </summary>
+        /// <summary>Creates a new csv file with the specified name and writes the whole table.</summary>
         /// <param name="rows">Table to write to the csv file.</param>
         /// <param name="fileName">File name of the csv file.</param>
         /// <param name="properties">Properties of the csv file.</param>
@@ -392,25 +397,19 @@ namespace Cave.Data
 
         #region instance functions
 
-        /// <summary>
-        /// Writes a row to the file.
-        /// </summary>
+        /// <summary>Writes a row to the file.</summary>
         /// <param name="row">The row to write.</param>
         /// <typeparam name="TStruct">Structure type.</typeparam>
         public void Write<TStruct>(TStruct row)
             where TStruct : struct
             => WriteRow(new Row(Layout, Layout.GetValues(row), false));
 
-        /// <summary>
-        /// Writes a row to the file.
-        /// </summary>
+        /// <summary>Writes a row to the file.</summary>
         /// <param name="row">Row to write.</param>
         public void WriteRow(Row row)
             => writer.WriteLine(RowToString(Properties, Layout, row));
 
-        /// <summary>
-        /// Writes a number of rows to the file.
-        /// </summary>
+        /// <summary>Writes a number of rows to the file.</summary>
         /// <param name="table">Table to write.</param>
         /// <typeparam name="TStruct">Structure type.</typeparam>
         public void Write<TStruct>(IEnumerable<TStruct> table)
@@ -418,52 +417,46 @@ namespace Cave.Data
         {
             if (table == null)
             {
-                throw new ArgumentNullException(nameof(Table));
+                throw new ArgumentNullException(nameof(table));
             }
 
-            foreach (TStruct row in table)
+            foreach (var row in table)
             {
                 Write(row);
             }
         }
 
-        /// <summary>
-        /// Writes a number of rows to the file.
-        /// </summary>
+        /// <summary>Writes a number of rows to the file.</summary>
         /// <param name="table">Table to write.</param>
         public void WriteRows(IEnumerable<Row> table)
         {
             if (table == null)
             {
-                throw new ArgumentNullException(nameof(Table));
+                throw new ArgumentNullException(nameof(table));
             }
 
-            foreach (Row row in table)
+            foreach (var row in table)
             {
                 WriteRow(row);
             }
         }
 
-        /// <summary>
-        /// Writes a full table of rows to the file.
-        /// </summary>
+        /// <summary>Writes a full table of rows to the file.</summary>
         /// <param name="table">Table to write.</param>
         public void Write(ITable table)
         {
             if (table == null)
             {
-                throw new ArgumentNullException(nameof(Table));
+                throw new ArgumentNullException(nameof(table));
             }
 
-            foreach (Row row in table.GetRows())
+            foreach (var row in table.GetRows())
             {
                 WriteRow(row);
             }
         }
 
-        /// <summary>
-        /// Closes the writer and the stream.
-        /// </summary>
+        /// <summary>Closes the writer and the stream.</summary>
         public void Close()
         {
             if (CloseBaseStream)
@@ -474,32 +467,8 @@ namespace Cave.Data
             writer = null;
         }
 
-        /// <inheritdoc/>
-        public void Dispose()
-        {
-            Dispose(true);
-        }
-
-        #endregion
-
-        #region IDisposable Support
-
-        /// <summary>Releases unmanaged and - optionally - managed resources.</summary>
-        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
-        void Dispose(bool disposing)
-        {
-            if (disposing)
-            {
-                if (CloseBaseStream)
-                {
-                    if (writer != null)
-                    {
-                        writer.BaseStream.Dispose();
-                    }
-                }
-                writer = null;
-            }
-        }
+        /// <inheritdoc />
+        public void Dispose() { Dispose(true); }
 
         #endregion
     }

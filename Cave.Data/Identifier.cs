@@ -4,16 +4,12 @@ using System.Linq;
 
 namespace Cave.Data
 {
-    /// <summary>
-    /// Provides a database identifier (alias primary key).
-    /// </summary>
+    /// <summary>Provides a database identifier (alias primary key).</summary>
     public class Identifier : IEquatable<Identifier>
     {
         readonly object[] data;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Identifier"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="Identifier" /> class.</summary>
         /// <param name="row">Row to create to create identifier for.</param>
         /// <param name="layout">Table layout.</param>
         public Identifier(Row row, RowLayout layout)
@@ -28,41 +24,35 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Identifier"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="Identifier" /> class.</summary>
         /// <param name="row">Row to create to create identifier for.</param>
         /// <param name="fields">The fields to use for the itentifier.</param>
         public Identifier(Row row, params int[] fields) => data = GetData(row, fields);
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Identifier"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="Identifier" /> class.</summary>
         /// <param name="row">Row to create to create identifier for.</param>
         /// <param name="fields">The fields to use for the itentifier.</param>
         public Identifier(Row row, IEnumerable<int> fields) => data = GetData(row, fields);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
+        public bool Equals(Identifier other) => other.data.SequenceEqual(data);
+
+        /// <inheritdoc />
         public override string ToString() => data.Select(d => $"{d}").Join('|');
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override bool Equals(object obj) => obj is Identifier other ? Equals(other) : false;
 
-        /// <inheritdoc/>
-        public bool Equals(Identifier other)
-        {
-            return other.data.SequenceEqual(data);
-        }
-
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override int GetHashCode()
         {
-            int hash = 0;
+            var hash = 0;
             foreach (var item in data)
             {
                 hash ^= item?.GetHashCode() ?? 0;
                 hash = hash.BitwiseRotateLeft(1);
             }
+
             return hash;
         }
 
@@ -73,6 +63,7 @@ namespace Cave.Data
             {
                 throw new ArgumentOutOfRangeException(nameof(fields));
             }
+
             return result;
         }
     }

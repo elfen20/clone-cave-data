@@ -1,20 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
 namespace Cave.Data
 {
-    /// <summary>
-    /// Provides a memory based storage engine for databases, tables and rows.
-    /// </summary>
+    /// <summary>Provides a memory based storage engine for databases, tables and rows.</summary>
     public sealed class MemoryStorage : Storage
     {
         readonly Dictionary<string, IDatabase> databases = new Dictionary<string, IDatabase>();
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MemoryStorage"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="MemoryStorage" /> class.</summary>
         /// <param name="options">Options for the database.</param>
         public MemoryStorage(ConnectionFlags options = ConnectionFlags.None)
             : base("memory://", options)
@@ -25,10 +20,10 @@ namespace Cave.Data
         /// <value>The default memory storage.</value>
         public static MemoryStorage Default { get; } = new MemoryStorage();
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override bool SupportsNativeTransactions { get; } = false;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override string[] DatabaseNames
         {
             get
@@ -42,13 +37,10 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
-        public override bool HasDatabase(string database)
-        {
-            return databases.ContainsKey(database);
-        }
+        /// <inheritdoc />
+        public override bool HasDatabase(string database) => databases.ContainsKey(database);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override IDatabase GetDatabase(string database)
         {
             if (Closed)
@@ -64,7 +56,7 @@ namespace Cave.Data
             return databases[database];
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override IDatabase CreateDatabase(string databaseName)
         {
             if (Closed)
@@ -82,7 +74,7 @@ namespace Cave.Data
             return database;
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void DeleteDatabase(string database)
         {
             if (Closed)

@@ -7,20 +7,18 @@ using Cave.Collections.Generic;
 namespace Cave.Data.Sql
 {
     /// <summary>
-    /// Provides a class used during custom searches to keep up with all parameters to be
-    /// added during sql command generation.
+    ///     Provides a class used during custom searches to keep up with all parameters to be added during sql command
+    ///     generation.
     /// </summary>
     public sealed class SqlSearch
     {
-        readonly List<SqlParam> parameters = new List<SqlParam>();
         readonly IndexedSet<string> fieldNames = new IndexedSet<string>();
-        readonly SqlStorage storage;
         readonly RowLayout layout;
+        readonly List<SqlParam> parameters = new List<SqlParam>();
+        readonly SqlStorage storage;
         readonly string text;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="SqlSearch"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="SqlSearch" /> class.</summary>
         /// <param name="storage">Storage engine used.</param>
         /// <param name="layout">Layout of the table.</param>
         /// <param name="search">Search to perform.</param>
@@ -35,19 +33,13 @@ namespace Cave.Data.Sql
             text = sb.ToString();
         }
 
-        /// <summary>
-        /// Gets the field names.
-        /// </summary>
+        /// <summary>Gets the field names.</summary>
         public IList<string> FieldNames { get; }
 
-        /// <summary>
-        /// Gets the parameters.
-        /// </summary>
+        /// <summary>Gets the parameters.</summary>
         public IList<SqlParam> Parameters { get; }
 
-        /// <summary>
-        /// Checks whether all fields used at options are present and adds them if not.
-        /// </summary>
+        /// <summary>Checks whether all fields used at options are present and adds them if not.</summary>
         /// <param name="option">Options to check.</param>
         public void CheckFieldsPresent(ResultOption option)
         {
@@ -60,9 +52,7 @@ namespace Cave.Data.Sql
             }
         }
 
-        /// <summary>
-        /// Gets the query text as string.
-        /// </summary>
+        /// <summary>Gets the query text as string.</summary>
         /// <returns>A the database specific search string.</returns>
         public override string ToString() => text;
 
@@ -74,7 +64,6 @@ namespace Cave.Data.Sql
                 case SearchMode.None:
                     sb.Append("1=1");
                     return;
-
                 case SearchMode.In:
                 {
                     fieldNames.Include(search.FieldName);
@@ -88,7 +77,7 @@ namespace Cave.Data.Sql
 
                     sb.Append("IN (");
                     var i = 0;
-                    foreach (var value in (Set<object>)search.FieldValue)
+                    foreach (var value in (Set<object>) search.FieldValue)
                     {
                         if (i++ > 0)
                         {
@@ -99,10 +88,10 @@ namespace Cave.Data.Sql
                         var parameter = AddParameter(dbValue);
                         sb.Append(parameter.Name);
                     }
+
                     sb.Append(")");
                     return;
                 }
-
                 case SearchMode.Equals:
                 {
                     fieldNames.Include(search.FieldName);
@@ -120,9 +109,9 @@ namespace Cave.Data.Sql
                         var parameter = AddParameter(dbValue);
                         sb.Append($"{fieldName} {(search.Inverted ? "<>" : "=")} {parameter.Name}");
                     }
+
                     break;
                 }
-
                 case SearchMode.Like:
                 {
                     fieldNames.Include(search.FieldName);
@@ -140,9 +129,9 @@ namespace Cave.Data.Sql
                         var parameter = AddParameter(dbValue);
                         sb.Append($"{fieldName} {(search.Inverted ? "NOT " : string.Empty)}LIKE {parameter.Name}");
                     }
+
                     break;
                 }
-
                 case SearchMode.Greater:
                 {
                     fieldNames.Include(search.FieldName);
@@ -152,7 +141,6 @@ namespace Cave.Data.Sql
                     sb.Append(search.Inverted ? $"{fieldName}<={parameter.Name}" : $"{fieldName}>{parameter.Name}");
                     break;
                 }
-
                 case SearchMode.GreaterOrEqual:
                 {
                     fieldNames.Include(search.FieldName);
@@ -162,7 +150,6 @@ namespace Cave.Data.Sql
                     sb.Append(search.Inverted ? $"{fieldName}<{parameter.Name}" : $"{fieldName}>={parameter.Name}");
                     break;
                 }
-
                 case SearchMode.Smaller:
                 {
                     fieldNames.Include(search.FieldName);
@@ -172,7 +159,6 @@ namespace Cave.Data.Sql
                     sb.Append(search.Inverted ? $"{name}>={parameter.Name}" : $"{name}<{parameter.Name}");
                     break;
                 }
-
                 case SearchMode.SmallerOrEqual:
                 {
                     fieldNames.Include(search.FieldName);
@@ -182,13 +168,13 @@ namespace Cave.Data.Sql
                     sb.Append(search.Inverted ? $"{name}>{parameter.Name}" : $"{name}<={parameter.Name}");
                     break;
                 }
-
                 case SearchMode.And:
                 {
                     if (search.Inverted)
                     {
                         sb.Append("NOT ");
                     }
+
                     sb.Append("(");
                     Flatten(sb, search.SearchA);
                     sb.Append(" AND ");
@@ -196,13 +182,13 @@ namespace Cave.Data.Sql
                     sb.Append(")");
                     break;
                 }
-
                 case SearchMode.Or:
                 {
                     if (search.Inverted)
                     {
                         sb.Append("NOT ");
                     }
+
                     sb.Append("(");
                     Flatten(sb, search.SearchA);
                     sb.Append(" OR ");
@@ -210,20 +196,17 @@ namespace Cave.Data.Sql
                     sb.Append(")");
                     break;
                 }
-
                 default: throw new NotImplementedException($"Mode {search.Mode} not implemented!");
             }
         }
 
-        /// <summary>
-        /// Adds a new parameter.
-        /// </summary>
+        /// <summary>Adds a new parameter.</summary>
         /// <param name="databaseValue">The databaseValue of the parameter.</param>
-        /// <returns>A new <see cref="SqlParam"/> instance.</returns>
+        /// <returns>A new <see cref="SqlParam" /> instance.</returns>
         SqlParam AddParameter(object databaseValue)
         {
             var name = storage.SupportsNamedParameters ? $"{storage.ParameterPrefix}{Parameters.Count + 1}" : storage.ParameterPrefix;
-            SqlParam parameter = new SqlParam(name, databaseValue);
+            var parameter = new SqlParam(name, databaseValue);
             parameters.Add(parameter);
             return parameter;
         }

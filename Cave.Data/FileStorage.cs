@@ -4,19 +4,13 @@ using System.IO;
 
 namespace Cave.Data
 {
-    /// <summary>
-    /// Provides an abstract base class for file storage containing multiple databases.
-    /// </summary>
+    /// <summary>Provides an abstract base class for file storage containing multiple databases.</summary>
     public abstract class FileStorage : Storage, IDisposable
     {
         #region constructors
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="FileStorage"/> class.
-        /// <para>
-        /// Following formats are supported:<br />
-        /// file://server/relativepath<br />
-        /// file:absolutepath.<br /></para>
+        /// <summary>Initializes a new instance of the <see cref="FileStorage" /> class.
+        ///     <para>Following formats are supported:<br /> file://server/relativepath<br /> file:absolutepath.<br /></para>
         /// </summary>
         /// <param name="connectionString">ConnectionString of the storage.</param>
         /// <param name="options">The options.</param>
@@ -28,31 +22,33 @@ namespace Cave.Data
                 connectionString.Server = "localhost";
             }
 
-            if (connectionString.Server != "localhost" && connectionString.Server != ".")
+            if ((connectionString.Server != "localhost") && (connectionString.Server != "."))
             {
-                throw new NotSupportedException(string.Format("Remote access via server setting is not supported atm.! (use localhost or .)"));
+                throw new NotSupportedException("Remote access via server setting is not supported atm.! (use localhost or .)");
             }
+
             if (string.IsNullOrEmpty(connectionString.Location) || !connectionString.Location.Contains("/"))
             {
                 connectionString.Location = $"./{connectionString.Location}";
             }
+
             Folder = Path.GetFullPath(Path.GetDirectoryName(connectionString.Location));
-            if (!Directory.Exists(Folder.ToString()))
+            if (!Directory.Exists(Folder))
             {
                 try
                 {
-                    Directory.CreateDirectory(Folder.ToString());
+                    Directory.CreateDirectory(Folder);
                 }
                 catch (Exception ex)
                 {
-                    throw new DirectoryNotFoundException(string.Format("The directory '{0}' cannot be found or created!", connectionString.Location), ex);
+                    throw new DirectoryNotFoundException($"The directory '{connectionString.Location}' cannot be found or created!", ex);
                 }
             }
         }
 
         #endregion
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override string[] DatabaseNames
         {
             get
@@ -63,29 +59,31 @@ namespace Cave.Data
                 }
 
                 var result = new List<string>();
-                foreach (var directory in Directory.GetDirectories(Folder.ToString(), "*", SearchOption.TopDirectoryOnly))
+                foreach (var directory in Directory.GetDirectories(Folder, "*", SearchOption.TopDirectoryOnly))
                 {
                     result.Add(Path.GetFileName(directory));
                 }
+
                 return result.ToArray();
             }
         }
 
-        /// <summary>
-        /// Gets the base path used for the file storage.
-        /// </summary>
+        /// <summary>Gets the base path used for the file storage.</summary>
         public string Folder { get; private set; }
+
+        /// <inheritdoc />
+        public override string ToString() => $"file://{Folder}";
 
         #region IStorage functions
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void Close()
         {
             Folder = null;
             base.Close();
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override bool HasDatabase(string database)
         {
             if (Closed)
@@ -96,7 +94,7 @@ namespace Cave.Data
             return Directory.Exists(Path.Combine(Folder, database));
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override IDatabase CreateDatabase(string database)
         {
             if (Closed)
@@ -106,16 +104,16 @@ namespace Cave.Data
 
             try
             {
-                Directory.CreateDirectory((Folder + database).ToString());
+                Directory.CreateDirectory(Folder + database);
                 return GetDatabase(database);
             }
             catch (Exception ex)
             {
-                throw new InvalidOperationException(string.Format("The database {0} cannot be created!", database), ex);
+                throw new InvalidOperationException($"The database {database} cannot be created!", ex);
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override void DeleteDatabase(string database)
         {
             if (Closed)
@@ -128,12 +126,9 @@ namespace Cave.Data
 
         #endregion
 
-        /// <inheritdoc/>
-        public override string ToString() => $"file://{Folder}";
-
         #region IDisposable Member
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Dispose()
         {
             Dispose(true);
@@ -141,11 +136,12 @@ namespace Cave.Data
         }
 
         /// <summary>Releases unmanaged and - optionally - managed resources.</summary>
-        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
-        protected virtual void Dispose(bool disposing)
-        {
-            Close();
-        }
+        /// <param name="disposing">
+        ///     <c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only
+        ///     unmanaged resources.
+        /// </param>
+        protected virtual void Dispose(bool disposing) { Close(); }
+
         #endregion
     }
 }

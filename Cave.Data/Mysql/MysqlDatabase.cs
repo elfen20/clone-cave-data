@@ -7,14 +7,10 @@ using Cave.IO;
 
 namespace Cave.Data.Mysql
 {
-    /// <summary>
-    /// Provides a mysql database implementation.
-    /// </summary>
+    /// <summary>Provides a mysql database implementation.</summary>
     public sealed class MySqlDatabase : SqlDatabase
     {
-        /// <summary>
-        /// Initializes a new instance of the <see cref="MySqlDatabase"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="MySqlDatabase" /> class.</summary>
         /// <param name="storage">the mysql storage engine.</param>
         /// <param name="name">the name of the database.</param>
         public MySqlDatabase(MySqlStorage storage, string name)
@@ -23,15 +19,13 @@ namespace Cave.Data.Mysql
         }
 
         /// <summary>Gets a value indicating whether this instance is using a secure connection to the storage.</summary>
-        /// <value>
-        /// <c>true</c> if this instance is using a secure connection; otherwise, <c>false</c>.
-        /// </value>
+        /// <value><c>true</c> if this instance is using a secure connection; otherwise, <c>false</c>.</value>
         public override bool IsSecure
         {
             get
             {
                 var error = false;
-                SqlConnection connection = SqlStorage.GetConnection(Name);
+                var connection = SqlStorage.GetConnection(Name);
                 try
                 {
                     return connection.ConnectionString.ToUpperInvariant().Contains("SSLMODE=REQUIRED");
@@ -48,25 +42,26 @@ namespace Cave.Data.Mysql
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override ITable GetTable(string table, TableFlags flags) => MySqlTable.Connect(this, flags, table);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override ITable CreateTable(RowLayout layout, TableFlags flags)
         {
             if (layout == null)
             {
-                throw new ArgumentNullException("Layout");
+                throw new ArgumentNullException(nameof(layout));
             }
 
             if (layout.Name.HasInvalidChars(ASCII.Strings.SafeName))
             {
-                throw new ArgumentException("Table name contains invalid chars!");
+                throw new ArgumentException($"Table name {layout.Name} contains invalid chars!");
             }
-            var utf8Charset = ((MySqlStorage)Storage).CharacterSet;
+
+            var utf8Charset = ((MySqlStorage) Storage).CharacterSet;
             LogCreateTable(layout);
             var queryText = new StringBuilder();
-            queryText.AppendFormat("CREATE TABLE {0} (", SqlStorage.FQTN(Name, layout.Name));
+            queryText.Append($"CREATE TABLE {SqlStorage.FQTN(Name, layout.Name)} (");
             for (var i = 0; i < layout.FieldCount; i++)
             {
                 var field = layout[i];
@@ -100,8 +95,11 @@ namespace Cave.Data.Mysql
                         {
                             queryText.Append("LONGBLOB");
                         }
+
                         break;
-                    case DataType.Bool: queryText.Append("TINYINT(1)"); break;
+                    case DataType.Bool:
+                        queryText.Append("TINYINT(1)");
+                        break;
                     case DataType.DateTime:
                         switch (field.DateTimeType)
                         {
@@ -122,6 +120,7 @@ namespace Cave.Data.Mysql
                                 break;
                             default: throw new NotImplementedException();
                         }
+
                         break;
                     case DataType.TimeSpan:
                         switch (field.DateTimeType)
@@ -143,19 +142,41 @@ namespace Cave.Data.Mysql
                                 break;
                             default: throw new NotImplementedException();
                         }
-                        break;
-                    case DataType.Int8: queryText.Append("TINYINT"); break;
-                    case DataType.Int16: queryText.Append("SMALLINT"); break;
-                    case DataType.Int32: queryText.Append("INTEGER"); break;
-                    case DataType.Int64: queryText.Append("BIGINT"); break;
-                    case DataType.Single: queryText.Append("FLOAT"); break;
-                    case DataType.Double: queryText.Append("DOUBLE"); break;
-                    case DataType.Enum: queryText.Append("BIGINT"); break;
-                    case DataType.UInt8: queryText.Append("TINYINT UNSIGNED"); break;
-                    case DataType.UInt16: queryText.Append("SMALLINT UNSIGNED"); break;
-                    case DataType.UInt32: queryText.Append("INTEGER UNSIGNED"); break;
-                    case DataType.UInt64: queryText.Append("BIGINT UNSIGNED"); break;
 
+                        break;
+                    case DataType.Int8:
+                        queryText.Append("TINYINT");
+                        break;
+                    case DataType.Int16:
+                        queryText.Append("SMALLINT");
+                        break;
+                    case DataType.Int32:
+                        queryText.Append("INTEGER");
+                        break;
+                    case DataType.Int64:
+                        queryText.Append("BIGINT");
+                        break;
+                    case DataType.Single:
+                        queryText.Append("FLOAT");
+                        break;
+                    case DataType.Double:
+                        queryText.Append("DOUBLE");
+                        break;
+                    case DataType.Enum:
+                        queryText.Append("BIGINT");
+                        break;
+                    case DataType.UInt8:
+                        queryText.Append("TINYINT UNSIGNED");
+                        break;
+                    case DataType.UInt16:
+                        queryText.Append("SMALLINT UNSIGNED");
+                        break;
+                    case DataType.UInt32:
+                        queryText.Append("INTEGER UNSIGNED");
+                        break;
+                    case DataType.UInt64:
+                        queryText.Append("BIGINT UNSIGNED");
+                        break;
                     case DataType.User:
                     case DataType.String:
                         if (field.MaximumLength <= 0)
@@ -178,41 +199,54 @@ namespace Cave.Data.Mysql
                         {
                             queryText.Append("LONGTEXT");
                         }
+
                         switch (field.StringEncoding)
                         {
                             case StringEncoding.Undefined:
-                            case StringEncoding.ASCII: queryText.Append(" CHARACTER SET latin1 COLLATE latin1_general_ci"); break;
-                            case StringEncoding.UTF8: queryText.Append($" CHARACTER SET utf8mb4 COLLATE {utf8Charset}_general_ci"); break;
-                            case StringEncoding.UTF16: queryText.Append(" CHARACTER SET ucs2 COLLATE ucs2_general_ci"); break;
-                            case StringEncoding.UTF32: queryText.Append(" CHARACTER SET utf32 COLLATE utf32_general_ci"); break;
-                            default: throw new NotSupportedException(string.Format("MYSQL Server does not support {0}!", field.StringEncoding));
+                            case StringEncoding.ASCII:
+                                queryText.Append(" CHARACTER SET latin1 COLLATE latin1_general_ci");
+                                break;
+                            case StringEncoding.UTF8:
+                                queryText.Append($" CHARACTER SET utf8mb4 COLLATE {utf8Charset}_general_ci");
+                                break;
+                            case StringEncoding.UTF16:
+                                queryText.Append(" CHARACTER SET ucs2 COLLATE ucs2_general_ci");
+                                break;
+                            case StringEncoding.UTF32:
+                                queryText.Append(" CHARACTER SET utf32 COLLATE utf32_general_ci");
+                                break;
+                            default: throw new NotSupportedException($"MYSQL Server does not support {field.StringEncoding}!");
                         }
-                        break;
 
+                        break;
                     case DataType.Decimal:
                         if (field.MaximumLength > 0)
                         {
-                            var value = (int)field.MaximumLength;
+                            var value = (int) field.MaximumLength;
                             var temp = (field.MaximumLength - value) * 100;
-                            var decimalValue = (int)temp;
-                            if (decimalValue >= value || decimalValue != temp)
+                            var decimalValue = (int) temp;
+                            if ((decimalValue >= value) || (decimalValue != temp))
                             {
-                                throw new ArgumentOutOfRangeException(string.Format("Field {0} has an invalid MaximumLength of {1},{2}. Correct values range from s,p = 1,0 to 65,30(default value) with 0 < s < p!", field.Name, value, decimalValue));
+                                throw new ArgumentOutOfRangeException(
+                                    $"Field {field.Name} has an invalid MaximumLength of {value},{decimalValue}. Correct values range from s,p = 1,0 to 65,30(default value) with 0 < s < p!");
                             }
+
                             queryText.AppendFormat("DECIMAL({0},{1})", value, decimalValue);
                         }
                         else
                         {
                             queryText.Append("DECIMAL(65,30)");
                         }
-                        break;
 
-                    default: throw new NotImplementedException(string.Format("Unknown DataType {0}!", field.DataType));
+                        break;
+                    default: throw new NotImplementedException($"Unknown DataType {field.DataType}!");
                 }
+
                 if ((field.Flags & FieldFlags.AutoIncrement) != 0)
                 {
                     queryText.Append(" AUTO_INCREMENT");
                 }
+
                 if ((field.Flags & FieldFlags.Unique) != 0)
                 {
                     queryText.Append(" UNIQUE");
@@ -238,18 +272,22 @@ namespace Cave.Data.Mysql
                         case DataType.String:
                             if (field.MaximumLength <= 0)
                             {
-                                throw new NotSupportedException(string.Format("Unique string fields without length are not supported! Please define Field.MaxLength at table {0} field {1}", layout.Name, field.Name));
+                                throw new NotSupportedException(
+                                    $"Unique string fields without length are not supported! Please define Field.MaxLength at table {layout.Name} field {field.Name}");
                             }
+
                             break;
-                        default: throw new NotSupportedException(string.Format("Uniqueness for table {0} field {1} is not supported!", layout.Name, field.Name));
+                        default: throw new NotSupportedException($"Uniqueness for table {layout.Name} field {field.Name} is not supported!");
                     }
                 }
+
                 if (field.Description != null)
                 {
                     if (field.Description.HasInvalidChars(ASCII.Strings.Printable))
                     {
                         throw new ArgumentException("Description of field '{0}' contains invalid chars!", field.Name);
                     }
+
                     queryText.Append(" COMMENT '" + field.Description.Substring(0, 60) + "'");
                 }
             }
@@ -257,20 +295,21 @@ namespace Cave.Data.Mysql
             if (layout.Identifier.Any())
             {
                 queryText.Append(",PRIMARY KEY(");
-                int count = 0;
+                var count = 0;
                 foreach (var field in layout.Identifier)
                 {
                     if (count++ > 0)
                     {
                         queryText.Append(",");
                     }
+
                     queryText.Append(SqlStorage.EscapeFieldName(field));
                 }
+
                 queryText.Append(")");
             }
 
             queryText.Append(")");
-
             if ((flags & TableFlags.InMemory) != 0)
             {
                 queryText.Append(" ENGINE = MEMORY");
@@ -295,13 +334,14 @@ namespace Cave.Data.Mysql
                             case DataType.Binary:
                             case DataType.String:
                             case DataType.User:
-                                var size = (int)field.MaximumLength;
+                                var size = (int) field.MaximumLength;
                                 if (size < 1)
                                 {
                                     size = 32;
                                 }
 
-                                command = $"CREATE INDEX `idx_{layout.Name}_{field.Name}` ON {SqlStorage.FQTN(Name, layout.Name)} ({SqlStorage.EscapeFieldName(field)} ({size}))";
+                                command =
+                                    $"CREATE INDEX `idx_{layout.Name}_{field.Name}` ON {SqlStorage.FQTN(Name, layout.Name)} ({SqlStorage.EscapeFieldName(field)} ({size}))";
                                 break;
                             case DataType.Bool:
                             case DataType.Char:
@@ -319,10 +359,12 @@ namespace Cave.Data.Mysql
                             case DataType.UInt32:
                             case DataType.UInt64:
                             case DataType.UInt8:
-                                command = $"CREATE INDEX `idx_{layout.Name}_{field.Name}` ON {SqlStorage.FQTN(Name, layout.Name)} ({SqlStorage.EscapeFieldName(field)})";
+                                command =
+                                    $"CREATE INDEX `idx_{layout.Name}_{field.Name}` ON {SqlStorage.FQTN(Name, layout.Name)} ({SqlStorage.EscapeFieldName(field)})";
                                 break;
                             default: throw new NotSupportedException($"INDEX for datatype of field {field} is not supported!");
                         }
+
                         SqlStorage.Execute(database: Name, table: layout.Name, cmd: command);
                     }
                 }
@@ -332,18 +374,22 @@ namespace Cave.Data.Mysql
                 DeleteTable(layout.Name);
                 throw;
             }
-            return GetTable(layout, TableFlags.None);
+
+            return GetTable(layout);
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         protected override string[] GetTableNames()
         {
             var result = new List<string>();
-            var rows = SqlStorage.Query(database: "information_schema", table: "TABLES", cmd: "SELECT table_name,table_schema,table_type FROM information_schema.TABLES where table_type='BASE TABLE' AND table_schema LIKE " + SqlStorage.EscapeString(Name));
-            foreach (Row row in rows)
+            var rows = SqlStorage.Query(database: "information_schema", table: "TABLES",
+                cmd: "SELECT table_name,table_schema,table_type FROM information_schema.TABLES where table_type='BASE TABLE' AND table_schema LIKE " +
+                SqlStorage.EscapeString(Name));
+            foreach (var row in rows)
             {
-                result.Add((string)row[0]);
+                result.Add((string) row[0]);
             }
+
             return result.ToArray();
         }
     }

@@ -4,27 +4,20 @@ using System.IO;
 
 namespace Cave.Data
 {
-    /// <summary>
-    /// Provides access to database storage engines.
-    /// </summary>
+    /// <summary>Provides access to database storage engines.</summary>
     public abstract class Storage : IStorage
     {
-        /// <summary>
-        /// Epoch DateTime in Ticks.
-        /// </summary>
+        /// <summary>Epoch DateTime in Ticks.</summary>
         public const long EpochTicks = 621355968000000000;
 
-        ConnectionString connectionString;
         bool closed;
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="Storage"/> class.
-        /// </summary>
+        /// <summary>Initializes a new instance of the <see cref="Storage" /> class.</summary>
         /// <param name="connectionString">ConnectionString of the storage.</param>
         /// <param name="flags">The connection flags.</param>
         protected Storage(ConnectionString connectionString, ConnectionFlags flags)
         {
-            this.connectionString = connectionString;
+            ConnectionString = connectionString;
             AllowUnsafeConnections = flags.HasFlag(ConnectionFlags.AllowUnsafeConnections);
             LogVerboseMessages = flags.HasFlag(ConnectionFlags.VerboseLogging);
             if (LogVerboseMessages)
@@ -33,65 +26,63 @@ namespace Cave.Data
             }
         }
 
-        /// <summary>
-        /// Gets or sets the date time format for big int date time values.
-        /// </summary>
+        /// <summary>Gets or sets the date time format for big int date time values.</summary>
         public static string BigIntDateTimeFormat { get; set; } = "yyyyMMddHHmmssfff";
 
         #region IStorage Member
 
         #region properties
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract string[] DatabaseNames { get; }
 
-        /// <inheritdoc/>
-        public virtual ConnectionString ConnectionString => connectionString;
+        /// <inheritdoc />
+        public virtual ConnectionString ConnectionString { get; }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual bool Closed => closed;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual float FloatPrecision => 0;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual double DoublePrecision => 0;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual TimeSpan DateTimePrecision => TimeSpan.FromMilliseconds(0);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual TimeSpan TimeSpanPrecision => new TimeSpan(0);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public bool LogVerboseMessages { get; set; }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public bool AllowUnsafeConnections { get; }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract bool SupportsNativeTransactions { get; }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public int TransactionRowCount { get; set; } = 5000;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         string IStorage.BigIntDateTimeFormat => BigIntDateTimeFormat;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IDatabase this[string databaseName] => GetDatabase(databaseName);
 
         #endregion
 
         #region functions
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual IFieldProperties GetDatabaseFieldProperties(IFieldProperties field) => field;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual void Close() => closed = true;
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual IDatabase GetDatabase(string database, bool createIfNotExists)
         {
             if (HasDatabase(database))
@@ -104,10 +95,10 @@ namespace Cave.Data
                 return CreateDatabase(database);
             }
 
-            throw new ArgumentException(string.Format("The requested database '{0}' was not found!", database));
+            throw new ArgumentException($"The requested database '{database}' was not found!");
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual void CheckLayout(RowLayout expected, RowLayout current)
         {
             if (expected == null)
@@ -122,8 +113,10 @@ namespace Cave.Data
 
             if (expected.FieldCount != current.FieldCount)
             {
-                throw new InvalidDataException($"Field.Count of table {current.Name} != {expected.Name} differs (found {current.FieldCount} expected {expected.FieldCount})!");
+                throw new InvalidDataException(
+                    $"Field.Count of table {current.Name} != {expected.Name} differs (found {current.FieldCount} expected {expected.FieldCount})!");
             }
+
             for (var i = 0; i < expected.FieldCount; i++)
             {
                 var expectedField = GetDatabaseFieldProperties(expected[i]);
@@ -132,6 +125,7 @@ namespace Cave.Data
                 {
                     throw new Exception($"FieldProperties of table {current.Name} != {expected.Name} differ! (found {currentField} expected {expectedField})!");
                 }
+
                 if (currentField.Flags != expectedField.Flags)
                 {
                     Trace.TraceWarning($"Field.Flags of table {current.Name} != {expected.Name} differ! (found {currentField} expected {expectedField})!");
@@ -139,19 +133,19 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract bool HasDatabase(string database);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract IDatabase GetDatabase(string database);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract IDatabase CreateDatabase(string database);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public abstract void DeleteDatabase(string database);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public virtual decimal GetDecimalPrecision(float count)
         {
             if (count == 0)
@@ -160,16 +154,17 @@ namespace Cave.Data
             }
 
             var value = Math.Truncate(count);
-            var decimalValue = (int)Math.Round((count - value) * 100);
+            var decimalValue = (int) Math.Round((count - value) * 100);
             decimal result = 1;
             while (decimalValue-- > 0)
             {
                 result *= 0.1m;
             }
+
             return result;
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public override string ToString() => ConnectionString.ToString(ConnectionStringPart.NoCredentials);
 
         #endregion

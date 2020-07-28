@@ -4,33 +4,29 @@ using System.Linq;
 
 namespace Cave.Data
 {
-    /// <summary>
-    /// Provides a table of structures (rows).
-    /// </summary>
+    /// <summary>Provides a table of structures (rows).</summary>
     /// <typeparam name="TKey">Key identifier type.</typeparam>
     /// <typeparam name="TStruct">Row structure type.</typeparam>
     public abstract class AbstractTable<TKey, TStruct> : AbstractTable<TStruct>, ITable<TKey, TStruct>, ITable<TStruct>, ITable
         where TKey : IComparable<TKey>
         where TStruct : struct
     {
-        /// <summary>
-        /// Gets the identifier field.
-        /// </summary>
+        /// <summary>Gets the identifier field.</summary>
         protected abstract IFieldProperties KeyField { get; }
 
         #region ITable{TKey, TStruct} properties
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public TStruct this[TKey id] => GetStruct(id);
 
         #endregion
 
         #region ITable{TKey, TStruct} interface
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public bool Exist(TKey id) => BaseTable.Exist(KeyField.Name, id);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Delete(TKey id)
         {
             var result = BaseTable.TryDelete(KeyField.Name, id);
@@ -42,25 +38,26 @@ namespace Cave.Data
             }
         }
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public void Delete(IEnumerable<TKey> ids) => BaseTable.TryDelete(Search.FieldIn(KeyField.Name, ids));
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public Row GetRow(TKey id) => BaseTable.GetRow(KeyField.Name, id);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IList<Row> GetRows(IEnumerable<TKey> ids) => BaseTable.GetRows(Search.FieldIn(KeyField.Name, ids));
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public TStruct GetStruct(TKey id) => GetRow(id).GetStruct<TStruct>(Layout);
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IList<TStruct> GetStructs(IEnumerable<TKey> ids)
             => GetRows(Search.FieldIn(KeyField.Name, ids)).Select(r => r.GetStruct<TStruct>(Layout)).ToList();
 
-        /// <inheritdoc/>
+        /// <inheritdoc />
         public IDictionary<TKey, TStruct> GetDictionary(Search search = null, ResultOption resultOption = null)
-            => GetRows(search, resultOption).ToDictionary(r => (TKey)r[KeyField.Index], r => r.GetStruct<TStruct>(Layout));
+            => GetRows(search, resultOption).ToDictionary(r => (TKey) r[KeyField.Index], r => r.GetStruct<TStruct>(Layout));
+
         #endregion
     }
 }

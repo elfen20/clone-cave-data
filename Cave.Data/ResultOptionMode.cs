@@ -1,8 +1,6 @@
 namespace Cave.Data
 {
-    /// <summary>
-    /// Available result option modes.
-    /// </summary>
+    /// <summary>Available result option modes.</summary>
     public enum ResultOptionMode
     {
         /// <summary>No option / empty</summary>
@@ -21,6 +19,6 @@ namespace Cave.Data
         Limit,
 
         /// <summary>The offset option</summary>
-        Offset,
+        Offset
     }
 }

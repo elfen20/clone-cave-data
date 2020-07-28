@@ -8,9 +8,7 @@ using Cave.Collections.Generic;
 
 namespace Cave.Data
 {
-    /// <summary>
-    /// Provides extension functions for ITable instances.
-    /// </summary>
+    /// <summary>Provides extension functions for ITable instances.</summary>
     public static class ITableExtensions
     {
         #region ITable extensions
@@ -65,11 +63,11 @@ namespace Cave.Data
         /// <param name="table">The table.</param>
         /// <param name="id">The identifier.</param>
         /// <returns>Returns true if the dataset was removed, false otherwise.</returns>
-        /// <typeparam name="TIdentifier">Identifier type. This has to be convertable to the database <see cref="DataType"/>.</typeparam>
+        /// <typeparam name="TIdentifier">Identifier type. This has to be convertable to the database <see cref="DataType" />.</typeparam>
         public static bool TryDelete<TIdentifier>(this ITable table, TIdentifier id)
         {
             var idField = table.Layout.Where(f => f.Flags.HasFlag(FieldFlags.ID)).SingleOrDefault()
-                ?? throw new InvalidOperationException("Could not find identifier field!");
+             ?? throw new InvalidOperationException("Could not find identifier field!");
             return table.TryDelete(idField.Name, id) > 0;
         }
 
@@ -77,11 +75,11 @@ namespace Cave.Data
         /// <param name="table">The table.</param>
         /// <param name="ids">The identifiers.</param>
         /// <returns>The number of datasets removed, 0 if the database does not support deletion count or no dataset was removed.</returns>
-        /// <typeparam name="TIdentifier">Identifier type. This has to be convertable to the database <see cref="DataType"/>.</typeparam>
+        /// <typeparam name="TIdentifier">Identifier type. This has to be convertable to the database <see cref="DataType" />.</typeparam>
         public static int TryDelete<TIdentifier>(this ITable table, IEnumerable<TIdentifier> ids)
         {
             var idField = table.Layout.Where(f => f.Flags.HasFlag(FieldFlags.ID)).SingleOrDefault()
-                ?? throw new InvalidOperationException("Could not find identifier field!");
+             ?? throw new InvalidOperationException("Could not find identifier field!");
             return table.TryDelete(Search.FieldIn(idField.Name, ids));
         }
 
@@ -90,10 +88,7 @@ namespace Cave.Data
         /// <param name="field">The fieldname to match.</param>
         /// <param name="value">The value to match.</param>
         /// <returns>The number of datasets deleted.</returns>
-        public static int TryDelete(this ITable table, string field, object value)
-        {
-            return table.TryDelete(Search.FieldEquals(field, value));
-        }
+        public static int TryDelete(this ITable table, string field, object value) => table.TryDelete(Search.FieldEquals(field, value));
 
         #endregion
 
@@ -104,10 +99,7 @@ namespace Cave.Data
         /// <param name="field">The fields name.</param>
         /// <param name="value">The value.</param>
         /// <returns>Returns true if a dataset exists, false otherwise.</returns>
-        public static bool Exist(this ITable table, string field, object value)
-        {
-            return table.Exist(Search.FieldEquals(field, value));
-        }
+        public static bool Exist(this ITable table, string field, object value) => table.Exist(Search.FieldEquals(field, value));
 
         #endregion
 
@@ -116,20 +108,14 @@ namespace Cave.Data
         /// <param name="field">The fieldname to match.</param>
         /// <param name="value">The value to match.</param>
         /// <returns>The row found.</returns>
-        public static Row GetRow(this ITable table, string field, object value)
-        {
-            return table.GetRow(Search.FieldEquals(field, value));
-        }
+        public static Row GetRow(this ITable table, string field, object value) => table.GetRow(Search.FieldEquals(field, value));
 
         /// <summary>Searches the table for rows with given field value combinations.</summary>
         /// <param name="table">The table.</param>
         /// <param name="field">The fieldname to match.</param>
         /// <param name="value">The value to match.</param>
         /// <returns>The rows found.</returns>
-        public static IList<Row> GetRows(this ITable table, string field, object value)
-        {
-            return table.GetRows(Search.FieldEquals(field, value));
-        }
+        public static IList<Row> GetRows(this ITable table, string field, object value) => table.GetRows(Search.FieldEquals(field, value));
 
         /// <summary>Caches the whole table into memory and provides a new ITable instance.</summary>
         /// <param name="table">The table.</param>
@@ -147,10 +133,7 @@ namespace Cave.Data
         /// <param name="field">The fieldname to match.</param>
         /// <param name="value">The value to match.</param>
         /// <returns>The number of rows found matching the criteria given.</returns>
-        public static long Count(this ITable table, string field, object value)
-        {
-            return table.Count(Search.FieldEquals(field, value), ResultOption.None);
-        }
+        public static long Count(this ITable table, string field, object value) => table.Count(Search.FieldEquals(field, value), ResultOption.None);
 
         #region SaveTo
 
@@ -182,62 +165,69 @@ namespace Cave.Data
 
         #region GenerateStruct/-File (ITable)
 
-        /// <summary>
-        /// Builds the csharp code file containing the row layout structure.
-        /// </summary>
+        /// <summary>Builds the csharp code file containing the row layout structure.</summary>
         /// <param name="table">The table to use.</param>
         /// <param name="databaseName">The database name (only used for the structure name).</param>
         /// <param name="tableName">The table name (only used for the structure name).</param>
         /// <param name="className">The name of the class to generate.</param>
         /// <param name="structFile">The struct file name (defaults to classname.cs).</param>
+        /// <param name="namingStrategy">Naming strategy for classes, properties, structures and fields.</param>
         /// <returns>The struct file name.</returns>
-        public static GenerateTableCodeResult GenerateStructFile(this ITable table, string databaseName = null, string tableName = null, string className = null, string structFile = null)
-            => GenerateStruct(table.Layout, databaseName: databaseName, tableName: tableName, className: className).SaveStructFile(structFile: structFile);
+        public static GenerateTableCodeResult GenerateStructFile(this ITable table, string databaseName = null, string tableName = null,
+            string className = null, string structFile = null, NamingStrategy namingStrategy = NamingStrategy.CamelCase)
+            => GenerateStruct(table.Layout, databaseName, tableName, className, namingStrategy).SaveStructFile(structFile);
 
-        /// <summary>
-        /// Builds the csharp code containing the row layout structure.
-        /// </summary>
+        /// <summary>Builds the csharp code containing the row layout structure.</summary>
         /// <param name="table">The table to use.</param>
         /// <param name="databaseName">The database name (only used for the structure name).</param>
         /// <param name="tableName">The table name (only used for the structure name).</param>
         /// <param name="className">The name of the class to generate.</param>
+        /// <param name="namingStrategy">Naming strategy for classes, properties, structures and fields.</param>
         /// <returns>Returns a string containing csharp code.</returns>
-        public static GenerateTableCodeResult GenerateStruct(this ITable table, string databaseName = null, string tableName = null, string className = null)
-            => GenerateStruct(table.Layout, databaseName: databaseName ?? table.Database.Name, tableName: tableName, className: className);
+        public static GenerateTableCodeResult GenerateStruct(this ITable table, string databaseName = null, string tableName = null, string className = null,
+            NamingStrategy namingStrategy = NamingStrategy.CamelCase)
+            => GenerateStruct(table.Layout, databaseName ?? table.Database.Name, tableName, className, namingStrategy);
 
         #endregion
 
         #region GenerateStruct/-File (RowLayout)
 
-        /// <summary>
-        /// Builds the csharp code file containing the row layout structure.
-        /// </summary>
+        /// <summary>Builds the csharp code file containing the row layout structure.</summary>
         /// <param name="layout">The layout to use.</param>
         /// <param name="databaseName">The database name (only used for the structure name).</param>
         /// <param name="tableName">The table name (only used for the structure name).</param>
         /// <param name="className">The name of the class to generate.</param>
         /// <param name="structFile">The struct file name (defaults to classname.cs).</param>
+        /// <param name="namingStrategy">Naming strategy for classes, properties, structures and fields.</param>
         /// <returns>The struct file name.</returns>
-        public static GenerateTableCodeResult GenerateStructFile(this RowLayout layout, string databaseName = null, string tableName = null, string className = null, string structFile = null)
-            => GenerateStruct(layout, databaseName: databaseName, tableName: tableName, className: className).SaveStructFile(structFile: structFile);
+        public static GenerateTableCodeResult GenerateStructFile(this RowLayout layout, string databaseName = null, string tableName = null,
+            string className = null, string structFile = null, NamingStrategy namingStrategy = NamingStrategy.CamelCase)
+            => GenerateStruct(layout, databaseName, tableName, className, namingStrategy).SaveStructFile(structFile);
 
-        /// <summary>
-        /// Builds the csharp code containing the row layout structure.
-        /// </summary>
+        /// <summary>Builds the csharp code containing the row layout structure.</summary>
         /// <param name="layout">The layout to use.</param>
         /// <param name="databaseName">The database name (only used for the structure name).</param>
         /// <param name="tableName">The table name (only used for the structure name).</param>
         /// <param name="className">The name of the class to generate.</param>
+        /// <param name="namingStrategy">Naming strategy for classes, properties, structures and fields.</param>
         /// <returns>Returns a string containing csharp code.</returns>
-        public static GenerateTableCodeResult GenerateStruct(this RowLayout layout, string databaseName, string tableName = null, string className = null)
+        public static GenerateTableCodeResult GenerateStruct(this RowLayout layout, string databaseName, string tableName = null, string className = null,
+            NamingStrategy namingStrategy = NamingStrategy.CamelCase)
         {
             #region GetName()
-            string GetName(string text)
+
+            string[] GetNameParts(string text)
+                => text.ReplaceInvalidChars(ASCII.Strings.Letters + ASCII.Strings.Digits, "_").Split('_').SelectMany(s => s.SplitCamelCase()).ToArray();
+
+            // TODO: use NamingStrategy
+            string GetName(string text) => namingStrategy switch
             {
-                text = text.ReplaceInvalidChars(ASCII.Strings.Letters + ASCII.Strings.Digits, "_");
-                var parts = text.Split('_').SelectMany(s => s.SplitCamelCase());
-                return parts.ToArray().JoinCamelCase();
-            }
+                NamingStrategy.CamelCase => GetNameParts(text).JoinCamelCase(),
+                NamingStrategy.SnakeCase => GetNameParts(text).JoinSnakeCase(),
+                NamingStrategy.Exact => text,
+                _ => throw new NotImplementedException($"Unknown NamingStrategy {namingStrategy}.")
+            };
+
             #endregion
 
             if (databaseName == null)
@@ -250,14 +240,13 @@ namespace Cave.Data
                 tableName = layout.Name;
             }
 
-            Dictionary<int, string> fieldNameLookup = new Dictionary<int, string>();
-            int idCount = layout.Identifier.Count();
+            var fieldNameLookup = new Dictionary<int, string>();
+            var idCount = layout.Identifier.Count();
             var idFields = (idCount == 0 ? layout : layout.Identifier).ToList();
-            StringBuilder code = new StringBuilder();
-
+            var code = new StringBuilder();
             code.AppendLine("//-----------------------------------------------------------------------");
             code.AppendLine("// <summary>");
-            code.AppendLine($"// Autogenerated table class {DateTime.UtcNow:R}");
+            code.AppendLine("// Autogenerated table class");
             code.AppendLine($"// Using {typeof(ITableExtensions).Assembly.FullName}");
             code.AppendLine("// </summary>");
             code.AppendLine("// <auto-generated />");
@@ -268,26 +257,33 @@ namespace Cave.Data
             code.AppendLine("using Cave.Data;");
 
             #region Build lookup tables
+
+            void BuildLookupTables()
             {
-                IndexedSet<string> uniqueFieldNames = new IndexedSet<string>();
+                var uniqueFieldNames = new IndexedSet<string>();
                 foreach (var field in layout)
                 {
                     var sharpName = GetName(field.Name);
-                    int i = 0;
+                    var i = 0;
                     while (uniqueFieldNames.Contains(sharpName))
                     {
                         sharpName = GetName(field.Name) + ++i;
                     }
+
                     uniqueFieldNames.Add(sharpName);
                     fieldNameLookup[field.Index] = sharpName;
                 }
             }
+
+            BuildLookupTables();
+
             #endregion
 
             if (className == null)
             {
                 className = GetName(databaseName) + GetName(tableName) + "Row";
             }
+
             code.AppendLine();
             code.AppendLine("namespace Database");
             code.AppendLine("{");
@@ -299,15 +295,16 @@ namespace Cave.Data
             #region static Parse()
 
             code.AppendLine($"\t\t/// <summary>Converts the string representation of a row to its {className} equivalent.</summary>");
-            code.AppendLine($"\t\t/// <param name=\"data\">A string that contains a row to convert.</param>");
+            code.AppendLine("\t\t/// <param name=\"data\">A string that contains a row to convert.</param>");
             code.AppendLine($"\t\t/// <returns>A new {className} instance.</returns>");
             code.AppendLine($"\t\tpublic static {className} Parse(string data) => Parse(data, CultureInfo.InvariantCulture);");
             code.AppendLine();
             code.AppendLine($"\t\t/// <summary>Converts the string representation of a row to its {className} equivalent.</summary>");
-            code.AppendLine($"\t\t/// <param name=\"data\">A string that contains a row to convert.</param>");
-            code.AppendLine($"\t\t/// <param name=\"provider\">The format provider (optional).</param>");
+            code.AppendLine("\t\t/// <param name=\"data\">A string that contains a row to convert.</param>");
+            code.AppendLine("\t\t/// <param name=\"provider\">The format provider (optional).</param>");
             code.AppendLine($"\t\t/// <returns>A new {className} instance.</returns>");
             code.AppendLine($"\t\tpublic static {className} Parse(string data, IFormatProvider provider) => CsvReader.ParseRow<{className}>(data, provider);");
+
             #endregion
 
             #region Add fields
@@ -320,50 +317,58 @@ namespace Cave.Data
                 {
                     code.AppendLine($"\t\t[Description(\"{field} {field.Description}\")]");
                 }
-                code.Append($"\t\t[Field(");
-                int i = 0;
+
+                code.Append("\t\t[Field(");
+                var i = 0;
+
                 void AddAttribute<T>(T value, Func<string> content)
                 {
                     if (Equals(value, default))
                     {
                         return;
                     }
+
                     if (i++ > 0)
                     {
                         code.Append(", ");
                     }
+
                     code.Append(content());
                 }
 
                 if (field.Flags != 0)
                 {
                     code.Append("Flags = ");
-                    int flagCount = 0;
+                    var flagCount = 0;
                     foreach (var flag in field.Flags.GetFlags())
                     {
                         if (flagCount++ > 0)
                         {
                             code.Append(" | ");
                         }
+
                         code.Append("FieldFlags.");
                         code.Append(flag);
                     }
+
                     code.Append(", ");
                 }
+
                 var sharpName = fieldNameLookup[field.Index];
                 if (sharpName != field.Name)
                 {
                     AddAttribute(field.Name, () => $"Name = \"{field.Name}\"");
                 }
+
                 if (field.MaximumLength < int.MaxValue)
                 {
-                    AddAttribute(field.MaximumLength, () => $"Length = {(int)field.MaximumLength}");
+                    AddAttribute(field.MaximumLength, () => $"Length = {(int) field.MaximumLength}");
                 }
+
                 AddAttribute(field.AlternativeNames, () => $"AlternativeNames = \"{field.AlternativeNames.Join(", ")}\"");
                 AddAttribute(field.DisplayFormat, () => $"DisplayFormat = \"{field.DisplayFormat.EscapeUtf8()}\"");
                 code.AppendLine(")]");
-
-                if (field.DateTimeKind != DateTimeKind.Unspecified || field.DateTimeType != DateTimeType.Undefined)
+                if ((field.DateTimeKind != DateTimeKind.Unspecified) || (field.DateTimeType != DateTimeType.Undefined))
                 {
                     code.AppendLine($"\t\t[DateTimeFormat({field.DateTimeKind}, {field.DateTimeType})]");
                 }
@@ -379,19 +384,22 @@ namespace Cave.Data
             #endregion
 
             #region ToString()
+
             {
                 code.AppendLine();
-                code.AppendLine($"\t\t/// <summary>Gets a string representation of this row.</summary>");
-                code.AppendLine($"\t\t/// <returns>Returns a string that can be parsed by <see cref=\"Parse(string)\"/>.</returns>");
-                code.AppendLine($"\t\tpublic override string ToString() => ToString(CultureInfo.InvariantCulture);");
+                code.AppendLine("\t\t/// <summary>Gets a string representation of this row.</summary>");
+                code.AppendLine("\t\t/// <returns>Returns a string that can be parsed by <see cref=\"Parse(string)\"/>.</returns>");
+                code.AppendLine("\t\tpublic override string ToString() => ToString(CultureInfo.InvariantCulture);");
                 code.AppendLine();
-                code.AppendLine($"\t\t/// <summary>Gets a string representation of this row.</summary>");
-                code.AppendLine($"\t\t/// <returns>Returns a string that can be parsed by <see cref=\"Parse(string, IFormatProvider)\"/>.</returns>");
-                code.AppendLine($"\t\tpublic string ToString(IFormatProvider provider) => CsvWriter.RowToString(this, provider);");
+                code.AppendLine("\t\t/// <summary>Gets a string representation of this row.</summary>");
+                code.AppendLine("\t\t/// <returns>Returns a string that can be parsed by <see cref=\"Parse(string, IFormatProvider)\"/>.</returns>");
+                code.AppendLine("\t\tpublic string ToString(IFormatProvider provider) => CsvWriter.RowToString(this, provider);");
             }
+
             #endregion
 
             #region GetHashCode()
+
             {
                 code.AppendLine();
                 if (idCount == 1)
@@ -408,16 +416,17 @@ namespace Cave.Data
                 {
                     if (idCount == 0)
                     {
-                        code.AppendLine($"\t\t/// <summary>Gets the hash code based on all values of this row (no identififer defined).</summary>");
+                        code.AppendLine("\t\t/// <summary>Gets the hash code based on all values of this row (no identififer defined).</summary>");
                     }
                     else
                     {
                         var names = idFields.Select(field => fieldNameLookup[field.Index]).Join(", ");
                         code.AppendLine($"\t\t/// <summary>Gets the hash code for the identifier of this row (fields {names}).</summary>");
                     }
+
                     code.AppendLine("\t\t/// <returns>A hash code for the identifier of this row.</returns>");
                     code.AppendLine("\t\tpublic override int GetHashCode() =>");
-                    bool first = true;
+                    var first = true;
                     foreach (var idField in idFields)
                     {
                         if (first)
@@ -428,14 +437,18 @@ namespace Cave.Data
                         {
                             code.AppendLine(" ^");
                         }
+
                         code.Append($"\t\t\t{fieldNameLookup[idField.Index]}.GetHashCode()");
                     }
+
                     code.AppendLine(";");
                 }
             }
+
             #endregion
 
             #region Equals()
+
             {
                 code.AppendLine();
                 code.AppendLine("\t\t/// <inheritdoc/>");
@@ -446,7 +459,7 @@ namespace Cave.Data
                 code.AppendLine("\t\t{");
                 code.AppendLine("\t\t\treturn");
                 {
-                    bool first = true;
+                    var first = true;
                     foreach (var field in layout)
                     {
                         if (first)
@@ -457,24 +470,24 @@ namespace Cave.Data
                         {
                             code.AppendLine(" &&");
                         }
+
                         var name = fieldNameLookup[field.Index];
                         code.Append($"\t\t\t\tEquals(other.{name}, {name})");
                     }
+
                     code.AppendLine(";");
                 }
                 code.AppendLine("\t\t}");
             }
+
             #endregion
 
             code.AppendLine("\t}");
             code.AppendLine("}");
             code.Replace("\t", "    ");
-            return new GenerateTableCodeResult()
+            return new GenerateTableCodeResult
             {
-                ClassName = className,
-                TableName = tableName,
-                DatabaseName = databaseName,
-                Code = code.ToString(),
+                ClassName = className, TableName = tableName, DatabaseName = databaseName, Code = code.ToString()
             };
         }
 
@@ -482,9 +495,7 @@ namespace Cave.Data
 
         #region SaveStructFile
 
-        /// <summary>
-        /// Saves the generated code to a file and returns the updated result.
-        /// </summary>
+        /// <summary>Saves the generated code to a file and returns the updated result.</summary>
         /// <param name="result">Result to update.</param>
         /// <param name="structFile">Name of the file to write to (optional).</param>
         /// <returns>Returns an updated result instance.</returns>
@@ -501,6 +512,7 @@ namespace Cave.Data
                     result.FileName = structFile;
                 }
             }
+
             File.WriteAllText(result.FileName, result.Code);
             return result;
         }
@@ -531,14 +543,10 @@ namespace Cave.Data
         /// <param name="value">The value to match.</param>
         /// <returns>The rows found.</returns>
         public static IList<TStruct> GetStructs<TStruct>(this ITable<TStruct> table, string field, object value)
-               where TStruct : struct
-        {
-            return table.GetStructs(Search.FieldEquals(field, value));
-        }
+            where TStruct : struct =>
+            table.GetStructs(Search.FieldEquals(field, value));
 
-        /// <summary>
-        /// Tries to get the row with the specified <paramref name="value"/> from <paramref name="table"/>.
-        /// </summary>
+        /// <summary>Tries to get the row with the specified <paramref name="value" /> from <paramref name="table" />.</summary>
         /// <typeparam name="TStruct">The row structure type.</typeparam>
         /// <param name="table">The table.</param>
         /// <param name="field">The fieldname to match.</param>
@@ -555,6 +563,7 @@ namespace Cave.Data
                 row = result.Single();
                 return true;
             }
+
             row = default;
             return false;
         }
@@ -563,9 +572,7 @@ namespace Cave.Data
 
         #region ITable<TKey, TStruct> extensions
 
-        /// <summary>
-        /// Tries to get the row with the specified <paramref name="key"/> from <paramref name="table"/>.
-        /// </summary>
+        /// <summary>Tries to get the row with the specified <paramref name="key" /> from <paramref name="table" />.</summary>
         /// <typeparam name="TKey">The identifier field type.</typeparam>
         /// <typeparam name="TStruct">The row structure type.</typeparam>
         /// <param name="table">The table.</param>
@@ -583,6 +590,7 @@ namespace Cave.Data
                 row = result.Single();
                 return true;
             }
+
             row = default;
             return false;
         }
