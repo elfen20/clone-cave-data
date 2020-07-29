@@ -24,4 +24,16 @@
   <ItemGroup>
     <ProjectReference Include="..\Cave.Data\Cave.Data.csproj" />
   </ItemGroup>
+  
+  <ItemGroup Condition="'$(TargetFramework)' == 'net45'">
+    <PackageReference Include="MySqlConnector">
+      <Version>0.69.8</Version>
+    </PackageReference>
+  </ItemGroup>
+  
+  <ItemGroup Condition="'$(TargetFramework)' == 'netcoreapp2.0'">
+    <PackageReference Include="MySqlConnector">
+      <Version>0.69.8</Version>
+    </PackageReference>
+  </ItemGroup>
 </Project>
